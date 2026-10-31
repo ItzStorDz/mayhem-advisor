@@ -1,0 +1,3372 @@
+{
+ "schema": 1,
+ "version": "16.21.8342754+branch.releases-16-21.content.release",
+ "generatedAt": "2026-10-31T21:22:13.590Z",
+ "champions": {
+  "Aatrox": {
+   "name": "Aatrox",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter"
+   ],
+   "ratios": {
+    "ad": 1.3
+   },
+   "heal": [
+    "P",
+    "E",
+    "R"
+   ],
+   "late": 1
+  },
+  "Ahri": {
+   "name": "Ahri",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 1.75
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Akali": {
+   "name": "Akali",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 1.7,
+    "ap": 2.55,
+    "ad": 1.65
+   },
+   "late": 1
+  },
+  "Akshan": {
+   "name": "Akshan",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 0.6,
+    "ad": 1.6,
+    "bonusAd": 0.7
+   },
+   "onHit": [
+    "P"
+   ],
+   "shield": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Alistar": {
+   "name": "Alistar",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.5
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Ambessa": {
+   "name": "Ambessa",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 2.9
+   },
+   "attackSpeed": [
+    "P"
+   ],
+   "heal": [
+    "R"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Amumu": {
+   "name": "Amumu",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.15,
+    "bonusArmor": 0.03,
+    "bonusMr": 0.03
+   },
+   "late": 1
+  },
+  "Anivia": {
+   "name": "Anivia",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.13
+   },
+   "late": 1
+  },
+  "Annie": {
+   "name": "Annie",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.75
+   },
+   "attackSpeed": [
+    "R"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Aphelios": {
+   "name": "Aphelios",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "bonusAd": 0.25,
+    "ap": 1
+   },
+   "late": 2
+  },
+  "Ashe": {
+   "name": "Ashe",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "support"
+   ],
+   "ratios": {
+    "ad": 2.3,
+    "ap": 1.2,
+    "bonusAd": 1
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "Q"
+   ],
+   "crit": [
+    "P"
+   ],
+   "late": 2
+  },
+  "AurelionSol": {
+   "name": "Aurelion Sol",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.42
+   },
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Aurora": {
+   "name": "Aurora",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 2.05
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Azir": {
+   "name": "Azir",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "marksman"
+   ],
+   "ratios": {
+    "ap": 2.95
+   },
+   "onHit": [
+    "W"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 2
+  },
+  "Bard": {
+   "name": "Bard",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.2
+   },
+   "heal": [
+    "W"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Belveth": {
+   "name": "Bel'Veth",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter"
+   ],
+   "ratios": {
+    "ad": 1.17,
+    "bonusAd": 0.03,
+    "ap": 3
+   },
+   "onHit": [
+    "P",
+    "E",
+    "R"
+   ],
+   "attackSpeed": [
+    "P",
+    "Q",
+    "E",
+    "R"
+   ],
+   "heal": [
+    "R"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Blitzcrank": {
+   "name": "Blitzcrank",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "ad": 2,
+    "ap": 2.45
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "shield": [
+    "P",
+    "R"
+   ],
+   "late": 1
+  },
+  "Brand": {
+   "name": "Brand",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.27
+   },
+   "late": 1
+  },
+  "Braum": {
+   "name": "Braum",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "health": 0.03,
+    "ap": 0.6
+   },
+   "onHit": [
+    "P"
+   ],
+   "shield": [
+    "Q",
+    "E"
+   ],
+   "late": 1
+  },
+  "Briar": {
+   "name": "Briar",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1.05,
+    "ap": 4.3,
+    "bonusAd": 3.2
+   },
+   "onHit": [
+    "W"
+   ],
+   "attackSpeed": [
+    "W"
+   ],
+   "heal": [
+    "P",
+    "W",
+    "E"
+   ],
+   "late": 1
+  },
+  "Caitlyn": {
+   "name": "Caitlyn",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "ap": 0.8,
+    "bonusAd": 1.3
+   },
+   "crit": [
+    "P",
+    "R"
+   ],
+   "late": 2
+  },
+  "Camille": {
+   "name": "Camille",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 1.35
+   },
+   "onHit": [
+    "R"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "heal": [
+    "W"
+   ],
+   "shield": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Cassiopeia": {
+   "name": "Cassiopeia",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.05
+   },
+   "heal": [
+    "E"
+   ],
+   "late": 2
+  },
+  "Chogath": {
+   "name": "Cho'Gath",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.5,
+    "bonusHealth": 0.1
+   },
+   "heal": [
+    "P",
+    "R"
+   ],
+   "stacks": [
+    "R"
+   ],
+   "late": 3
+  },
+  "Corki": {
+   "name": "Corki",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "bonusAd": 6.5,
+    "ap": 2.5
+   },
+   "late": 1
+  },
+  "Darius": {
+   "name": "Darius",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "bonusAd": 1.05
+   },
+   "heal": [
+    "Q"
+   ],
+   "late": 1
+  },
+  "Diana": {
+   "name": "Diana",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 2.58
+   },
+   "onHit": [
+    "P"
+   ],
+   "attackSpeed": [
+    "P"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Draven": {
+   "name": "Draven",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "bonusAd": 3.55
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "late": 2
+  },
+  "DrMundo": {
+   "name": "Dr. Mundo",
+   "attack": "melee",
+   "damageType": "mixed",
+   "roles": [
+    "tank",
+    "fighter"
+   ],
+   "ratios": {
+    "bonusHealth": 0.12,
+    "ad": 1,
+    "health": 0.05
+   },
+   "heal": [
+    "P",
+    "Q",
+    "W",
+    "R"
+   ],
+   "late": 1
+  },
+  "Ekko": {
+   "name": "Ekko",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 3.65
+   },
+   "heal": [
+    "R"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Elise": {
+   "name": "Elise",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.7
+   },
+   "onHit": [
+    "P"
+   ],
+   "heal": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Evelynn": {
+   "name": "Evelynn",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.6
+   },
+   "heal": [
+    "P",
+    "R"
+   ],
+   "levelSpike": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Ezreal": {
+   "name": "Ezreal",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "bonusAd": 2.6,
+    "ap": 3.15,
+    "ad": 1.3
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "P"
+   ],
+   "late": 2
+  },
+  "FiddleSticks": {
+   "name": "Fiddlesticks",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 1.45
+   },
+   "heal": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Fiora": {
+   "name": "Fiora",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 0,
+    "ap": 1
+   },
+   "onHit": [
+    "Q",
+    "E"
+   ],
+   "attackSpeed": [
+    "W",
+    "E"
+   ],
+   "crit": [
+    "E"
+   ],
+   "heal": [
+    "P",
+    "R"
+   ],
+   "late": 2
+  },
+  "Fizz": {
+   "name": "Fizz",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 2.56,
+    "ad": 1
+   },
+   "onHit": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Galio": {
+   "name": "Galio",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 3.1,
+    "bonusMr": 1.6,
+    "ad": 1
+   },
+   "shield": [
+    "W",
+    "R"
+   ],
+   "late": 1
+  },
+  "Gangplank": {
+   "name": "Gangplank",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 0.3,
+    "ad": 1,
+    "bonusAd": 1
+   },
+   "onHit": [
+    "Q"
+   ],
+   "crit": [
+    "Q"
+   ],
+   "heal": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Garen": {
+   "name": "Garen",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 2.02
+   },
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Gnar": {
+   "name": "Gnar",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 2,
+    "ad": 3.8,
+    "bonusAd": 0.5,
+    "health": 0.06
+   },
+   "attackSpeed": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Gragas": {
+   "name": "Gragas",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "fighter",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.9
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Graves": {
+   "name": "Graves",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "bonusAd": 2.55,
+    "ap": 0.6
+   },
+   "onHit": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Gwen": {
+   "name": "Gwen",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 0.7
+   },
+   "onHit": [
+    "P",
+    "Q",
+    "E"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "heal": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Hecarim": {
+   "name": "Hecarim",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "bonusAd": 1.4,
+    "ap": 1.8
+   },
+   "heal": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Heimerdinger": {
+   "name": "Heimerdinger",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 4.01
+   },
+   "onHit": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Hwei": {
+   "name": "Hwei",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.9
+   },
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Illaoi": {
+   "name": "Illaoi",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 1.1,
+    "ap": 0.4,
+    "bonusAd": 0.5
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Irelia": {
+   "name": "Irelia",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 3.5,
+    "ad": 2
+   },
+   "onHit": [
+    "P",
+    "Q"
+   ],
+   "attackSpeed": [
+    "P"
+   ],
+   "heal": [
+    "Q"
+   ],
+   "late": 1
+  },
+  "Ivern": {
+   "name": "Ivern",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.2
+   },
+   "onHit": [
+    "W"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Janna": {
+   "name": "Janna",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1
+   },
+   "heal": [
+    "R"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "JarvanIV": {
+   "name": "Jarvan IV",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "bonusAd": 3.25,
+    "ap": 0.8
+   },
+   "attackSpeed": [
+    "E"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Jax": {
+   "name": "Jax",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 2.3,
+    "bonusAd": 1
+   },
+   "onHit": [
+    "R"
+   ],
+   "attackSpeed": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Jayce": {
+   "name": "Jayce",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "marksman"
+   ],
+   "ratios": {
+    "ap": 1,
+    "bonusAd": 2.65
+   },
+   "late": 1
+  },
+  "Jhin": {
+   "name": "Jhin",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "ad": 2.69,
+    "ap": 1.6
+   },
+   "crit": [
+    "P",
+    "R"
+   ],
+   "late": 2
+  },
+  "Jinx": {
+   "name": "Jinx",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "ad": 2.5,
+    "ap": 1,
+    "bonusAd": 1.2
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "P",
+    "Q"
+   ],
+   "late": 2
+  },
+  "Kaisa": {
+   "name": "Kai'Sa",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "bonusAd": 0.55,
+    "ap": 0.77,
+    "ad": 1.3
+   },
+   "onHit": [
+    "P"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "shield": [
+    "R"
+   ],
+   "late": 2
+  },
+  "Kalista": {
+   "name": "Kalista",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "ad": 1.75,
+    "ap": 0.65
+   },
+   "onHit": [
+    "P",
+    "E"
+   ],
+   "late": 2
+  },
+  "Karma": {
+   "name": "Karma",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 1.65
+   },
+   "heal": [
+    "R"
+   ],
+   "shield": [
+    "E",
+    "R"
+   ],
+   "late": 1
+  },
+  "Karthus": {
+   "name": "Karthus",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.05
+   },
+   "late": 1
+  },
+  "Kassadin": {
+   "name": "Kassadin",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.8
+   },
+   "onHit": [
+    "W"
+   ],
+   "shield": [
+    "Q"
+   ],
+   "late": 2
+  },
+  "Katarina": {
+   "name": "Katarina",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 0.84,
+    "ad": 0.4,
+    "bonusAd": 0.6
+   },
+   "onHit": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Kayle": {
+   "name": "Kayle",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.65,
+    "bonusAd": 1.8
+   },
+   "onHit": [
+    "P",
+    "E"
+   ],
+   "attackSpeed": [
+    "P"
+   ],
+   "heal": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Kayn": {
+   "name": "Kayn",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 3.45,
+    "ad": 0.65
+   },
+   "heal": [
+    "P",
+    "E",
+    "R"
+   ],
+   "late": 1
+  },
+  "Kennen": {
+   "name": "Kennen",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.6
+   },
+   "onHit": [
+    "W"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "crit": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Khazix": {
+   "name": "Kha'Zix",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 2.95
+   },
+   "heal": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Kindred": {
+   "name": "Kindred",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "bonusAd": 1.95,
+    "ap": 0.2
+   },
+   "attackSpeed": [
+    "Q"
+   ],
+   "heal": [
+    "W",
+    "R"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Kled": {
+   "name": "Kled",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter"
+   ],
+   "ratios": {
+    "bonusAd": 1.25,
+    "bonusHealth": 0
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "shield": [
+    "R"
+   ],
+   "late": 1
+  },
+  "KogMaw": {
+   "name": "Kog'Maw",
+   "attack": "ranged",
+   "damageType": "mixed",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.01,
+    "bonusAd": 0.75
+   },
+   "onHit": [
+    "W"
+   ],
+   "attackSpeed": [
+    "Q"
+   ],
+   "heal": [
+    "R"
+   ],
+   "late": 2
+  },
+  "KSante": {
+   "name": "K'Sante",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "tank",
+    "fighter"
+   ],
+   "ratios": {
+    "bonusHealth": 0.05,
+    "ad": 2,
+    "bonusArmor": 0.4,
+    "bonusMr": 0.4
+   },
+   "attackSpeed": [
+    "R"
+   ],
+   "heal": [
+    "R"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Leblanc": {
+   "name": "LeBlanc",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 3.05
+   },
+   "late": 1
+  },
+  "LeeSin": {
+   "name": "Lee Sin",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 2.9,
+    "ad": 0.9
+   },
+   "attackSpeed": [
+    "P"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Leona": {
+   "name": "Leona",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "ap": 1.9
+   },
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Lillia": {
+   "name": "Lillia",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "fighter",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.6
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Lissandra": {
+   "name": "Lissandra",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 3.3
+   },
+   "heal": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Locke": {
+   "name": "Locke",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.65
+   },
+   "onHit": [
+    "P"
+   ],
+   "attackSpeed": [
+    "W"
+   ],
+   "heal": [
+    "W"
+   ],
+   "stacks": [
+    "R"
+   ],
+   "late": 3
+  },
+  "Lucian": {
+   "name": "Lucian",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1.25,
+    "ap": 1.05,
+    "bonusAd": 1
+   },
+   "onHit": [
+    "P"
+   ],
+   "shield": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Lulu": {
+   "name": "Lulu",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.05
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "heal": [
+    "R"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Lux": {
+   "name": "Lux",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 3.1
+   },
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Malphite": {
+   "name": "Malphite",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.3,
+    "armor": 0.55
+   },
+   "onHit": [
+    "W"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "shield": [
+    "P",
+    "W"
+   ],
+   "late": 1
+  },
+  "Malzahar": {
+   "name": "Malzahar",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "bonusAd": 0.4,
+    "ap": 2.35
+   },
+   "shield": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Maokai": {
+   "name": "Maokai",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.15,
+    "bonusHealth": 0.1
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "MasterYi": {
+   "name": "Master Yi",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1.2,
+    "bonusAd": 0.35
+   },
+   "onHit": [
+    "Q",
+    "E"
+   ],
+   "attackSpeed": [
+    "R"
+   ],
+   "heal": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Mel": {
+   "name": "Mel",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 1.59
+   },
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Milio": {
+   "name": "Milio",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.4
+   },
+   "heal": [
+    "W",
+    "R"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "MissFortune": {
+   "name": "Miss Fortune",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.2,
+    "ad": 1.6
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "crit": [
+    "Q",
+    "R"
+   ],
+   "late": 2
+  },
+  "MonkeyKing": {
+   "name": "Wukong",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 1,
+    "ad": 1.38,
+    "bonusAd": 0.5
+   },
+   "attackSpeed": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Mordekaiser": {
+   "name": "Mordekaiser",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "fighter",
+    "mage"
+   ],
+   "ratios": {
+    "bonusAd": 1.2,
+    "ap": 1.45
+   },
+   "heal": [
+    "W"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Morgana": {
+   "name": "Morgana",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.7
+   },
+   "heal": [
+    "P"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Naafiri": {
+   "name": "Naafiri",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "assassin",
+    "fighter"
+   ],
+   "ratios": {
+    "bonusAd": 2.64
+   },
+   "heal": [
+    "Q",
+    "E"
+   ],
+   "shield": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Nami": {
+   "name": "Nami",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.8
+   },
+   "heal": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Nasus": {
+   "name": "Nasus",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 1,
+    "ap": 0.6
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "heal": [
+    "R"
+   ],
+   "stacks": [
+    "Q"
+   ],
+   "late": 3
+  },
+  "Nautilus": {
+   "name": "Nautilus",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.6,
+    "ad": 1
+   },
+   "onHit": [
+    "W"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Neeko": {
+   "name": "Neeko",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 3.05
+   },
+   "shield": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Nidalee": {
+   "name": "Nidalee",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "assassin",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.1,
+    "bonusAd": 0.7,
+    "ad": 0.75
+   },
+   "attackSpeed": [
+    "E"
+   ],
+   "heal": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Nilah": {
+   "name": "Nilah",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1,
+    "bonusAd": 1.2
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "Q"
+   ],
+   "heal": [
+    "P",
+    "Q",
+    "R"
+   ],
+   "shield": [
+    "P",
+    "Q",
+    "R"
+   ],
+   "late": 2
+  },
+  "Nocturne": {
+   "name": "Nocturne",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1.2,
+    "bonusAd": 2.05,
+    "ap": 1
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Nunu": {
+   "name": "Nunu & Willump",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 5.95,
+    "ad": 0.3,
+    "bonusHealth": 0.05
+   },
+   "attackSpeed": [
+    "P"
+   ],
+   "heal": [
+    "Q"
+   ],
+   "shield": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Olaf": {
+   "name": "Olaf",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 0.5,
+    "bonusAd": 1
+   },
+   "attackSpeed": [
+    "P",
+    "W"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Orianna": {
+   "name": "Orianna",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 3
+   },
+   "onHit": [
+    "P"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Ornn": {
+   "name": "Ornn",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank"
+   ],
+   "ratios": {
+    "ap": 0.2,
+    "ad": 1.1,
+    "bonusArmor": 0.4,
+    "bonusMr": 0.4
+   },
+   "late": 2
+  },
+  "Pantheon": {
+   "name": "Pantheon",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 2.5,
+    "bonusHealth": 0,
+    "bonusAd": 2.3,
+    "ad": 1
+   },
+   "heal": [
+    "E"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Poppy": {
+   "name": "Poppy",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "tank",
+    "fighter"
+   ],
+   "ratios": {
+    "bonusAd": 2.25,
+    "ap": 0.7
+   },
+   "shield": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Pyke": {
+   "name": "Pyke",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "support",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 10.55
+   },
+   "late": 1
+  },
+  "Qiyana": {
+   "name": "Qiyana",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 3.9,
+    "ap": 0.75
+   },
+   "onHit": [
+    "W"
+   ],
+   "attackSpeed": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Quinn": {
+   "name": "Quinn",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 1.95,
+    "ap": 0.5
+   },
+   "onHit": [
+    "P"
+   ],
+   "attackSpeed": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Rakan": {
+   "name": "Rakan",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "support"
+   ],
+   "ratios": {
+    "ap": 2
+   },
+   "heal": [
+    "Q"
+   ],
+   "shield": [
+    "P",
+    "E"
+   ],
+   "late": 1
+  },
+  "Rammus": {
+   "name": "Rammus",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank"
+   ],
+   "ratios": {
+    "armor": 0.25,
+    "mr": 0.25,
+    "ap": 2.3
+   },
+   "late": 1
+  },
+  "RekSai": {
+   "name": "Rek'Sai",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "bonusAd": 1.85,
+    "ad": 0.5,
+    "ap": 1.5
+   },
+   "attackSpeed": [
+    "Q"
+   ],
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Rell": {
+   "name": "Rell",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "armor": 0.05,
+    "mr": 0.05,
+    "ap": 1.75
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "shield": [
+    "Q",
+    "W"
+   ],
+   "late": 1
+  },
+  "Renata": {
+   "name": "Renata Glasc",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.35
+   },
+   "onHit": [
+    "P"
+   ],
+   "attackSpeed": [
+    "W",
+    "R"
+   ],
+   "heal": [
+    "W"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Renekton": {
+   "name": "Renekton",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 0.75,
+    "bonusAd": 2.85,
+    "ap": 0.1
+   },
+   "heal": [
+    "Q",
+    "R"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Rengar": {
+   "name": "Rengar",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "assassin",
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 0.8,
+    "ad": 2.2,
+    "bonusAd": 0.8
+   },
+   "attackSpeed": [
+    "Q"
+   ],
+   "heal": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Riven": {
+   "name": "Riven",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 3.45
+   },
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Rumble": {
+   "name": "Rumble",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "fighter",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.15
+   },
+   "attackSpeed": [
+    "P"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Ryze": {
+   "name": "Ryze",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.75
+   },
+   "mana": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Samira": {
+   "name": "Samira",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 1.2,
+    "ad": 1.4,
+    "ap": 0.15
+   },
+   "attackSpeed": [
+    "E"
+   ],
+   "crit": [
+    "P",
+    "R"
+   ],
+   "late": 2
+  },
+  "Sejuani": {
+   "name": "Sejuani",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank"
+   ],
+   "ratios": {
+    "ap": 2.85,
+    "health": 0.08
+   },
+   "onHit": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Senna": {
+   "name": "Senna",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "support",
+    "marksman"
+   ],
+   "ratios": {
+    "ap": 0.7,
+    "bonusAd": 2.65,
+    "ad": 0.2,
+    "crit": 1
+   },
+   "crit": [
+    "P"
+   ],
+   "heal": [
+    "Q"
+   ],
+   "shield": [
+    "R"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Seraphine": {
+   "name": "Seraphine",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.34
+   },
+   "heal": [
+    "W"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Sett": {
+   "name": "Sett",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 0.6,
+    "bonusAd": 1.2
+   },
+   "onHit": [
+    "Q"
+   ],
+   "heal": [
+    "P"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Shaco": {
+   "name": "Shaco",
+   "attack": "melee",
+   "damageType": "mixed",
+   "roles": [
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 1.88,
+    "bonusAd": 1.6
+   },
+   "onHit": [
+    "W"
+   ],
+   "crit": [
+    "Q"
+   ],
+   "late": 1
+  },
+  "Shen": {
+   "name": "Shen",
+   "attack": "melee",
+   "damageType": "mixed",
+   "roles": [
+    "tank"
+   ],
+   "ratios": {
+    "bonusHealth": 0.11
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "Q"
+   ],
+   "shield": [
+    "P",
+    "R"
+   ],
+   "late": 1
+  },
+  "Shyvana": {
+   "name": "Shyvana",
+   "attack": "melee",
+   "damageType": "mixed",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 2.75,
+    "bonusAd": 0,
+    "ad": 1.1
+   },
+   "onHit": [
+    "Q"
+   ],
+   "heal": [
+    "W"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Singed": {
+   "name": "Singed",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 0.98
+   },
+   "heal": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Sion": {
+   "name": "Sion",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "tank",
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 0.95,
+    "bonusAd": 1.2,
+    "ad": 2.4
+   },
+   "heal": [
+    "P"
+   ],
+   "shield": [
+    "W"
+   ],
+   "stacks": [
+    "W"
+   ],
+   "late": 3
+  },
+  "Sivir": {
+   "name": "Sivir",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "bonusAd": 0.7,
+    "ap": 0.6,
+    "ad": 1
+   },
+   "onHit": [
+    "W"
+   ],
+   "attackSpeed": [
+    "W",
+    "R"
+   ],
+   "crit": [
+    "W"
+   ],
+   "heal": [
+    "E"
+   ],
+   "late": 2
+  },
+  "Skarner": {
+   "name": "Skarner",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "tank",
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 1.8,
+    "bonusAd": 2.1,
+    "health": 0.06,
+    "bonusHealth": 0.03
+   },
+   "attackSpeed": [
+    "Q"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Smolder": {
+   "name": "Smolder",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "bonusAd": 2.9,
+    "ap": 1.8,
+    "ad": 0.3
+   },
+   "heal": [
+    "R"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Sona": {
+   "name": "Sona",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.1
+   },
+   "heal": [
+    "W"
+   ],
+   "shield": [
+    "W"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Soraka": {
+   "name": "Soraka",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 0.75
+   },
+   "heal": [
+    "Q",
+    "W",
+    "R"
+   ],
+   "late": 1
+  },
+  "Swain": {
+   "name": "Swain",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.15
+   },
+   "heal": [
+    "P",
+    "R"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Sylas": {
+   "name": "Sylas",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1.3,
+    "ap": 2.5
+   },
+   "attackSpeed": [
+    "P"
+   ],
+   "heal": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Syndra": {
+   "name": "Syndra",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.15
+   },
+   "late": 1
+  },
+  "TahmKench": {
+   "name": "Tahm Kench",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.5,
+    "bonusHealth": 0.04
+   },
+   "heal": [
+    "Q",
+    "E"
+   ],
+   "shield": [
+    "E",
+    "R"
+   ],
+   "late": 1
+  },
+  "Taliyah": {
+   "name": "Taliyah",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 1.2
+   },
+   "late": 1
+  },
+  "Talon": {
+   "name": "Talon",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 5
+   },
+   "crit": [
+    "Q"
+   ],
+   "heal": [
+    "Q"
+   ],
+   "late": 1
+  },
+  "Taric": {
+   "name": "Taric",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "tank"
+   ],
+   "ratios": {
+    "bonusArmor": 0.65,
+    "ap": 0.5
+   },
+   "heal": [
+    "Q"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Teemo": {
+   "name": "Teemo",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.5,
+    "bonusAd": 0.05
+   },
+   "onHit": [
+    "E"
+   ],
+   "attackSpeed": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Thresh": {
+   "name": "Thresh",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 2.5,
+    "ad": 2.1
+   },
+   "onHit": [
+    "E"
+   ],
+   "shield": [
+    "W"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Tristana": {
+   "name": "Tristana",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 2,
+    "bonusAd": 1.7
+   },
+   "attackSpeed": [
+    "Q"
+   ],
+   "late": 2
+  },
+  "Trundle": {
+   "name": "Trundle",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 0,
+    "ad": 1.55
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "heal": [
+    "P",
+    "W"
+   ],
+   "late": 1
+  },
+  "Tryndamere": {
+   "name": "Tryndamere",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 1,
+    "ap": 0.8
+   },
+   "crit": [
+    "P",
+    "E",
+    "R"
+   ],
+   "heal": [
+    "Q"
+   ],
+   "late": 2
+  },
+  "TwistedFate": {
+   "name": "Twisted Fate",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "marksman"
+   ],
+   "ratios": {
+    "ad": 1,
+    "ap": 2.25,
+    "bonusAd": 0.7
+   },
+   "attackSpeed": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Twitch": {
+   "name": "Twitch",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "assassin"
+   ],
+   "ratios": {
+    "ap": 0.38,
+    "bonusAd": 0.35
+   },
+   "onHit": [
+    "P",
+    "E"
+   ],
+   "attackSpeed": [
+    "Q"
+   ],
+   "late": 2
+  },
+  "Udyr": {
+   "name": "Udyr",
+   "attack": "melee",
+   "damageType": "mixed",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 0.35,
+    "bonusAd": 0.2,
+    "bonusHealth": 0.02
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "P",
+    "Q"
+   ],
+   "heal": [
+    "W"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Urgot": {
+   "name": "Urgot",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 1.04,
+    "bonusAd": 1.5
+   },
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Varus": {
+   "name": "Varus",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "mage"
+   ],
+   "ratios": {
+    "bonusAd": 1.1,
+    "ap": 1.3
+   },
+   "onHit": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Vayne": {
+   "name": "Vayne",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 0.5
+   },
+   "onHit": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Veigar": {
+   "name": "Veigar",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.65
+   },
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Velkoz": {
+   "name": "Vel'Koz",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 3.35
+   },
+   "late": 1
+  },
+  "Vex": {
+   "name": "Vex",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 2.1
+   },
+   "shield": [
+    "W"
+   ],
+   "late": 1
+  },
+  "Vi": {
+   "name": "Vi",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "bonusAd": 1.54,
+    "ad": 1.1,
+    "ap": 1
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "shield": [
+    "P",
+    "W"
+   ],
+   "late": 1
+  },
+  "Viego": {
+   "name": "Viego",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1.9,
+    "ap": 1.15
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "heal": [
+    "P",
+    "Q"
+   ],
+   "late": 1
+  },
+  "Viktor": {
+   "name": "Viktor",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.8,
+    "ad": 1
+   },
+   "shield": [
+    "Q"
+   ],
+   "stacks": [
+    "P"
+   ],
+   "late": 3
+  },
+  "Vladimir": {
+   "name": "Vladimir",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "fighter"
+   ],
+   "ratios": {
+    "health": 0.06,
+    "ap": 2.1,
+    "bonusHealth": 0.15
+   },
+   "heal": [
+    "Q",
+    "W",
+    "R"
+   ],
+   "late": 2
+  },
+  "Volibear": {
+   "name": "Volibear",
+   "attack": "melee",
+   "damageType": "mixed",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 2.4,
+    "bonusAd": 4.3,
+    "ad": 2.1,
+    "bonusHealth": 0.06
+   },
+   "onHit": [
+    "P"
+   ],
+   "attackSpeed": [
+    "P"
+   ],
+   "heal": [
+    "W",
+    "R"
+   ],
+   "shield": [
+    "E"
+   ],
+   "late": 1
+  },
+  "Warwick": {
+   "name": "Warwick",
+   "attack": "melee",
+   "damageType": "mixed",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "bonusAd": 1.82,
+    "ap": 1.1,
+    "ad": 1.2
+   },
+   "onHit": [
+    "P"
+   ],
+   "attackSpeed": [
+    "W"
+   ],
+   "heal": [
+    "P",
+    "Q",
+    "R"
+   ],
+   "late": 1
+  },
+  "Xayah": {
+   "name": "Xayah",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "bonusAd": 1.5
+   },
+   "attackSpeed": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Xerath": {
+   "name": "Xerath",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.45
+   },
+   "late": 1
+  },
+  "XinZhao": {
+   "name": "Xin Zhao",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ap": 2.95,
+    "ad": 0.9,
+    "bonusAd": 1.45
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Yasuo": {
+   "name": "Yasuo",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1.05,
+    "bonusAd": 1.7,
+    "ap": 0.6,
+    "crit": 1
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "Q"
+   ],
+   "crit": [
+    "P",
+    "R"
+   ],
+   "shield": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Yone": {
+   "name": "Yone",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 2.05,
+    "bonusAd": 0.8,
+    "crit": 1
+   },
+   "onHit": [
+    "Q"
+   ],
+   "crit": [
+    "P"
+   ],
+   "shield": [
+    "W"
+   ],
+   "late": 2
+  },
+  "Yorick": {
+   "name": "Yorick",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter",
+    "tank"
+   ],
+   "ratios": {
+    "ad": 0.5,
+    "bonusAd": 0.5,
+    "ap": 1
+   },
+   "heal": [
+    "Q",
+    "W",
+    "R"
+   ],
+   "late": 1
+  },
+  "Yunara": {
+   "name": "Yunara",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "ap": 1.45,
+    "ad": 0.3,
+    "bonusAd": 2.05
+   },
+   "onHit": [
+    "Q"
+   ],
+   "attackSpeed": [
+    "Q"
+   ],
+   "crit": [
+    "P"
+   ],
+   "late": 2
+  },
+  "Yuumi": {
+   "name": "Yuumi",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 0.55
+   },
+   "onHit": [
+    "Q",
+    "W"
+   ],
+   "attackSpeed": [
+    "E"
+   ],
+   "crit": [
+    "Q"
+   ],
+   "heal": [
+    "P",
+    "Q",
+    "W",
+    "R"
+   ],
+   "shield": [
+    "W",
+    "E",
+    "R"
+   ],
+   "late": 1
+  },
+  "Zaahen": {
+   "name": "Zaahen",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "fighter"
+   ],
+   "ratios": {
+    "bonusAd": 3.4
+   },
+   "heal": [
+    "Q",
+    "R"
+   ],
+   "late": 1
+  },
+  "Zac": {
+   "name": "Zac",
+   "attack": "melee",
+   "damageType": "magic",
+   "roles": [
+    "tank",
+    "fighter"
+   ],
+   "ratios": {
+    "ap": 1.53,
+    "bonusHealth": 0.03
+   },
+   "heal": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Zed": {
+   "name": "Zed",
+   "attack": "melee",
+   "damageType": "physical",
+   "roles": [
+    "assassin"
+   ],
+   "ratios": {
+    "ad": 1,
+    "bonusAd": 1.7
+   },
+   "onHit": [
+    "P"
+   ],
+   "late": 1
+  },
+  "Zeri": {
+   "name": "Zeri",
+   "attack": "ranged",
+   "damageType": "physical",
+   "roles": [
+    "marksman"
+   ],
+   "ratios": {
+    "ad": 2.5,
+    "ap": 2.9,
+    "crit": 1,
+    "bonusAd": 0.6
+   },
+   "onHit": [
+    "P",
+    "E"
+   ],
+   "attackSpeed": [
+    "R"
+   ],
+   "crit": [
+    "W",
+    "E",
+    "R"
+   ],
+   "late": 2
+  },
+  "Ziggs": {
+   "name": "Ziggs",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 3.25
+   },
+   "late": 1
+  },
+  "Zilean": {
+   "name": "Zilean",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "support",
+    "mage"
+   ],
+   "ratios": {
+    "ap": 0.9
+   },
+   "heal": [
+    "R"
+   ],
+   "late": 1
+  },
+  "Zoe": {
+   "name": "Zoe",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage"
+   ],
+   "ratios": {
+    "ap": 1.35
+   },
+   "late": 1
+  },
+  "Zyra": {
+   "name": "Zyra",
+   "attack": "ranged",
+   "damageType": "magic",
+   "roles": [
+    "mage",
+    "support"
+   ],
+   "ratios": {
+    "ap": 2.15
+   },
+   "heal": [
+    "R"
+   ],
+   "late": 1
+  }
+ }
+}

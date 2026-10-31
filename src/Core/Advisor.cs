@@ -291,6 +291,9 @@ public sealed partial class Advisor(StatsStore stats)
         // el daño contrario (Ezreal con 2 objetos de AD y un aumento "de AP"), manda tu build y el estilo no se usa.
         bool physicalStyle = _style?.Key is "ad" or "crit" or "lethality" or "on_hit";
         if (_fromItems && ((_style?.Key == "ap" && _apShare < 0.35) || (physicalStyle && _apShare > 0.65))) _style = null;
+        // Tus objetos ya dicen el estilo (Yi con Rey Arruinado y Fin del Ingenio = on-hit): manda lo que se compra en ese
+        // estilo, sea o no el habitual del campeón. Pesa más que tus aumentos: la build ya está empezada.
+        if (StyleFromItems(myChampion, myItems) is { } byItems) _style = byItems;
         if (_style is not null && !_fromItems)
         {
             if (_style.Key == "ap") iAmMagic = true;
@@ -329,7 +332,8 @@ public sealed partial class Advisor(StatsStore stats)
         // Build ya clara (Shaco con 2 objetos AD): los de daño contrario no entran ni como "otra opción"; si faltan opciones,
         // se completan abajo con objetos de la tienda de tu tipo de daño.
         if (_fromItems && _apShare is < 0.35 or > 0.65)
-            buyable = buyable.Where(a => a.InProgress || !WrongDamageFor(a.Item, iAmMagic)).ToList();
+            buyable = buyable.Where(a => a.InProgress || !WrongDamageFor(a.Item, iAmMagic)
+                                         || _style?.FromItems is not null && _style.Items.GetValueOrDefault(a.Item.Id) >= StyleItemMin).ToList();
 
         var items = TakeWithinLimit(buyable, 3, ArmorPenSlotsLeft(myItems));
         // Se acabaron los objetos de sus datos (Pyke: todo letalidad y ya lleva 2): objetos de la tienda que le sirvan.
@@ -597,6 +601,9 @@ public sealed partial class Advisor(StatsStore stats)
     /// Además mira si el aumento encaja con tu build (ver <see cref="BuildFit"/>). Null si no hay nada que decir.
     /// </summary>
     const double MaxGuessBonus = 0.015;
+    /// <summary>Aumentos que potencian curaciones y escudos (Botiquín, Batido de Proteínas…).</summary>
+    static readonly System.Text.RegularExpressions.Regex HealShieldPower = new(@"curaciones y escudos|heal(ing)? and shield(ing)?",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
     public AugmentSynergy? SynergyWith(Augment candidate, IReadOnlyList<Augment> mine, string champion, IReadOnlyList<int>? myItems = null)
     {
@@ -658,6 +665,20 @@ public sealed partial class Advisor(StatsStore stats)
         if (BuildFit(candidate, champion, myItems ?? [], mine) is { } fit)
         {
             if (fit.Bonus > 0) Guess(fit.Bonus, fit.Reason); else Add(fit.Bonus, fit.Reason);
+        }
+
+        // El kit del campeón (campeones-kit.json): un aumento de ataques rinde más si sus habilidades aplican efectos al
+        // impactar (W de Kog'Maw), uno de crítico si las suyas lo usan (pasiva de Yasuo), y uno que potencia curaciones y
+        // escudos no hace nada si no tiene ninguno.
+        if (stats.Kits.For(champion) is { } kit)
+        {
+            var tags = candidate.StatList;
+            if (kit.HasOnHit && tags.Any(t => t is "OnHit" or "AS"))
+                Guess(0.01, L($"tu kit aplica efectos al impactar ({ChampionKit.Keys(kit.OnHit)})", $"your kit applies on-hit effects ({ChampionKit.Keys(kit.OnHit)})"));
+            if (kit.HasCrit && tags.Contains("Crit"))
+                Guess(0.01, L($"tu kit usa el crítico ({ChampionKit.Keys(kit.Crit)})", $"your kit uses crit ({ChampionKit.Keys(kit.Crit)})"));
+            if (!kit.Heals && !kit.Shields && HealShieldPower.IsMatch(candidate.Description + " " + candidate.ExtraDescription))
+                Add(-0.02, L($"potencia curaciones y escudos, y el kit de {Data.ChampionName(champion)} no tiene", $"boosts heals and shields, and {Data.ChampionName(champion)}'s kit has none"));
         }
 
         // Aumentos que mejoran o piden un objeto («Mejorar Filo del Infinito», «Descarga Tormentosa Mejorada»…): si ese
@@ -779,8 +800,47 @@ public sealed partial class Advisor(StatsStore stats)
     public static string StyleName(string key) => key switch
     {
         "utility" => L("apoyo", "support"), "ap" => "AP", "ad" => "AD", "tank" => L("tanque", "tank"),
+        "on_hit" => "on-hit", "crit" => L("crítico", "crit"), "lethality" => L("letalidad", "lethality"),
+        "bruiser" => L("luchador", "bruiser"), "hybrid" => L("híbrido", "hybrid"),
         _ => key.ToUpperInvariant(),
     };
+
+    /// <summary>
+    /// El estilo que dicen tus objetos terminados (ver <see cref="AugmentBuilds.StyleFromItems"/>). Con él se recomienda lo
+    /// que se compra en ESE estilo y no la mezcla de todas las builds del campeón (los Yi de crítico y los on-hit juntos).
+    /// Si es el mismo que piden tus aumentos, se queda el de tus aumentos (trae lo que se compra con ellos). Si el campeón
+    /// no tiene ese estilo en sus datos (Twitch on-hit), los objetos salen de la media de todos los campeones (mezclarlo
+    /// con lo suyo colaba lo de su estilo habitual: Filo del Infinito a un Twitch on-hit, Piedra Lunar a una Lulu on-hit). Sin objetos terminados, el estilo habitual del campeón. Null si no está claro.
+    /// </summary>
+    public StylePick? StyleFromItems(string champion, IReadOnlyList<int> myItems)
+    {
+        var finals = myItems.Distinct().Where(id => Data.Item(id) is { IsFinal: true, IsBoots: false, PriceTotal: > 0 } i
+                                                    && !i.Has("Trinket") && !i.Has("Consumable") && !stats.Links.IsReward(id)).ToList();
+        var styles = stats.AramkitBuilds.Styles(champion);
+        // Sin objetos terminados: lo que se compra en el estilo habitual del campeón, no la mezcla de todos sus estilos
+        // (con pruebas/evaluar-objetos, el primer objeto acierta el 48,8 % en vez del 44 %). FromItems "" = sin objetos.
+        if (finals.Count == 0)
+            return _style ?? (styles.Count > 0 ? new StylePick(styles[0].Key, styles[0].Key, (double)styles[0].Games / styles.Sum(s => s.Games),
+                styles[0].WinRate, styles[0].WinRate, styles[0].Games, 0, styles[0].Items, "") : null);
+        var kit = stats.Kits.For(champion);
+        bool marksman = Data.Champion(champion)?.Roles.FirstOrDefault() == "marksman";
+        bool KitFits(string key) => key switch
+        {
+            "on_hit" => kit is { HasOnHit: true } || kit is { HasAttackSpeed: true },
+            "crit" => kit is { HasCrit: true } || marksman,
+            _ => false,
+        };
+        if (stats.AramkitBuilds.StyleFromItems(champion, finals, KitFits) is not { Probability: >= AugmentBuilds.ItemStyleConfidence } found) return null;
+
+        string usual = styles.FirstOrDefault()?.Key ?? found.Style.Key;
+        if (found.Style.Key == _style?.Key) return _style; // el de tus aumentos ya trae lo que se compra con ellos
+
+        var items = found.Style.Items;
+        var decisive = finals.OrderByDescending(id => found.Style.Items.GetValueOrDefault(id)).Take(2).Select(id => Data.Item(id)!.DisplayName);
+        int total = styles.Sum(s => s.Games);
+        return new StylePick(found.Style.Key, usual, found.Generic || total == 0 ? 0 : (double)found.Style.Games / total, found.Style.WinRate,
+            styles.FirstOrDefault()?.WinRate ?? found.Style.WinRate, found.Style.Games, 0, items, string.Join(" + ", decisive), found.Generic);
+    }
     /// <summary>Durante <see cref="Build"/>: parte AP de tu build (ver <see cref="BuildProfile"/>) y si ya la deciden tus objetos.</summary>
     double _apShare = 0.5;
     bool _fromItems;
@@ -925,8 +985,11 @@ public sealed partial class Advisor(StatsStore stats)
         var role = Data.Champion(champion)?.Roles.FirstOrDefault();
         bool frontline = role is "tank" or "fighter";
         if (frontline && i.IsDefensive) return true;
-        return magic ? i.Has("SpellDamage")
-             : i.Has("Damage") || i.Has("CriticalStrike") || (role == "marksman" && i.Has("AttackSpeed"));
+        // Con un kit de ataques (efectos al impactar o velocidad de ataque: Kayle, Kog'Maw, Yi…) la velocidad de ataque
+        // le sirve aunque no sea tirador, y a los de AP también (Diente de Nashor, Espadafuria de Guinsoo).
+        bool attackKit = role == "marksman" || stats.Kits.For(champion) is { HasOnHit: true } or { HasAttackSpeed: true };
+        return magic ? i.Has("SpellDamage") || (attackKit && i.Has("AttackSpeed") && i.Has("OnHit") && !i.Has("Damage"))
+             : i.Has("Damage") || i.Has("CriticalStrike") || (attackKit && i.Has("AttackSpeed"));
     }
 
     const int InventorySlots = 6;
@@ -935,6 +998,14 @@ public sealed partial class Advisor(StatsStore stats)
     /// <summary>Lo que suma el objeto que compra la mayoría con tu campeón (el 60 % o más de las partidas: todo).</summary>
     const double MaxPopularBonus = 0.06;
     const double OffMetaPenalty = -0.05;
+    /// <summary>
+    /// Con el estilo que dicen tus objetos (<see cref="StyleFromItems"/>) lo que se compra en ese estilo pesa más que la
+    /// build habitual. Medido con pruebas/evaluar-objetos (1.687 jugadores de partidas guardadas, 2 objetos dados):
+    /// con 0,06 / −0,05 acertaba el 37,5 % de lo que compraron después; con 0,15 / −0,12, el 43 %; más ya no mejora y
+    /// taparía al equipo enemigo y a tus aumentos.
+    /// </summary>
+    const double StyleItemsBonus = 0.15;
+    const double StyleItemsPenalty = -0.12;
 
     /// <summary>
     /// Cuanto más se compra con tu campeón en Mayhem, más suma: la build habitual de la página manda salvo que haya un
@@ -942,7 +1013,7 @@ public sealed partial class Advisor(StatsStore stats)
     /// Con otro estilo de build por tus aumentos (<see cref="_style"/>), cuenta lo que se compra en ese estilo.
     /// </summary>
     double PopularBonus(string champion, int itemId) =>
-        _style is not null ? MaxPopularBonus * Math.Min(_style.Items.GetValueOrDefault(itemId), 0.6) / 0.6
+        _style is not null ? (_style.FromItems is null ? MaxPopularBonus : StyleItemsBonus) * Math.Min(_style.Items.GetValueOrDefault(itemId), 0.6) / 0.6
         : stats.GlobalItem(champion, itemId) is { PickRate: { } pick } ? MaxPopularBonus * Math.Min(pick, 60) / 60 : 0;
     /// <summary>Con otro estilo de build, un objeto que sale en menos de esta parte de sus partidas no entra como candidato extra.</summary>
     const double StyleItemMin = 0.1;
@@ -1094,10 +1165,19 @@ public sealed partial class Advisor(StatsStore stats)
             // Otro estilo de build por tus aumentos: manda lo que compra la gente en ese estilo, no la build habitual.
             double share = _style.Items.GetValueOrDefault(item.Id);
             string? aug = myAugments.FirstOrDefault(a => a.Id == _style.AugmentId)?.DisplayName;
+            if (_style.FromItems == "")
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+                    $"build habitual de {Data.ChampionName(champion)} ({StyleName(_style.Key)}): lo compra el {share:P0}",
+                    $"standard {Data.ChampionName(champion)} build ({StyleName(_style.Key)}): {share:P0} buy it"));
+            else if (_style.FromItems is { } decisive)
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+                    $"tu build va {StyleName(_style.Key)} ({decisive}): lo compra el {share:P0} de los que van así{(_style.Generic ? " (con cualquier campeón)" : "")}",
+                    $"your build is {StyleName(_style.Key)} ({decisive}): {share:P0} of those builds have it{(_style.Generic ? " (any champion)" : "")}"));
+            else
             Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
                 $"con «{aug}» el {_style.Share:P0} va de {StyleName(_style.Key)} y gana más ({_style.WinRate:0.#} % frente a {_style.UsualWinRate:0.#} % de {StyleName(_style.Usual)}): lo compra el {share:P0}",
                 $"with “{aug}” {_style.Share:P0} go {StyleName(_style.Key)} and win more ({_style.WinRate:0.#}% vs {_style.UsualWinRate:0.#}% {StyleName(_style.Usual)}): {share:P0} buy it"));
-            Bonus(share < 0.05, OffMetaPenalty, "");
+            Bonus(share < 0.05, _style.FromItems is null ? OffMetaPenalty : StyleItemsPenalty, "");
         }
         else
         {
@@ -1136,8 +1216,10 @@ public sealed partial class Advisor(StatsStore stats)
         bool apOnly = ApItem.Any(item.Has) && !item.Has("Damage") && !item.Has("CriticalStrike") && !item.Has("ArmorPenetration"),
              adOnly = AdItem.Any(item.Has) && !ApItem.Any(item.Has);
         // Fuerte: un aumento de prisa o de "habilidades" no debe colar una Antorcha de Fuegoscuro en una build AD.
-        Bonus(_fromItems && apOnly && _apShare < 0.35, -0.2, "");
-        Bonus(_fromItems && adOnly && _apShare > 0.65, -0.2, "");
+        // Salvo lo normal del estilo de tus objetos: un on-hit mezcla AD y AP (Matakrakens con Diente de Nashor en Lulu).
+        bool styleItem = _style?.FromItems is not null && _style.Items.GetValueOrDefault(item.Id) >= StyleItemMin;
+        Bonus(_fromItems && apOnly && _apShare < 0.35 && !styleItem, -0.2, "");
+        Bonus(_fromItems && adOnly && _apShare > 0.65 && !styleItem, -0.2, "");
 
         // Un aumento que necesita este objeto para funcionar (misiones, "Mejorar X"…): va primero.
         foreach (var aug in myAugments)

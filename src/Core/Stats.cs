@@ -89,6 +89,8 @@ public sealed class StatsStore
     public ExternalAugments Aramkit { get; set; } = new();
     /// <summary>Estilos de build (apoyo, AP, tanque…) con cada aumento según aramkit.com (aramkit-builds.json).</summary>
     public AugmentBuilds AramkitBuilds { get; set; } = new();
+    /// <summary>Para qué sirve el kit de cada campeón (campeones-kit.json): on-hit, velocidad de ataque, escalado…</summary>
+    public ChampionKits Kits { get; set; } = new();
     /// <summary>Mínimo de partidas de un campeón con un aumento para usar la cifra de todos los jugadores.</summary>
     const int MinGlobalGames = 30;
 

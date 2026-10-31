@@ -1,4 +1,4 @@
-Mayhem Advisor — créditos de datos
+﻿Mayhem Advisor — créditos de datos
 ==================================
 
 Este archivo debe distribuirse junto con la aplicación (se copia a la carpeta
@@ -9,6 +9,11 @@ Datos del juego
 Campeones, objetos, aumentos, iconos y precios: CommunityDragon (Riot Games),
 el espejo público de los assets del cliente de League of Legends.
 https://raw.communitydragon.org/
+
+Kit de cada campeón (con qué escala cada habilidad, cuáles aplican efectos al
+impactar, curan, dan escudo o acumulan cargas; campeones-kit.json): calculado
+de los datos del cliente vía CommunityDragon, más una revisión a mano. Solo se
+guardan números y marcas, no los textos de Riot.
 
 Estadísticas de Mayhem
 ----------------------

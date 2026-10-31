@@ -18,6 +18,14 @@ ventana-ingles.js   Recorre la ventana principal en inglés (también cambiando 
                     el texto que parece español. Abrir la app con WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333
                     y luego:  set ELECTRON_RUN_AS_NODE=1 & overlay-electron\node_modules\electron\dist\electron.exe pruebas\ventana-ingles.js <salida>
 
+evaluar-objetos\    Mide lo bien que la app adivina los objetos con tus partidas guardadas (y las de la comunidad): a cada jugador
+                    le da sus primeros objetos terminados y mira cuántos de los que compró después recomienda. No carga tus
+                    estadísticas (serían las mismas partidas). Copia en una carpeta aparte tus datos y los de datos\ y:
+                      $env:MAYHEM_DATA_DIR = "<esa carpeta>"; $env:EVAL_OWNED = "2"   (objetos que se dan: 0-3)
+                      dotnet run --project pruebas\evaluar-objetos -c Release [-- detalle]
+                    Para comparar con una versión anterior: -p:Antiguo=<carpeta codigo de un respaldo> (desde una copia
+                    de la carpeta evaluar-objetos, para no mezclar lo compilado).
+
 medir-dano-enemigo.py  Compara, con tus partidas guardadas, formas de calcular el % de daño mágico del equipo enemigo
                     contra el daño real.  python pruebas\medir-dano-enemigo.py "%LOCALAPPDATA%\MayhemAdvisor"
 

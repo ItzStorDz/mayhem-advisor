@@ -117,6 +117,8 @@
   .hero h2 { font-size: 32px; font-weight: 800; } .hero .roles { color: #c9d1da; margin: 2px 0 10px; }
   .hero .pills { display: flex; gap: 8px; flex-wrap: wrap; } .hero .pills .pill { font-size: 13.5px; padding: 5px 12px; }
   .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .keyitem { display: inline-block; width: 22px; height: 22px; border-radius: 5px; vertical-align: middle; margin-right: 3px; }
   .back { all: unset; cursor: pointer; color: var(--gold2); font-weight: 700; }
 
   /* Aumentos */
@@ -164,7 +166,7 @@
   .hidden { display: none !important; }
 
   /* Ventanas estrechas */
-  @media (max-width: 1150px) { .stats { grid-template-columns: repeat(3, 1fr); } .cols { grid-template-columns: 1fr; } .three { grid-template-columns: 1fr; } .settings { grid-template-columns: 1fr; }
+  @media (max-width: 1150px) { .stats { grid-template-columns: repeat(3, 1fr); } .cols { grid-template-columns: 1fr; } .three, .two { grid-template-columns: 1fr; } .settings { grid-template-columns: 1fr; }
     .match { grid-template-columns: 5px 42px 110px 80px minmax(0, 1fr) 80px; } .match .icons:not(.ai) { display: none; } }
 </style>
 <link rel="stylesheet" href="partidas.css">
@@ -295,7 +297,11 @@ const T = {
     liveIn: c => `En partida con <b>${c}</b>`, liveNext: n => `compra ahora: <b class="gold">${n}</b>`, liveSelect: "Selección de campeón", liveBest: n => `Mejor opción del banco: <b class="gold">${n}</b>`,
     champSearch: "Buscar campeón…", cfAll: "Todos", cfMine: "Los que juego", cfTop: "Mejor tier", champCount: n => `${n} campeones`, patch: p => ` · parche ${p}`,
     noChamps: "No hay campeones con ese filtro.", you: (w, g) => `Tú: ${w} V · ${g - w} D`, wrPill: w => `${w} de victorias`, gamesPill: g => `${g} partidas`, tierPill: tr => `Tier ${tr}`,
-    back: "‹ Todos los campeones", build: "BUILD MÁS POPULAR", wr: "% victorias", prismatic: "PRISMÁTICOS", gold: "DE ORO", silver: "DE PLATA", bestAugs: "AUMENTOS CON MEJOR NOTA", confTip: c => `Fiabilidad ${c}/3 (por las partidas que hay)`,
+    back: "‹ Todos los campeones", build: "BUILD MÁS POPULAR", wr: "% victorias", prismatic: "PRISMÁTICOS", gold: "DE ORO", silver: "DE PLATA", bestAugs: "AUMENTOS CON MEJOR NOTA",
+    kitTitle: "KIT DEL CAMPEÓN", kitScales: "Su daño escala con", kitOnHit: "Aplica efectos al impactar", kitAs: "Da o usa velocidad de ataque",
+    kitCrit: "Usa el crítico", kitHeal: "Cura", kitShield: "Da escudo", kitStacks: "Cargas sin límite",
+    late1: "escalado normal", late2: "fuerte en partida larga", late3: "escala sin límite",
+    stylesTitle: "BUILDS POSIBLES", styleShare: p => `${p} de las partidas · objetos clave:`, confTip: c => `Fiabilidad ${c}/3 (por las partidas que hay)`,
     nGames: g => g == 1 ? "1 partida" : `${g} partidas`, noData: "Sin datos suficientes todavía.", loading: "Cargando…",
     "augs.sub": "los mejores para cada campeón", "augs.note": "Ordenados por % de victorias · mínimo 30 partidas", rfAll: "Todos", rfP: "Prismáticos", rfG: "Oro", rfS: "Plata",
     rarP: "PRISMÁTICO", rarG: "ORO", rarS: "PLATA", withChamp: (g, c) => `${g} partidas con ${c}`,
@@ -340,7 +346,11 @@ const T = {
     liveIn: c => `In game with <b>${c}</b>`, liveNext: n => `buy now: <b class="gold">${n}</b>`, liveSelect: "Champion select", liveBest: n => `Best bench pick: <b class="gold">${n}</b>`,
     champSearch: "Search champion…", cfAll: "All", cfMine: "I play", cfTop: "Best tier", champCount: n => `${n} champions`, patch: p => ` · patch ${p}`,
     noChamps: "No champions with that filter.", you: (w, g) => `You: ${w} W · ${g - w} L`, wrPill: w => `${w} win rate`, gamesPill: g => `${g} games`, tierPill: tr => `${tr} tier`,
-    back: "‹ All champions", build: "MOST POPULAR BUILD", wr: "win rate", prismatic: "PRISMATIC", gold: "GOLD", silver: "SILVER", bestAugs: "TOP-SCORED AUGMENTS", confTip: c => `Confidence ${c}/3 (from the number of games)`,
+    back: "‹ All champions", build: "MOST POPULAR BUILD", wr: "win rate", prismatic: "PRISMATIC", gold: "GOLD", silver: "SILVER", bestAugs: "TOP-SCORED AUGMENTS",
+    kitTitle: "CHAMPION KIT", kitScales: "Damage scales with", kitOnHit: "Applies on-hit effects", kitAs: "Gives or uses attack speed",
+    kitCrit: "Uses crit", kitHeal: "Heals", kitShield: "Shields", kitStacks: "Unlimited stacks",
+    late1: "normal scaling", late2: "strong late game", late3: "scales without limit",
+    stylesTitle: "POSSIBLE BUILDS", styleShare: p => `${p} of games · key items:`, confTip: c => `Confidence ${c}/3 (from the number of games)`,
     nGames: g => g == 1 ? "1 game" : `${g} games`, noData: "Not enough data yet.", loading: "Loading…",
     "augs.sub": "the best for each champion", "augs.note": "Sorted by win rate · at least 30 games", rfAll: "All", rfP: "Prismatic", rfG: "Gold", rfS: "Silver",
     rarP: "PRISMATIC", rarG: "GOLD", rarS: "SILVER", withChamp: (g, c) => `${g} games with ${c}`,
@@ -558,6 +568,22 @@ function renderChampDetail() {
       <div class="card"><div class="lbl"><span>${t("build")}</span><em>${t("wr")}</em></div>${c.items.length ? c.items.map(i => `<div class="row"><img class="ico" src="${esc(i.icon)}"><div class="t"><b>${esc(i.name)}</b><span>${t("nGames", num(i.games))}</span></div><span class="pill ${i.winRate >= (c.winRate ?? .5) ? "g" : "r"}">${pct(i.winRate, 1)}</span></div>`).join("") : `<div class="muted">${t("noData")}</div>`}</div>
       <div class="card"><div class="lbl"><span>${t("bestAugs")}</span><em>${t("prismatic")}</em></div>${augList(c.augments.prismatic, "#c29bff")}<div class="lbl" style="margin-top:14px">${t("gold")}</div>${augList(c.augments.gold, "#f0d080")}</div>
       <div class="card"><div class="lbl">${t("silver")}</div>${augList(c.augments.silver, "#c9d1da")}</div>
+    </div>${kitCards(c)}`;
+}
+// Para qué sirve su kit (campeones-kit.json) y las builds que se juegan con él.
+function kitCards(c) {
+  if (!c.kit && !c.styles?.length) return "";
+  const k = c.kit;
+  const line = (label, value) => value ? `<div class="row"><div class="t"><b>${esc(label)}</b><span>${esc(value)}</span></div></div>` : "";
+  const kit = !k ? `<div class="muted">${t("noData")}</div>` : [
+    line(t("kitScales"), k.scales.join(", ")), line(t("kitOnHit"), k.onHit), line(t("kitAs"), k.attackSpeed), line(t("kitCrit"), k.crit),
+    line(t("kitHeal"), k.heal), line(t("kitShield"), k.shield), line(t("kitStacks"), k.stacks)].join("");
+  const styles = c.styles?.length ? c.styles.map(s => `<div class="row"><div class="t"><b>${esc(s.name)}</b><span>${t("styleShare", pct(s.share, 0))}</span>
+      <div style="margin-top:4px">${s.items.map(i => `<img class="keyitem" src="${esc(i.icon)}" title="${esc(i.name)}">`).join("")}</div></div>
+      <span class="pill ${s.winRate >= (c.winRate ?? .5) ? "g" : "r"}">${pct(s.winRate, 1)}</span></div>`).join("") : `<div class="muted">${t("noData")}</div>`;
+  return `<div class="two" style="margin-top:16px">
+      <div class="card"><div class="lbl"><span>${t("kitTitle")}</span>${k ? `<em>${t("late" + k.late)}</em>` : ""}</div>${kit}</div>
+      <div class="card"><div class="lbl"><span>${t("stylesTitle")}</span><em>${t("wr")}</em></div>${styles}</div>
     </div>`;
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-back]")) { champDetail = null; $("#champDetail").classList.add("hidden"); $("#champList").classList.remove("hidden"); } });

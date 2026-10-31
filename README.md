@@ -53,6 +53,8 @@ open; your games and settings are kept). The download is checked against GitHub'
 ## Data sources
 
 - Game data, icons, and prices: [CommunityDragon](https://communitydragon.org/).
+- Champion kits (ability scalings, on-hit, heals, shields, late-game scaling): computed from the same client data
+  (`herramientas/actualizar-kits.mjs`), plus a hand-checked list.
 - ARAM: Mayhem statistics: [mayhemmeta.com](https://mayhemmeta.com/), [ARAMKit](https://aramkit.com/), and
   [AramHex](https://github.com/czgreat/aramhex-data) (CC BY-NC 4.0).
 - Your own games, read from your League client.

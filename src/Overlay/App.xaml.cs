@@ -50,7 +50,8 @@ public partial class App : System.Windows.Application
     MayhemAugments _augmentTable = new(); // % de cada campeón con cada aumento (todos los jugadores)
     ExternalAugments _aramhex = new(), _aramkit = new(); // lo mismo según AramHex y aramkit.com (punto de partida de las notas)
     AugmentBuilds _aramkitBuilds = new(); // estilo de build (apoyo, AP…) con cada aumento, de aramkit.com
-    DateTime _mayhemLoadedFrom, _buildsLoadedFrom, _augmentTextsLoadedFrom, _aramhexLoadedFrom, _aramkitLoadedFrom, _aramkitBuildsLoadedFrom;
+    ChampionKits _kits = new(); // para qué sirve el kit de cada campeón (herramientas/actualizar-kits.mjs)
+    DateTime _mayhemLoadedFrom, _buildsLoadedFrom, _augmentTextsLoadedFrom, _aramhexLoadedFrom, _aramkitLoadedFrom, _aramkitBuildsLoadedFrom, _kitsLoadedFrom;
     readonly Settings _settings = Settings.Load();
     bool _panelEnabled = true;
 
@@ -1233,6 +1234,7 @@ public partial class App : System.Windows.Application
         _stats.Aramhex = _aramhex;
         _stats.Aramkit = _aramkit;
         _stats.AramkitBuilds = _aramkitBuilds;
+        _stats.Kits = _kits;
     }
 
     /// <summary>
@@ -1287,6 +1289,12 @@ public partial class App : System.Windows.Application
             _stats.AramkitBuilds = aramkitBuilds;
             Log.Write(aramkitBuilds.IsEmpty ? "Sin builds por aumento de aramkit.com (ejecuta herramientas/actualizar-aramkit.mjs)"
                 : $"Builds por aumento de aramkit.com: {aramkitBuilds.ChampionCount} campeones, {aramkitBuilds.RowCount} campeón+aumento, parche {aramkitBuilds.Patch}");
+        }
+        if (ReloadIfChanged("campeones-kit.json", ref _kitsLoadedFrom, ChampionKits.Load, k => k.IsEmpty) is { } kits)
+        {
+            _kits = kits;
+            _stats.Kits = kits;
+            Log.Write(kits.IsEmpty ? "Sin kits de campeones (ejecuta herramientas/actualizar-kits.mjs)" : $"Kits de campeones: {kits.Count}, versión {kits.Version}");
         }
         if (linksStale || _links.IsEmpty)
         {

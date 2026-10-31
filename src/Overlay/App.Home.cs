@@ -1,4 +1,4 @@
-using MayhemAdvisor.Core;
+﻿using MayhemAdvisor.Core;
 using static MayhemAdvisor.Core.Lang;
 
 namespace MayhemAdvisor.Overlay;
@@ -131,6 +131,17 @@ public partial class App
             })
             .ToList();
 
+        // Para qué sirve su kit (campeones-kit.json) y los estilos de build que se juegan con él (aramkit), con sus 4 objetos clave.
+        var kit = _kits.For(info?.Alias ?? alias);
+        var styles = _aramkitBuilds.Styles(info?.Alias ?? alias);
+        int styleGames = styles.Sum(s => s.Games);
+        var styleRows = styles.Where(s => s.Games >= styleGames * 0.03).Select(s => new
+        {
+            name = Advisor.StyleName(s.Key), share = (double)s.Games / Math.Max(1, styleGames), winRate = s.WinRate / 100,
+            items = s.Items.Where(kv => _data.Item(kv.Key) is { IsBoots: false, InStore: true }).OrderByDescending(kv => kv.Value).Take(4)
+                .Select(kv => new { name = _data.Item(kv.Key)!.DisplayName, icon = _data.Item(kv.Key)!.Icon }),
+        }).ToList();
+
         return new
         {
             type = "champion", alias = info?.Alias ?? alias, name = info?.DisplayName ?? alias, icon = info?.Icon,
@@ -140,6 +151,13 @@ public partial class App
             mine = mine.Count == 0 ? null : new { games = mine.Count, wins = mine.Count(m => m.Win), kda = Math.Round(mine.Sum(m => m.Kills + m.Assists) / (double)Math.Max(1, mine.Sum(m => m.Deaths)), 1) },
             items,
             augments = new { prismatic = Augs("kPrismatic", 8), gold = Augs("kGold", 8), silver = Augs("kSilver", 8) },
+            kit = kit is null ? null : new
+            {
+                scales = kit.ScalesWith(), onHit = ChampionKit.Keys(kit.OnHit), attackSpeed = ChampionKit.Keys(kit.AttackSpeed),
+                crit = ChampionKit.Keys(kit.Crit), heal = ChampionKit.Keys(kit.Heal), shield = ChampionKit.Keys(kit.Shield),
+                stacks = ChampionKit.Keys(kit.Stacks), late = kit.Late,
+            },
+            styles = styleRows,
         };
     }
 

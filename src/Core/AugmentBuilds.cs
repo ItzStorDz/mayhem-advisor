@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace MayhemAdvisor.Core;
@@ -15,8 +15,10 @@ public sealed record BuildStyle(string Key, int Games, double WinRate, IReadOnly
 /// <paramref name="UsualWinRate"/>, cuánto ganan los dos con tus aumentos (0-100, sin suavizar, para el texto).
 /// <paramref name="Items"/>: en qué parte de las partidas con ese estilo y tus aumentos sale cada objeto (0-1).
 /// </summary>
+/// <param name="FromItems">Si el estilo lo dicen tus objetos (no tus aumentos): los que lo deciden, para el texto ("" = aún sin objetos).</param>
+/// <param name="Generic">El campeón no tiene ese estilo en sus datos: sale de la media de todos los campeones.</param>
 public sealed record StylePick(string Key, string Usual, double Share, double WinRate, double UsualWinRate, int Games,
-                               int AugmentId, IReadOnlyDictionary<int, double> Items)
+                               int AugmentId, IReadOnlyDictionary<int, double> Items, string? FromItems = null, bool Generic = false)
 {
     public bool Changed => Key != Usual;
 }
@@ -64,6 +66,8 @@ public sealed class AugmentBuilds
     sealed record ChampionStyles(double WinRate, IReadOnlyList<BuildStyle> Styles, Dictionary<int, IReadOnlyList<BuildStyle>> Augments);
 
     readonly Dictionary<string, ChampionStyles> _champions = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Cada estilo con todos los campeones juntos (por partidas): para el que no tiene ese estilo en sus datos.</summary>
+    readonly Dictionary<string, BuildStyle> _generic = [];
 
     public string? Patch { get; private init; }
     public bool IsEmpty => _champions.Count == 0;
@@ -125,6 +129,41 @@ public sealed class AugmentBuilds
         return new StylePick(best.Key, usual, best.Share, best.Raw, usualOption.Raw, best.Games, best.Lead, best.Items);
     }
 
+    /// <summary>Estilos que se pueden sacar de la media de todos los campeones (apoyo e híbrido dependen demasiado de cada uno).</summary>
+    static readonly string[] GenericStyles = ["on_hit", "crit", "lethality", "bruiser", "ap", "tank"];
+    /// <summary>Lo que se le supone a un estilo que el campeón no tiene en sus datos (frente a sus estilos de verdad).</summary>
+    const double GenericPrior = 0.02;
+    /// <summary>Parte de un objeto en un estilo cuando no sale en él (casi nadie lo compra así; no puede ser 0).</summary>
+    const double MissingShare = 0.01;
+    /// <summary>A partir de qué probabilidad se da por hecho el estilo de tus objetos.</summary>
+    public const double ItemStyleConfidence = 0.75;
+
+    /// <summary>
+    /// El estilo de build que dicen tus objetos terminados (Yi con Rey Arruinado y Fin del Ingenio → on-hit), con lo
+    /// probable que es (0-1). Cuenta en qué parte de las partidas de cada estilo sale cada objeto tuyo y lo jugado que es
+    /// el estilo. Los estilos que el campeón no tiene en sus datos (Twitch on-hit) salen de la media de todos los campeones,
+    /// con poca probabilidad de partida (más si su kit va con ese estilo, ver <paramref name="kitFits"/>).
+    /// Null sin objetos o sin datos.
+    /// </summary>
+    public (BuildStyle Style, double Probability, bool Generic)? StyleFromItems(string alias, IReadOnlyCollection<int> items, Func<string, bool>? kitFits = null)
+    {
+        if (items.Count == 0 || _generic.Count == 0) return null;
+        var own = Styles(alias);
+        int total = own.Sum(s => s.Games);
+        var options = own.Select(s => (Style: s, Prior: (double)s.Games / Math.Max(1, total), Generic: false)).ToList();
+        foreach (var key in GenericStyles)
+            if (own.All(s => s.Key != key) && _generic.TryGetValue(key, out var generic))
+                options.Add((generic, GenericPrior * (kitFits?.Invoke(key) == true ? 3 : 1), true));
+        if (options.Count == 0) return null;
+
+        var scored = options.Select(o => (o.Style, o.Generic,
+            Log: Math.Log(o.Prior) + items.Sum(id => Math.Log(Math.Clamp(o.Style.Items.GetValueOrDefault(id), MissingShare, 0.98))))).ToList();
+        double max = scored.Max(s => s.Log);
+        double sum = scored.Sum(s => Math.Exp(s.Log - max));
+        var best = scored.MaxBy(s => s.Log);
+        return (best.Style, 1 / sum, best.Generic);
+    }
+
     static IReadOnlyList<BuildStyle> ReadStyles(List<JsonElement[]>? rows)
     {
         var list = new List<BuildStyle>();
@@ -157,6 +196,15 @@ public sealed class AugmentBuilds
                 if (int.TryParse(id, out var augmentId) && !ExternalAugments.Biased.Contains(augmentId) && ReadStyles(row.Styles) is { Count: > 0 } styles)
                     augments[augmentId] = styles;
             result._champions[alias] = new ChampionStyles(champ.WinRate, ReadStyles(champ.Styles), augments);
+        }
+        foreach (var key in GenericStyles)
+        {
+            var styles = result._champions.Values.SelectMany(c => c.Styles).Where(s => s.Key == key).ToList();
+            int games = styles.Sum(s => s.Games);
+            if (games == 0) continue;
+            var items = styles.SelectMany(s => s.Items.Keys).Distinct()
+                .ToDictionary(id => id, id => styles.Sum(s => s.Games * s.Items.GetValueOrDefault(id)) / games);
+            result._generic[key] = new BuildStyle(key, games, styles.Sum(s => s.Games * s.WinRate) / games, items);
         }
         return result;
     }
