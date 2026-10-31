@@ -806,7 +806,9 @@ public sealed partial class Advisor(StatsStore stats)
     {
         var tags = candidate.StatList.ToHashSet();
         bool needsAp = tags.Overlaps(["AP", "MagicPen"]), needsAd = tags.Overlaps(["AD", "Crit", "Lethality"]);
-        bool needsAbilities = tags.Contains("Abilities"), needsAttacks = tags.Overlaps(["AS", "Crit", "OnHit"]);
+        // Los aumentos de la definitiva (Axioma Arcano, Recursión Definitiva…) sirven a cualquiera que la use, también a un
+        // Yi o un Twitch de ataques básicos: no piden build de habilidades.
+        bool needsAbilities = tags.Contains("Abilities") && !candidate.NeedsUltimate, needsAttacks = tags.Overlaps(["AS", "Crit", "OnHit"]);
         if (needsAp == needsAd && needsAbilities == needsAttacks) return null; // pide de todo o nada concreto
 
         var (apShare, abilityShare, fromItems) = BuildProfile(champion, myItems, mine);
