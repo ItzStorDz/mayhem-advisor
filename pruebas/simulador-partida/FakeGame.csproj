@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net9.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>League of Legends</AssemblyName></PropertyGroup>
+  <ItemGroup><None Include="live-sample.json;fondo-partida.png" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+</Project>

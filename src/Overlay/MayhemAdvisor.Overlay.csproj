@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- La versión de Windows en el nombre habilita el OCR integrado de Windows (Windows.Media.Ocr). -->
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- Para el icono de la bandeja y la captura de pantalla. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>MayhemAdvisor</AssemblyName>
+    <ApplicationIcon>icono.ico</ApplicationIcon>
+    <!-- Datos del programa (Propiedades > Detalles del .exe). El instalador usa los mismos. -->
+    <Product>Mayhem Advisor</Product>
+    <AssemblyTitle>Mayhem Advisor</AssemblyTitle>
+    <Description>Consejero de aumentos y objetos para ARAM: Caos de League of Legends</Description>
+    <Company>ItzStorDz</Company>
+    <Authors>ItzStorDz</Authors>
+    <Copyright>© 2026 ItzStorDz</Copyright>
+    <!-- La versión se cambia SOLO aquí: el instalador y "Acerca de" la leen de este archivo. -->
+    <Version>1.3.9</Version>
+    <!-- Menos RAM: el recolector de memoria de .NET prioriza ocupar poco sobre ir rápido. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Evita choques de nombres entre WinForms/System.Drawing y WPF; los usamos con su nombre completo. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\MayhemAdvisor.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Icono de la bandeja y de las ventanas (el del .exe va dentro con ApplicationIcon). -->
+    <None Include="icono.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Interfaz de la ventana principal (HTML/CSS/JS), se copia junto al .exe. -->
+    <None Include="wwwroot\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Datos offline (estadísticas y créditos). Se copian a "datos" junto al .exe. -->
+    <None Include="..\..\datos\**\*" Link="datos\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

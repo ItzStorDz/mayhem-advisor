@@ -1,0 +1,2352 @@
+{
+	"activePlayer": {
+		"abilities": {
+			"E": {
+				"abilityLevel": 5,
+				"displayName": "Fuego Espiritual",
+				"id": "NasusE",
+				"rawDescription": "GeneratedTip_Spell_NasusE_Description",
+				"rawDisplayName": "GeneratedTip_Spell_NasusE_DisplayName"
+			},
+			"Passive": {
+				"displayName": "Devorador de Almas",
+				"id": "NasusPassive",
+				"rawDescription": "GeneratedTip_Passive_NasusPassive_Description",
+				"rawDisplayName": "GeneratedTip_Passive_NasusPassive_DisplayName"
+			},
+			"Q": {
+				"abilityLevel": 5,
+				"displayName": "Golpe Absorbente",
+				"id": "NasusQ",
+				"rawDescription": "GeneratedTip_Spell_NasusQ_Description",
+				"rawDisplayName": "GeneratedTip_Spell_NasusQ_DisplayName"
+			},
+			"R": {
+				"abilityLevel": 3,
+				"displayName": "Furia de las Arenas",
+				"id": "NasusR",
+				"rawDescription": "GeneratedTip_Spell_NasusR_Description",
+				"rawDisplayName": "GeneratedTip_Spell_NasusR_DisplayName"
+			},
+			"W": {
+				"abilityLevel": 4,
+				"displayName": "Marchitar",
+				"id": "NasusW",
+				"rawDescription": "GeneratedTip_Spell_NasusW_Description",
+				"rawDisplayName": "GeneratedTip_Spell_NasusW_DisplayName"
+			}
+		},
+		"championStats": {
+			"abilityHaste": 25.0,
+			"abilityPower": 0.0,
+			"armor": 272.8840026855469,
+			"armorPenetrationFlat": 0.0,
+			"armorPenetrationPercent": 1.0,
+			"attackDamage": 149.36199951171876,
+			"attackRange": 125.0,
+			"attackSpeed": 0.9870217442512512,
+			"bonusArmorPenetrationPercent": 1.0,
+			"bonusMagicPenetrationPercent": 1.0,
+			"critChance": 0.0,
+			"critDamage": 200.0,
+			"currentHealth": 0.0,
+			"healShieldPower": 0.0,
+			"healthRegenRate": 17.36100196838379,
+			"lifeSteal": 0.25,
+			"magicLethality": 0.0,
+			"magicPenetrationFlat": 0.0,
+			"magicPenetrationPercent": 1.0,
+			"magicResist": 129.2259979248047,
+			"maxHealth": 6394.6298828125,
+			"moveSpeed": 395.0,
+			"omnivamp": 0.0,
+			"physicalLethality": 0.0,
+			"physicalVamp": 0.0,
+			"resourceMax": 1300.64013671875,
+			"resourceRegenRate": 5.414107322692871,
+			"resourceType": "MANA",
+			"resourceValue": 1196.8438720703126,
+			"spellVamp": 0.0,
+			"tenacity": 5.0
+		},
+		"currentGold": 1793.21923828125,
+		"fullRunes": {},
+		"level": 17,
+		"riotId": "ITzStorDz#LAN",
+		"riotIdGameName": "ITzStorDz",
+		"riotIdTagLine": "LAN",
+		"summonerName": "ITzStorDz#LAN",
+		"teamRelativeColors": true
+	},
+	"allPlayers": [
+		{
+			"championName": "Viktor",
+			"isBot": false,
+			"isDead": true,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Eco de Luden",
+					"itemID": 6655,
+					"price": 450,
+					"rawDescription": "GeneratedTip_Item_6655_Description",
+					"rawDisplayName": "Item_6655_Name",
+					"slot": 0
+				},
+				{
+					"canUse": true,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Reloj de Arena de Zhonya",
+					"itemID": 3157,
+					"price": 450,
+					"rawDescription": "GeneratedTip_Item_3157_Description",
+					"rawDisplayName": "Item_3157_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Lumbría",
+					"itemID": 4645,
+					"price": 900,
+					"rawDescription": "GeneratedTip_Item_4645_Description",
+					"rawDisplayName": "Item_4645_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Descarga Tormentosa",
+					"itemID": 4646,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_4646_Description",
+					"rawDisplayName": "Item_4646_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Sombrero Mortífero de Rabadon",
+					"itemID": 3089,
+					"price": 1100,
+					"rawDescription": "GeneratedTip_Item_3089_Description",
+					"rawDisplayName": "Item_3089_Name",
+					"slot": 4
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 1,
+					"displayName": "Porogalletas",
+					"itemID": 2052,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_2052_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Viktor",
+			"rawSkinName": "game_character_displayname_Viktor",
+			"respawnTimer": 25.605587005615236,
+			"riotId": "Player1#Pan",
+			"riotIdGameName": "Player1",
+			"riotIdTagLine": "Pan",
+			"runes": null,
+			"scores": {
+				"assists": 12,
+				"creepScore": 50,
+				"deaths": 10,
+				"kills": 10,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Viktor",
+			"summonerName": "Player1#Pan",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Marca",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Maokai",
+			"isBot": false,
+			"isDead": false,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Hábito del Espectro",
+					"itemID": 3211,
+					"price": 150,
+					"rawDescription": "GeneratedTip_Item_3211_Description",
+					"rawDisplayName": "Item_3211_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Botas de Mercurio",
+					"itemID": 3111,
+					"price": 550,
+					"rawDescription": "GeneratedTip_Item_3111_Description",
+					"rawDisplayName": "Item_3111_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "El Tormento de Liandry",
+					"itemID": 6653,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_6653_Description",
+					"rawDisplayName": "Item_6653_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Corazón de Acero",
+					"itemID": 3084,
+					"price": 400,
+					"rawDescription": "GeneratedTip_Item_3084_Description",
+					"rawDisplayName": "Item_3084_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Cota de Espinas",
+					"itemID": 3075,
+					"price": 450,
+					"rawDescription": "GeneratedTip_Item_3075_Description",
+					"rawDisplayName": "Item_3075_Name",
+					"slot": 4
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Rukerno Kaénico",
+					"itemID": 2504,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_2504_Description",
+					"rawDisplayName": "Item_2504_Name",
+					"slot": 5
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 1,
+					"displayName": "Porogalletas",
+					"itemID": 220013,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_220013_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Maokai",
+			"rawSkinName": "game_character_displayname_Maokai",
+			"respawnTimer": 0.0,
+			"riotId": "Player2#LAN",
+			"riotIdGameName": "Player2",
+			"riotIdTagLine": "LAN",
+			"runes": null,
+			"scores": {
+				"assists": 16,
+				"creepScore": 20,
+				"deaths": 7,
+				"kills": 6,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Maokai",
+			"summonerName": "Player2#LAN",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Marca",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Nasus",
+			"isBot": false,
+			"isDead": true,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Apariencia Espiritual",
+					"itemID": 3065,
+					"price": 650,
+					"rawDescription": "GeneratedTip_Item_3065_Description",
+					"rawDisplayName": "Item_3065_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Punteras de Acero Revestidas",
+					"itemID": 3047,
+					"price": 600,
+					"rawDescription": "GeneratedTip_Item_3047_Description",
+					"rawDisplayName": "Item_3047_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Guantelete del Hijo del Hielo",
+					"itemID": 6662,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_6662_Description",
+					"rawDisplayName": "Item_6662_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Corazón de Acero",
+					"itemID": 3084,
+					"price": 400,
+					"rawDescription": "GeneratedTip_Item_3084_Description",
+					"rawDisplayName": "Item_3084_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Cota de Espinas",
+					"itemID": 3075,
+					"price": 450,
+					"rawDescription": "GeneratedTip_Item_3075_Description",
+					"rawDisplayName": "Item_3075_Name",
+					"slot": 4
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Nasus",
+			"rawSkinName": "game_character_skin_displayname_Nasus_2",
+			"respawnTimer": 10.536975860595704,
+			"riotId": "ITzStorDz#LAN",
+			"riotIdGameName": "ITzStorDz",
+			"riotIdTagLine": "LAN",
+			"runes": null,
+			"scores": {
+				"assists": 19,
+				"creepScore": 60,
+				"deaths": 11,
+				"kills": 5,
+				"wardScore": 0.0
+			},
+			"skinID": 2,
+			"skinName": "Faraón Nasus",
+			"summonerName": "ITzStorDz#LAN",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Fantasma",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerHaste_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHaste_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Rengar",
+			"isBot": false,
+			"isDead": true,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Arrogancia",
+					"itemID": 126697,
+					"price": 900,
+					"rawDescription": "GeneratedTip_Item_126697_Description",
+					"rawDisplayName": "Item_126697_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Botas de Mercurio",
+					"itemID": 3111,
+					"price": 550,
+					"rawDescription": "GeneratedTip_Item_3111_Description",
+					"rawDisplayName": "Item_3111_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Fauces de Malmortius",
+					"itemID": 3156,
+					"price": 750,
+					"rawDescription": "GeneratedTip_Item_3156_Description",
+					"rawDisplayName": "Item_3156_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Cicloespada Voltaica",
+					"itemID": 6699,
+					"price": 963,
+					"rawDescription": "GeneratedTip_Item_6699_Description",
+					"rawDisplayName": "Item_6699_Name",
+					"slot": 3
+				},
+				{
+					"canUse": true,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Hidra Voraz",
+					"itemID": 3074,
+					"price": 150,
+					"rawDescription": "GeneratedTip_Item_3074_Description",
+					"rawDisplayName": "Item_3074_Name",
+					"slot": 4
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Rengar",
+			"rawSkinName": "game_character_displayname_Rengar",
+			"respawnTimer": 22.551795959472658,
+			"riotId": "Player3#LAN",
+			"riotIdGameName": "Player3",
+			"riotIdTagLine": "LAN",
+			"runes": null,
+			"scores": {
+				"assists": 10,
+				"creepScore": 20,
+				"deaths": 11,
+				"kills": 9,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Rengar",
+			"summonerName": "Player3#LAN",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Ignición",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerDot_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerDot_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Marca",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Lux",
+			"isBot": false,
+			"isDead": true,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Eco de Luden",
+					"itemID": 6655,
+					"price": 450,
+					"rawDescription": "GeneratedTip_Item_6655_Description",
+					"rawDisplayName": "Item_6655_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Joya Maldita",
+					"itemID": 4630,
+					"price": 700,
+					"rawDescription": "GeneratedTip_Item_4630_Description",
+					"rawDisplayName": "Item_4630_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Maldad",
+					"itemID": 3118,
+					"price": 650,
+					"rawDescription": "GeneratedTip_Item_3118_Description",
+					"rawDisplayName": "Item_3118_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Descarga Tormentosa",
+					"itemID": 4646,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_4646_Description",
+					"rawDisplayName": "Item_4646_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Lumbría",
+					"itemID": 4645,
+					"price": 900,
+					"rawDescription": "GeneratedTip_Item_4645_Description",
+					"rawDisplayName": "Item_4645_Name",
+					"slot": 4
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Varita Explosiva",
+					"itemID": 1026,
+					"price": 850,
+					"rawDescription": "GeneratedTip_Item_1026_Description",
+					"rawDisplayName": "Item_1026_Name",
+					"slot": 5
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 1,
+					"displayName": "Porogalletas",
+					"itemID": 220013,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_220013_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Lux",
+			"rawSkinName": "game_character_skin_displayname_Lux_5",
+			"respawnTimer": 3.2935867309570314,
+			"riotId": "Player4#LAN",
+			"riotIdGameName": "Player4",
+			"riotIdTagLine": "LAN",
+			"runes": null,
+			"scores": {
+				"assists": 14,
+				"creepScore": 20,
+				"deaths": 9,
+				"kills": 2,
+				"wardScore": 0.0
+			},
+			"skinID": 5,
+			"skinName": "Lux Legión de Acero",
+			"summonerName": "Player4#LAN",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Claridad",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerMana_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerMana_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Nami",
+			"isBot": false,
+			"isDead": false,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Sombrero Mortífero de Rabadon",
+					"itemID": 3089,
+					"price": 1100,
+					"rawDescription": "GeneratedTip_Item_3089_Description",
+					"rawDisplayName": "Item_3089_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Abrazo del Serafín",
+					"itemID": 3040,
+					"price": 2900,
+					"rawDescription": "GeneratedTip_Item_3040_Description",
+					"rawDisplayName": "Item_3040_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Vara Innecesariamente Grande",
+					"itemID": 1058,
+					"price": 1200,
+					"rawDescription": "GeneratedTip_Item_1058_Description",
+					"rawDisplayName": "Item_1058_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Varita Explosiva",
+					"itemID": 1026,
+					"price": 850,
+					"rawDescription": "GeneratedTip_Item_1026_Description",
+					"rawDisplayName": "Item_1026_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Brillo",
+					"itemID": 3057,
+					"price": 650,
+					"rawDescription": "GeneratedTip_Item_3057_Description",
+					"rawDisplayName": "Item_3057_Name",
+					"slot": 4
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Botas del Hechicero",
+					"itemID": 3020,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_3020_Description",
+					"rawDisplayName": "Item_3020_Name",
+					"slot": 5
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 4,
+					"displayName": "Porogalletas",
+					"itemID": 2052,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_2052_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Nami",
+			"rawSkinName": "game_character_displayname_Nami",
+			"respawnTimer": 0.0,
+			"riotId": "Player5#LAN",
+			"riotIdGameName": "Player5",
+			"riotIdTagLine": "LAN",
+			"runes": null,
+			"scores": {
+				"assists": 34,
+				"creepScore": 0,
+				"deaths": 8,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Nami",
+			"summonerName": "Player5#LAN",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Fantasma",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerHaste_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHaste_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Curación",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerHeal_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHeal_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Zoe",
+			"isBot": false,
+			"isDead": false,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Eco de Luden",
+					"itemID": 6655,
+					"price": 450,
+					"rawDescription": "GeneratedTip_Item_6655_Description",
+					"rawDisplayName": "Item_6655_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Báculo del Vacío",
+					"itemID": 3135,
+					"price": 1050,
+					"rawDescription": "GeneratedTip_Item_3135_Description",
+					"rawDisplayName": "Item_3135_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Botas del Hechicero",
+					"itemID": 3020,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_3020_Description",
+					"rawDisplayName": "Item_3020_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Descarga Tormentosa",
+					"itemID": 4646,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_4646_Description",
+					"rawDisplayName": "Item_4646_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Sombrero Mortífero de Rabadon",
+					"itemID": 3089,
+					"price": 1100,
+					"rawDescription": "GeneratedTip_Item_3089_Description",
+					"rawDisplayName": "Item_3089_Name",
+					"slot": 4
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Vara Innecesariamente Grande",
+					"itemID": 1058,
+					"price": 1200,
+					"rawDescription": "GeneratedTip_Item_1058_Description",
+					"rawDisplayName": "Item_1058_Name",
+					"slot": 5
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 2,
+					"displayName": "Porogalletas",
+					"itemID": 220013,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_220013_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Zoe",
+			"rawSkinName": "game_character_displayname_Zoe",
+			"respawnTimer": 0.0,
+			"riotId": "Player6#LAN",
+			"riotIdGameName": "Player6",
+			"riotIdTagLine": "LAN",
+			"runes": null,
+			"scores": {
+				"assists": 23,
+				"creepScore": 10,
+				"deaths": 5,
+				"kills": 11,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Zoe",
+			"summonerName": "Player6#LAN",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Marca",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Kayn",
+			"isBot": false,
+			"isDead": true,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Eclipse",
+					"itemID": 6692,
+					"price": 625,
+					"rawDescription": "GeneratedTip_Item_6692_Description",
+					"rawDisplayName": "Item_6692_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Punteras de Acero Revestidas",
+					"itemID": 3047,
+					"price": 600,
+					"rawDescription": "GeneratedTip_Item_3047_Description",
+					"rawDisplayName": "Item_3047_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Cicloespada Voltaica",
+					"itemID": 6699,
+					"price": 963,
+					"rawDescription": "GeneratedTip_Item_6699_Description",
+					"rawDisplayName": "Item_6699_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "El Coleccionista",
+					"itemID": 6676,
+					"price": 525,
+					"rawDescription": "GeneratedTip_Item_6676_Description",
+					"rawDisplayName": "Item_6676_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Último Suspiro",
+					"itemID": 3035,
+					"price": 750,
+					"rawDescription": "GeneratedTip_Item_3035_Description",
+					"rawDisplayName": "Item_3035_Name",
+					"slot": 4
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Martillo de Guerra de Caulfield",
+					"itemID": 3133,
+					"price": 100,
+					"rawDescription": "GeneratedTip_Item_3133_Description",
+					"rawDisplayName": "Item_3133_Name",
+					"slot": 5
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 2,
+					"displayName": "Porogalletas",
+					"itemID": 220013,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_220013_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 17,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Kayn",
+			"rawSkinName": "game_character_skin_displayname_Kayn_1",
+			"respawnTimer": 7.912532806396484,
+			"riotId": "Player7#DMC",
+			"riotIdGameName": "Player7",
+			"riotIdTagLine": "DMC",
+			"runes": null,
+			"scores": {
+				"assists": 24,
+				"creepScore": 20,
+				"deaths": 8,
+				"kills": 6,
+				"wardScore": 0.0
+			},
+			"skinID": 1,
+			"skinName": "Kayn Cazador de Almas",
+			"summonerName": "Player7#DMC",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Marca",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Lissandra",
+			"isBot": false,
+			"isDead": true,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Maldad",
+					"itemID": 3118,
+					"price": 650,
+					"rawDescription": "GeneratedTip_Item_3118_Description",
+					"rawDisplayName": "Item_3118_Name",
+					"slot": 0
+				},
+				{
+					"canUse": true,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Reloj de Arena de Zhonya",
+					"itemID": 3157,
+					"price": 450,
+					"rawDescription": "GeneratedTip_Item_3157_Description",
+					"rawDisplayName": "Item_3157_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Botas del Hechicero",
+					"itemID": 3020,
+					"price": 800,
+					"rawDescription": "GeneratedTip_Item_3020_Description",
+					"rawDisplayName": "Item_3020_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Lumbría",
+					"itemID": 4645,
+					"price": 900,
+					"rawDescription": "GeneratedTip_Item_4645_Description",
+					"rawDisplayName": "Item_4645_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Joya Maldita",
+					"itemID": 4630,
+					"price": 700,
+					"rawDescription": "GeneratedTip_Item_4630_Description",
+					"rawDisplayName": "Item_4630_Name",
+					"slot": 4
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Códice Diabólico",
+					"itemID": 3108,
+					"price": 200,
+					"rawDescription": "GeneratedTip_Item_3108_Description",
+					"rawDisplayName": "Item_3108_Name",
+					"slot": 5
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 2,
+					"displayName": "Porogalletas",
+					"itemID": 220013,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_220013_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 18,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Lissandra",
+			"rawSkinName": "game_character_displayname_Lissandra",
+			"respawnTimer": 26.88003921508789,
+			"riotId": "Player8#lulu",
+			"riotIdGameName": "Player8",
+			"riotIdTagLine": "lulu",
+			"runes": null,
+			"scores": {
+				"assists": 26,
+				"creepScore": 60,
+				"deaths": 6,
+				"kills": 13,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Lissandra",
+			"summonerName": "Player8#lulu",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Marca",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Ezreal",
+			"isBot": false,
+			"isDead": true,
+			"items": [
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Fuerza de la Trinidad",
+					"itemID": 3078,
+					"price": 133,
+					"rawDescription": "GeneratedTip_Item_3078_Description",
+					"rawDisplayName": "Item_3078_Name",
+					"slot": 0
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Muramaná",
+					"itemID": 3042,
+					"price": 2900,
+					"rawDescription": "GeneratedTip_Item_3042_Description",
+					"rawDisplayName": "Item_3042_Name",
+					"slot": 1
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Botas de Mercurio",
+					"itemID": 3111,
+					"price": 550,
+					"rawDescription": "GeneratedTip_Item_3111_Description",
+					"rawDisplayName": "Item_3111_Name",
+					"slot": 2
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Espada del Rey Arruinado",
+					"itemID": 3153,
+					"price": 725,
+					"rawDescription": "GeneratedTip_Item_3153_Description",
+					"rawDisplayName": "Item_3153_Name",
+					"slot": 3
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Rencor de Serylda",
+					"itemID": 6694,
+					"price": 500,
+					"rawDescription": "GeneratedTip_Item_6694_Description",
+					"rawDisplayName": "Item_6694_Name",
+					"slot": 4
+				},
+				{
+					"canUse": false,
+					"consumable": false,
+					"count": 1,
+					"displayName": "Excavador de Túneles",
+					"itemID": 2021,
+					"price": 400,
+					"rawDescription": "GeneratedTip_Item_2021_Description",
+					"rawDisplayName": "Item_2021_Name",
+					"slot": 5
+				},
+				{
+					"canUse": true,
+					"consumable": true,
+					"count": 2,
+					"displayName": "Porogalletas",
+					"itemID": 220013,
+					"price": 0,
+					"rawDescription": "GeneratedTip_Item_220013_Description",
+					"rawDisplayName": "Item_2052_Name",
+					"slot": 6
+				}
+			],
+			"level": 18,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Ezreal",
+			"rawSkinName": "game_character_skin_displayname_Ezreal_5",
+			"respawnTimer": 25.418922424316408,
+			"riotId": "Player9#002",
+			"riotIdGameName": "Player9",
+			"riotIdTagLine": "002",
+			"runes": null,
+			"scores": {
+				"assists": 22,
+				"creepScore": 60,
+				"deaths": 5,
+				"kills": 18,
+				"wardScore": 0.0
+			},
+			"skinID": 5,
+			"skinName": "Ezreal Pulso de Fuego",
+			"summonerName": "Player9#002",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Destello",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Fantasma",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerHaste_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHaste_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		}
+	],
+	"events": {
+		"Events": [
+			{
+				"EventID": 0,
+				"EventName": "GameStart",
+				"EventTime": 0.03930880129337311
+			},
+			{
+				"EventID": 1,
+				"EventName": "MinionsSpawning",
+				"EventTime": 50.06375503540039
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2",
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 2,
+				"EventName": "ChampionKill",
+				"EventTime": 89.82547760009766,
+				"KillerName": "Player3",
+				"VictimName": "Player7"
+			},
+			{
+				"EventID": 3,
+				"EventName": "FirstBlood",
+				"EventTime": 89.82547760009766,
+				"Recipient": "Player3"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 4,
+				"EventName": "ChampionKill",
+				"EventTime": 93.88080596923828,
+				"KillerName": "Player6",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"Player3"
+				],
+				"EventID": 5,
+				"EventName": "ChampionKill",
+				"EventTime": 103.6087417602539,
+				"KillerName": "Player1",
+				"VictimName": "Player6"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"Player3"
+				],
+				"EventID": 6,
+				"EventName": "ChampionKill",
+				"EventTime": 137.65077209472657,
+				"KillerName": "ITzStorDz",
+				"VictimName": "Player7"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 7,
+				"EventName": "ChampionKill",
+				"EventTime": 144.6631317138672,
+				"KillerName": "Player6",
+				"VictimName": "Player3"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 8,
+				"EventName": "ChampionKill",
+				"EventTime": 155.40919494628907,
+				"KillerName": "Player6",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player1"
+				],
+				"EventID": 9,
+				"EventName": "ChampionKill",
+				"EventTime": 171.97621154785157,
+				"KillerName": "Player2",
+				"VictimName": "Player5"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz"
+				],
+				"EventID": 10,
+				"EventName": "ChampionKill",
+				"EventTime": 171.97621154785157,
+				"KillerName": "Player2",
+				"VictimName": "Player8"
+			},
+			{
+				"EventID": 11,
+				"EventName": "Multikill",
+				"EventTime": 171.97621154785157,
+				"KillStreak": 2,
+				"KillerName": "Player2"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"ITzStorDz"
+				],
+				"EventID": 12,
+				"EventName": "ChampionKill",
+				"EventTime": 189.1729736328125,
+				"KillerName": "Player3",
+				"VictimName": "Player6"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"ITzStorDz"
+				],
+				"EventID": 13,
+				"EventName": "ChampionKill",
+				"EventTime": 189.7854461669922,
+				"KillerName": "Player1",
+				"VictimName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2",
+					"Player3"
+				],
+				"EventID": 14,
+				"EventName": "ChampionKill",
+				"EventTime": 220.83900451660157,
+				"KillerName": "ITzStorDz",
+				"VictimName": "Player5"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player9"
+				],
+				"EventID": 15,
+				"EventName": "ChampionKill",
+				"EventTime": 222.7531280517578,
+				"KillerName": "Player8",
+				"VictimName": "Player3"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player8"
+				],
+				"EventID": 16,
+				"EventName": "ChampionKill",
+				"EventTime": 224.18075561523438,
+				"KillerName": "Player9",
+				"VictimName": "Player2"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player9"
+				],
+				"EventID": 17,
+				"EventName": "ChampionKill",
+				"EventTime": 226.9213409423828,
+				"KillerName": "Player8",
+				"VictimName": "Player1"
+			},
+			{
+				"EventID": 18,
+				"EventName": "Multikill",
+				"EventTime": 226.9213409423828,
+				"KillStreak": 2,
+				"KillerName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 19,
+				"EventName": "ChampionKill",
+				"EventTime": 228.85629272460938,
+				"KillerName": "Player6",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player6",
+					"Player7",
+					"Player9"
+				],
+				"EventID": 20,
+				"EventName": "TurretKilled",
+				"EventTime": 238.9785919189453,
+				"KillerName": "Player8",
+				"TurretKilled": "Turret_TOrder_L1_P3_2250400266_0"
+			},
+			{
+				"EventID": 21,
+				"EventName": "FirstBrick",
+				"EventTime": 238.9785919189453,
+				"KillerName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6"
+				],
+				"EventID": 22,
+				"EventName": "ChampionKill",
+				"EventTime": 321.12152099609377,
+				"KillerName": "Player9",
+				"VictimName": "Player4"
+			},
+			{
+				"Assisters": [
+					"Player6",
+					"Player8"
+				],
+				"EventID": 23,
+				"EventName": "ChampionKill",
+				"EventTime": 322.1278076171875,
+				"KillerName": "Player9",
+				"VictimName": "Player3"
+			},
+			{
+				"EventID": 24,
+				"EventName": "Multikill",
+				"EventTime": 322.1278076171875,
+				"KillStreak": 2,
+				"KillerName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player6",
+					"Player7"
+				],
+				"EventID": 25,
+				"EventName": "ChampionKill",
+				"EventTime": 329.9075012207031,
+				"KillerName": "Player8",
+				"VictimName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player6",
+					"Player7",
+					"Player9"
+				],
+				"EventID": 26,
+				"EventName": "ChampionKill",
+				"EventTime": 330.38946533203127,
+				"KillerName": "Player8",
+				"VictimName": "Player2"
+			},
+			{
+				"EventID": 27,
+				"EventName": "Multikill",
+				"EventTime": 330.38946533203127,
+				"KillStreak": 2,
+				"KillerName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2"
+				],
+				"EventID": 28,
+				"EventName": "ChampionKill",
+				"EventTime": 331.4813232421875,
+				"KillerName": "ITzStorDz",
+				"VictimName": "Player7"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8"
+				],
+				"EventID": 29,
+				"EventName": "ChampionKill",
+				"EventTime": 331.4813232421875,
+				"KillerName": "Player9",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"EventID": 30,
+				"EventName": "Multikill",
+				"EventTime": 331.4813232421875,
+				"KillStreak": 3,
+				"KillerName": "Player9"
+			},
+			{
+				"Acer": "Player9",
+				"AcingTeam": "CHAOS",
+				"EventID": 31,
+				"EventName": "Ace",
+				"EventTime": 331.4813232421875
+			},
+			{
+				"Assisters": [
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 32,
+				"EventName": "ChampionKill",
+				"EventTime": 331.4813232421875,
+				"KillerName": "Player2",
+				"VictimName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player7",
+					"Player9"
+				],
+				"EventID": 33,
+				"EventName": "ChampionKill",
+				"EventTime": 423.4604187011719,
+				"KillerName": "Player8",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player7"
+				],
+				"EventID": 34,
+				"EventName": "ChampionKill",
+				"EventTime": 425.7780456542969,
+				"KillerName": "Player8",
+				"VictimName": "Player4"
+			},
+			{
+				"EventID": 35,
+				"EventName": "Multikill",
+				"EventTime": 425.7780456542969,
+				"KillStreak": 2,
+				"KillerName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player8"
+				],
+				"EventID": 36,
+				"EventName": "ChampionKill",
+				"EventTime": 432.68096923828127,
+				"KillerName": "Player9",
+				"VictimName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player9"
+				],
+				"EventID": 37,
+				"EventName": "ChampionKill",
+				"EventTime": 454.7397766113281,
+				"KillerName": "Player6",
+				"VictimName": "Player4"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 38,
+				"EventName": "ChampionKill",
+				"EventTime": 462.306884765625,
+				"KillerName": "Player3",
+				"VictimName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"Player3"
+				],
+				"EventID": 39,
+				"EventName": "ChampionKill",
+				"EventTime": 467.78070068359377,
+				"KillerName": "Player1",
+				"VictimName": "Player7"
+			},
+			{
+				"Assisters": [
+					"Player3",
+					"Player4"
+				],
+				"EventID": 40,
+				"EventName": "ChampionKill",
+				"EventTime": 471.3521423339844,
+				"KillerName": "ITzStorDz",
+				"VictimName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2",
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 41,
+				"EventName": "ChampionKill",
+				"EventTime": 522.5475463867188,
+				"KillerName": "Player3",
+				"VictimName": "Player7"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player7",
+					"Player8"
+				],
+				"EventID": 42,
+				"EventName": "ChampionKill",
+				"EventTime": 522.8056640625,
+				"KillerName": "Player9",
+				"VictimName": "Player2"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6"
+				],
+				"EventID": 43,
+				"EventName": "ChampionKill",
+				"EventTime": 523.8079833984375,
+				"KillerName": "Player9",
+				"VictimName": "Player1"
+			},
+			{
+				"EventID": 44,
+				"EventName": "Multikill",
+				"EventTime": 523.8079833984375,
+				"KillStreak": 2,
+				"KillerName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player8"
+				],
+				"EventID": 45,
+				"EventName": "ChampionKill",
+				"EventTime": 524.3457641601563,
+				"KillerName": "Player9",
+				"VictimName": "Player3"
+			},
+			{
+				"EventID": 46,
+				"EventName": "Multikill",
+				"EventTime": 524.3457641601563,
+				"KillStreak": 3,
+				"KillerName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 47,
+				"EventName": "ChampionKill",
+				"EventTime": 525.417724609375,
+				"KillerName": "Player6",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player7",
+					"Player8"
+				],
+				"EventID": 48,
+				"EventName": "ChampionKill",
+				"EventTime": 525.67529296875,
+				"KillerName": "Player9",
+				"VictimName": "Player4"
+			},
+			{
+				"EventID": 49,
+				"EventName": "Multikill",
+				"EventTime": 525.67529296875,
+				"KillStreak": 4,
+				"KillerName": "Player9"
+			},
+			{
+				"Acer": "Player9",
+				"AcingTeam": "CHAOS",
+				"EventID": 50,
+				"EventName": "Ace",
+				"EventTime": 525.67529296875
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player8"
+				],
+				"EventID": 51,
+				"EventName": "TurretKilled",
+				"EventTime": 542.5386962890625,
+				"KillerName": "Player9",
+				"TurretKilled": "Turret_TOrder_L1_P2_2032291219_0"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player8"
+				],
+				"EventID": 52,
+				"EventName": "InhibKilled",
+				"EventTime": 553.0908813476563,
+				"InhibKilled": "Inhib_TOrder_L1_P1_196971597_0",
+				"KillerName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2"
+				],
+				"EventID": 53,
+				"EventName": "ChampionKill",
+				"EventTime": 555.4434814453125,
+				"KillerName": "Player3",
+				"VictimName": "Player5"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"ITzStorDz",
+					"Player3",
+					"Player4"
+				],
+				"EventID": 54,
+				"EventName": "ChampionKill",
+				"EventTime": 560.7380981445313,
+				"KillerName": "Player2",
+				"VictimName": "Player9"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 55,
+				"EventName": "ChampionKill",
+				"EventTime": 562.7266845703125,
+				"KillerName": "Player1",
+				"VictimName": "Player6"
+			},
+			{
+				"Assisters": [
+					"Player8"
+				],
+				"EventID": 56,
+				"EventName": "ChampionKill",
+				"EventTime": 595.8309936523438,
+				"KillerName": "Player7",
+				"VictimName": "Player2"
+			},
+			{
+				"Assisters": [
+					"Player7",
+					"Player8"
+				],
+				"EventID": 57,
+				"EventName": "ChampionKill",
+				"EventTime": 600.1458740234375,
+				"KillerName": "Player9",
+				"VictimName": "Player3"
+			},
+			{
+				"Assisters": [
+					"Player6",
+					"Player7",
+					"Player9"
+				],
+				"EventID": 58,
+				"EventName": "ChampionKill",
+				"EventTime": 613.2429809570313,
+				"KillerName": "Player8",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player6",
+					"Player7",
+					"Player8"
+				],
+				"EventID": 59,
+				"EventName": "ChampionKill",
+				"EventTime": 616.2409057617188,
+				"KillerName": "Player9",
+				"VictimName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player7"
+				],
+				"EventID": 60,
+				"EventName": "ChampionKill",
+				"EventTime": 618.7560424804688,
+				"KillerName": "Player9",
+				"VictimName": "Player4"
+			},
+			{
+				"EventID": 61,
+				"EventName": "Multikill",
+				"EventTime": 618.7560424804688,
+				"KillStreak": 2,
+				"KillerName": "Player9"
+			},
+			{
+				"Acer": "Player9",
+				"AcingTeam": "CHAOS",
+				"EventID": 62,
+				"EventName": "Ace",
+				"EventTime": 618.7560424804688
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player8"
+				],
+				"EventID": 63,
+				"EventName": "ChampionKill",
+				"EventTime": 657.5986328125,
+				"KillerName": "Player9",
+				"VictimName": "Player3"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz"
+				],
+				"EventID": 64,
+				"EventName": "ChampionKill",
+				"EventTime": 688.60986328125,
+				"KillerName": "Player4",
+				"VictimName": "Player5"
+			},
+			{
+				"Assisters": [
+					"Player4"
+				],
+				"EventID": 65,
+				"EventName": "ChampionKill",
+				"EventTime": 689.4195556640625,
+				"KillerName": "Player1",
+				"VictimName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player7"
+				],
+				"EventID": 66,
+				"EventName": "ChampionKill",
+				"EventTime": 733.7791748046875,
+				"KillerName": "Player8",
+				"VictimName": "Player4"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player8"
+				],
+				"EventID": 67,
+				"EventName": "ChampionKill",
+				"EventTime": 739.648681640625,
+				"KillerName": "Player9",
+				"VictimName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player8"
+				],
+				"EventID": 68,
+				"EventName": "ChampionKill",
+				"EventTime": 745.8576049804688,
+				"KillerName": "Player6",
+				"VictimName": "Player3"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2",
+					"ITzStorDz"
+				],
+				"EventID": 69,
+				"EventName": "ChampionKill",
+				"EventTime": 747.6737060546875,
+				"KillerName": "Player3",
+				"VictimName": "Player5"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 70,
+				"EventName": "ChampionKill",
+				"EventTime": 749.569091796875,
+				"KillerName": "Player6",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"EventID": 71,
+				"EventName": "Multikill",
+				"EventTime": 749.569091796875,
+				"KillStreak": 2,
+				"KillerName": "Player6"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player7",
+					"Player9"
+				],
+				"EventID": 72,
+				"EventName": "ChampionKill",
+				"EventTime": 752.0372314453125,
+				"KillerName": "Player8",
+				"VictimName": "Player2"
+			},
+			{
+				"Acer": "Player8",
+				"AcingTeam": "CHAOS",
+				"EventID": 73,
+				"EventName": "Ace",
+				"EventTime": 752.0372314453125
+			},
+			{
+				"EventID": 74,
+				"EventName": "InhibRespawned",
+				"EventTime": 803.0872192382813,
+				"InhibRespawned": "Inhib_TOrder_L1_P1_196971597_0"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"ITzStorDz",
+					"Player3",
+					"Player4"
+				],
+				"EventID": 75,
+				"EventName": "ChampionKill",
+				"EventTime": 815.08447265625,
+				"KillerName": "Player1",
+				"VictimName": "Player7"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz",
+					"Player3",
+					"Player4"
+				],
+				"EventID": 76,
+				"EventName": "ChampionKill",
+				"EventTime": 820.2285766601563,
+				"KillerName": "Player1",
+				"VictimName": "Player5"
+			},
+			{
+				"EventID": 77,
+				"EventName": "Multikill",
+				"EventTime": 820.2285766601563,
+				"KillStreak": 2,
+				"KillerName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player9"
+				],
+				"EventID": 78,
+				"EventName": "ChampionKill",
+				"EventTime": 826.582275390625,
+				"KillerName": "Player8",
+				"VictimName": "Player1"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 79,
+				"EventName": "ChampionKill",
+				"EventTime": 827.6051635742188,
+				"KillerName": "Player1",
+				"VictimName": "Player8"
+			},
+			{
+				"EventID": 80,
+				"EventName": "Multikill",
+				"EventTime": 827.6051635742188,
+				"KillStreak": 3,
+				"KillerName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player6"
+				],
+				"EventID": 81,
+				"EventName": "ChampionKill",
+				"EventTime": 841.1923217773438,
+				"KillerName": "Player9",
+				"VictimName": "Player3"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 82,
+				"EventName": "ChampionKill",
+				"EventTime": 870.2615356445313,
+				"KillerName": "Player6",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [],
+				"EventID": 83,
+				"EventName": "ChampionKill",
+				"EventTime": 871.9888916015625,
+				"KillerName": "Player7",
+				"VictimName": "Player4"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 84,
+				"EventName": "ChampionKill",
+				"EventTime": 872.7742309570313,
+				"KillerName": "Player2",
+				"VictimName": "Player6"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player7",
+					"Player9"
+				],
+				"EventID": 85,
+				"EventName": "ChampionKill",
+				"EventTime": 874.3717651367188,
+				"KillerName": "Player8",
+				"VictimName": "Player2"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player9"
+				],
+				"EventID": 86,
+				"EventName": "ChampionKill",
+				"EventTime": 889.60693359375,
+				"KillerName": "Player7",
+				"VictimName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2"
+				],
+				"EventID": 87,
+				"EventName": "ChampionKill",
+				"EventTime": 890.7626342773438,
+				"KillerName": "Player3",
+				"VictimName": "Player5"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8"
+				],
+				"EventID": 88,
+				"EventName": "ChampionKill",
+				"EventTime": 893.6334228515625,
+				"KillerName": "Player9",
+				"VictimName": "Player3"
+			},
+			{
+				"Acer": "Player9",
+				"AcingTeam": "CHAOS",
+				"EventID": 89,
+				"EventName": "Ace",
+				"EventTime": 893.6334228515625
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player7",
+					"Player8"
+				],
+				"EventID": 90,
+				"EventName": "InhibKilled",
+				"EventTime": 897.1362915039063,
+				"InhibKilled": "Inhib_TOrder_L1_P1_196971597_0",
+				"KillerName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player1"
+				],
+				"EventID": 91,
+				"EventName": "ChampionKill",
+				"EventTime": 904.3534545898438,
+				"KillerName": "Player3",
+				"VictimName": "Player9"
+			},
+			{
+				"Assisters": [
+					"Player5"
+				],
+				"EventID": 92,
+				"EventName": "TurretKilled",
+				"EventTime": 905.872802734375,
+				"KillerName": "Player7",
+				"TurretKilled": "Turret_TOrder_L1_P5_1477396591_0"
+			},
+			{
+				"Assisters": [
+					"Player8"
+				],
+				"EventID": 93,
+				"EventName": "TurretKilled",
+				"EventTime": 913.8236083984375,
+				"KillerName": "Player7",
+				"TurretKilled": "Turret_TOrder_L1_P4_2267177885_0"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"Player4"
+				],
+				"EventID": 94,
+				"EventName": "ChampionKill",
+				"EventTime": 925.6636352539063,
+				"KillerName": "ITzStorDz",
+				"VictimName": "Player7"
+			},
+			{
+				"Assisters": [
+					"Player5"
+				],
+				"EventID": 95,
+				"EventName": "ChampionKill",
+				"EventTime": 990.9234619140625,
+				"KillerName": "Player6",
+				"VictimName": "Player4"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player9"
+				],
+				"EventID": 96,
+				"EventName": "ChampionKill",
+				"EventTime": 998.6825561523438,
+				"KillerName": "Player8",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player8"
+				],
+				"EventID": 97,
+				"EventName": "ChampionKill",
+				"EventTime": 1004.9212646484375,
+				"KillerName": "Player9",
+				"VictimName": "Player1"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player6",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 98,
+				"EventName": "ChampionKill",
+				"EventTime": 1010.4964599609375,
+				"KillerName": "Player7",
+				"VictimName": "Player2"
+			},
+			{
+				"Assisters": [
+					"Player1",
+					"Player2",
+					"ITzStorDz"
+				],
+				"EventID": 99,
+				"EventName": "ChampionKill",
+				"EventTime": 1011.5313720703125,
+				"KillerName": "Player3",
+				"VictimName": "Player6"
+			},
+			{
+				"Assisters": [
+					"Player5",
+					"Player8",
+					"Player9"
+				],
+				"EventID": 100,
+				"EventName": "ChampionKill",
+				"EventTime": 1013.5338134765625,
+				"KillerName": "Player7",
+				"VictimName": "Player3"
+			},
+			{
+				"EventID": 101,
+				"EventName": "Multikill",
+				"EventTime": 1013.5338134765625,
+				"KillStreak": 2,
+				"KillerName": "Player7"
+			},
+			{
+				"Acer": "Player7",
+				"AcingTeam": "CHAOS",
+				"EventID": 102,
+				"EventName": "Ace",
+				"EventTime": 1013.5338134765625
+			},
+			{
+				"Assisters": [],
+				"EventID": 103,
+				"EventName": "ChampionKill",
+				"EventTime": 1041.3037109375,
+				"KillerName": "Player4",
+				"VictimName": "Player5"
+			},
+			{
+				"Assisters": [
+					"Player9"
+				],
+				"EventID": 104,
+				"EventName": "ChampionKill",
+				"EventTime": 1049.6697998046876,
+				"KillerName": "Player7",
+				"VictimName": "Player4"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"ITzStorDz",
+					"Player4"
+				],
+				"EventID": 105,
+				"EventName": "ChampionKill",
+				"EventTime": 1054.2886962890626,
+				"KillerName": "Player1",
+				"VictimName": "Player7"
+			},
+			{
+				"Assisters": [
+					"Player7",
+					"Player9"
+				],
+				"EventID": 106,
+				"EventName": "ChampionKill",
+				"EventTime": 1056.9130859375,
+				"KillerName": "Player8",
+				"VictimName": "ITzStorDz"
+			},
+			{
+				"Assisters": [
+					"Player8"
+				],
+				"EventID": 107,
+				"EventName": "ChampionKill",
+				"EventTime": 1068.927978515625,
+				"KillerName": "Player9",
+				"VictimName": "Player3"
+			},
+			{
+				"Assisters": [
+					"Player2",
+					"ITzStorDz",
+					"Player3"
+				],
+				"EventID": 108,
+				"EventName": "ChampionKill",
+				"EventTime": 1069.7950439453126,
+				"KillerName": "Player1",
+				"VictimName": "Player9"
+			},
+			{
+				"Assisters": [
+					"ITzStorDz",
+					"Player3"
+				],
+				"EventID": 109,
+				"EventName": "ChampionKill",
+				"EventTime": 1071.2562255859376,
+				"KillerName": "Player2",
+				"VictimName": "Player8"
+			},
+			{
+				"Assisters": [
+					"Player7",
+					"Player8"
+				],
+				"EventID": 110,
+				"EventName": "ChampionKill",
+				"EventTime": 1071.981689453125,
+				"KillerName": "Player6",
+				"VictimName": "Player1"
+			}
+		]
+	},
+	"gameData": {
+		"gameMode": "KIWI",
+		"gameTime": 1084.3760986328126,
+		"mapName": "Map12",
+		"mapNumber": 12,
+		"mapTerrain": "Default"
+	}
+}

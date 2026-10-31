@@ -1,0 +1,37 @@
+Mayhem Advisor
+Copyright (c) 2026 ItzStorDz. All rights reserved.
+
+This source code is published so that anyone can read it and check what the app
+does on their computer. Publishing it does NOT give you permission to reuse it.
+
+You MAY:
+  - read the code and browse this repository on GitHub;
+  - download the official installers from this repository's Releases page and
+    use Mayhem Advisor for your own personal, non-commercial use.
+
+You may NOT, without prior written permission from ItzStorDz:
+  - copy, modify, translate, or create derivative works of this code or of any
+    part of it (including the user interface, texts, images, and icons);
+  - publish, distribute, share, sublicense, or sell this code, modified or
+    unmodified versions of it, or apps built from it;
+  - remove or change this notice or the author's name.
+
+GitHub's Terms of Service allow other GitHub users to view and fork public
+repositories on GitHub. That allowance does not grant any of the rights listed
+above.
+
+Third-party data and assets included in or downloaded by this project keep
+their own licenses and terms (see CREDITOS.md and datos/CREDITOS.txt). In
+particular, the AramHex data is licensed under CC BY-NC 4.0 by its authors.
+
+Mayhem Advisor isn't endorsed by Riot Games and doesn't reflect the views or
+opinions of Riot Games or anyone officially involved in producing or managing
+Riot Games properties. Riot Games, and all associated properties are trademarks
+or registered trademarks of Riot Games, Inc.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+For permission requests, open an issue at
+https://github.com/ItzStorDz/mayhem-advisor/issues

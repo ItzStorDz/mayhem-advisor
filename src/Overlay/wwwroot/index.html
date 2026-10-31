@@ -1,0 +1,550 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mayhem Advisor</title>
+<style>
+  :root {
+    --bg: #0a0d13; --text: #eef1f5; --muted: #8b93a1; --line: rgba(255, 255, 255, .07);
+    --gold: #c8aa6e; --gold2: #f0d080; --green: #4cd97b; --red: #ff6b6b;
+    --op-a: #ff5a5f; --op-b: #ff9f43; --s-a: #ffe08a; --s-b: #c8902e; --a-a: #c29bff; --a-b: #6c5ce7;
+    --b-a: #6fd3ff; --b-b: #2f80ed; --c-a: #a9b4bf; --c-b: #5f6b78; --d-a: #7d828a; --d-b: #3d4148;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; color: var(--text); user-select: none;
+    font: 14px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+    background: radial-gradient(900px 500px at 75% -10%, rgba(120, 90, 255, .14), transparent 60%),
+                radial-gradient(800px 500px at 10% 110%, rgba(240, 190, 90, .09), transparent 60%), var(--bg); }
+  ::-webkit-scrollbar { width: 10px; } ::-webkit-scrollbar-thumb { background: #243041; border-radius: 99px; border: 2px solid var(--bg); }
+  .app { display: grid; grid-template-columns: 220px 1fr; height: 100%; }
+  img { display: block; }
+
+  /* Menú */
+  nav { padding: 20px 14px 14px; background: rgba(255, 255, 255, .02); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin: 0 8px 24px; }
+  .hex { width: 34px; height: 34px; flex: none; display: grid; place-items: center; font-weight: 900; color: #1a1206;
+    background: linear-gradient(145deg, #ffe7a3, #c8902e); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+  .brand b { font-size: 15px; } .brand small { display: block; color: var(--muted); font-size: 11.5px; }
+  nav button { all: unset; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; color: #9aa3b2; font-weight: 600; }
+  nav button i { width: 8px; height: 8px; border-radius: 3px; background: #3a4352; }
+  nav button:hover { color: var(--text); background: rgba(255, 255, 255, .03); }
+  nav button.on { color: #fff; background: linear-gradient(90deg, rgba(240, 200, 110, .18), rgba(240, 200, 110, .02)); box-shadow: inset 3px 0 0 var(--gold2); }
+  nav button.on i { background: var(--gold2); }
+  .nav-foot { margin-top: auto; padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, .03); border: 1px solid var(--line); font-size: 12px; color: #9aa3b2; }
+  .nav-foot b { color: var(--green); } .nav-foot b.off { color: var(--muted); }
+
+  /* Contenido */
+  main { overflow-y: auto; padding: 22px 28px 32px; }
+  section { display: flex; flex-direction: column; gap: 16px; animation: fade .2s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  .top { display: flex; align-items: center; gap: 14px; }
+  .top h1 { font-size: 24px; font-weight: 800; flex: 1; letter-spacing: -.01em; }
+  .top h1 span { color: var(--muted); font-weight: 600; font-size: 15px; margin-left: 8px; }
+  .lang { display: flex; padding: 3px; border-radius: 99px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08); }
+  .lang button { all: unset; cursor: pointer; padding: 5px 13px; border-radius: 99px; font-size: 12.5px; font-weight: 800; color: #9aa3b2; }
+  .lang button.on { color: #1a1206; background: linear-gradient(180deg, #ffe7a3, #d9a64a); }
+  .status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .status.live { background: rgba(76, 217, 123, .1); border-color: rgba(76, 217, 123, .3); } .status.live i { background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .status.wait i { background: var(--gold2); }
+  .card { background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .02)); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; min-width: 0; }
+  .lbl { font-size: 11px; font-weight: 800; letter-spacing: .12em; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; gap: 10px; }
+  .lbl em { font-style: normal; color: var(--gold2); letter-spacing: 0; font-weight: 700; }
+  .muted { color: var(--muted); } .up { color: var(--green); } .down { color: var(--red); } .gold { color: var(--gold2); }
+  .empty { color: var(--muted); padding: 26px; text-align: center; border: 1px dashed rgba(200, 170, 110, .25); border-radius: 16px; }
+  .btn { all: unset; cursor: pointer; padding: 8px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; color: #1a1206; background: linear-gradient(180deg, #ffe7a3, #d9a64a); white-space: nowrap; }
+  .btn.ghost { color: var(--text); background: rgba(255, 255, 255, .08); }
+  .btn:hover { filter: brightness(1.08); }
+  .pill { display: inline-block; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+  .pill.g { color: var(--green); background: rgba(76, 217, 123, .12); } .pill.r { color: #ff8a8a; background: rgba(255, 107, 107, .12); }
+  .pill.n { color: #c9d1da; background: rgba(255, 255, 255, .08); }
+  .ico { width: 34px; height: 34px; border-radius: 10px; flex: none; background: #000; object-fit: cover; }
+  .ico.r { border-radius: 50%; background: #111; }
+  .tier { display: inline-grid; place-items: center; min-width: 28px; height: 22px; padding: 0 7px; border-radius: 7px; font-size: 12px; font-weight: 800;
+    color: #120d06; background: linear-gradient(145deg, var(--ga), var(--gb)); }
+  .g-OP { --ga: var(--op-a); --gb: var(--op-b); } .g-S { --ga: var(--s-a); --gb: var(--s-b); } .g-A { --ga: var(--a-a); --gb: var(--a-b); }
+  .g-B { --ga: var(--b-a); --gb: var(--b-b); } .g-C { --ga: var(--c-a); --gb: var(--c-b); } .g-D, .g-F { --ga: var(--d-a); --gb: var(--d-b); }
+  .tier.g-OP, .tier.g-A, .tier.g-B, .tier.g-D, .tier.g-F { color: #fff; }
+  .ascore { display: inline-flex; align-items: center; gap: 6px; flex: none; } .ascore b { font-size: 15px; font-variant-numeric: tabular-nums; min-width: 34px; text-align: right; }
+  .conf { display: inline-flex; gap: 2px; vertical-align: middle; margin-left: 4px; } .conf i { width: 4px; height: 10px; border-radius: 1px; background: rgba(255,255,255,.18); }
+  .conf.c1 i:nth-child(-n+1), .conf.c2 i:nth-child(-n+2), .conf.c3 i { background: var(--gold2, #f0c86e); }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row + .row { margin-top: 9px; }
+  .row .t { flex: 1; min-width: 0; } .row .t b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .t span { color: var(--muted); font-size: 12px; }
+  input.search { all: unset; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); font-size: 14px; width: 300px; user-select: text; }
+  input.search:focus { border-color: var(--gold); }
+
+  /* Inicio */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .stat { min-width: 0; } .stat b { display: block; font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+  .stat span { color: var(--muted); font-size: 12.5px; } .stat small { display: block; margin-top: 6px; font-size: 12px; font-weight: 700; }
+  .stat .mini { display: flex; align-items: center; gap: 10px; } .stat .mini b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .mini > div { min-width: 0; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  .side { display: flex; flex-direction: column; gap: 14px; }
+  .match { display: grid; grid-template-columns: 5px 46px 120px 86px auto minmax(0, 1fr) 90px; align-items: center; gap: 12px; padding: 9px 12px 9px 0;
+    border-radius: 14px; margin-bottom: 7px; border: 1px solid rgba(255, 255, 255, .05); overflow: hidden; }
+  .match .bar { align-self: stretch; } .match.win .bar { background: var(--green); } .match.loss .bar { background: var(--red); }
+  .match.win { background: linear-gradient(90deg, rgba(76, 217, 123, .09), rgba(255, 255, 255, .02) 40%); }
+  .match.loss { background: linear-gradient(90deg, rgba(255, 107, 107, .09), rgba(255, 255, 255, .02) 40%); }
+  .match .ch { width: 46px; height: 46px; border-radius: 12px; }
+  .match .r b { display: block; } .match .r span, .match .kda span { color: var(--muted); font-size: 12px; }
+  .match .r span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .match .kda b { font-size: 15px; } .match .kda span { display: block; }
+  .icons { display: flex; gap: 4px; flex-wrap: wrap; } .icons img { width: 26px; height: 26px; border-radius: 7px; border: 1px solid rgba(255, 255, 255, .12); background: #000; }
+  .icons.ai img { border-radius: 50%; background: #111; }
+  .when { text-align: right; color: var(--muted); font-size: 12px; }
+  .chart { display: flex; align-items: flex-end; gap: 6px; height: 56px; } .chart i { flex: 1; border-radius: 4px 4px 2px 2px; min-height: 8px; }
+  .tip { background: linear-gradient(135deg, rgba(240, 200, 110, .14), rgba(120, 90, 255, .09)); border-color: rgba(240, 200, 110, .3); }
+  .tip p { font-size: 13.5px; line-height: 1.45; } .tip p + p { margin-top: 8px; }
+  .livecard { display: flex; align-items: center; gap: 14px; }
+
+  /* Campeones */
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .chip { all: unset; cursor: pointer; padding: 8px 14px; border-radius: 99px; font-size: 13px; font-weight: 700; color: #c9d1da; background: rgba(255, 255, 255, .06); }
+  .chip.on { color: #1a1206; background: linear-gradient(180deg, #ffe7a3, #d9a64a); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .tile { cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .03); border: 1px solid var(--line); }
+  .tile:hover { border-color: rgba(240, 200, 110, .45); background: rgba(240, 200, 110, .06); }
+  .tile img { width: 40px; height: 40px; border-radius: 10px; } .tile .t { flex: 1; min-width: 0; }
+  .tile .t b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .tile .t span { color: var(--muted); font-size: 12px; }
+  .hero { position: relative; overflow: hidden; padding: 0; height: 200px; }
+  .hero > img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; opacity: .5; }
+  .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--bg) 10%, rgba(10, 13, 19, .55) 55%, transparent); }
+  .hero .in { position: relative; z-index: 1; height: 100%; display: flex; gap: 18px; align-items: center; padding: 24px 26px; }
+  .hero .in > img { width: 92px; height: 92px; border-radius: 22px; border: 2px solid var(--gold2); }
+  .hero h2 { font-size: 32px; font-weight: 800; } .hero .roles { color: #c9d1da; margin: 2px 0 10px; }
+  .hero .pills { display: flex; gap: 8px; flex-wrap: wrap; } .hero .pills .pill { font-size: 13.5px; padding: 5px 12px; }
+  .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .back { all: unset; cursor: pointer; color: var(--gold2); font-weight: 700; }
+
+  /* Aumentos */
+  .augs { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .aug { display: flex; gap: 12px; align-items: center; padding: 14px 16px; }
+  .aug img { width: 48px; height: 48px; border-radius: 50%; background: #111; border: 2px solid var(--rc); flex: none; }
+  .aug .t { flex: 1; min-width: 0; } .aug .rar { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--rc); }
+  .aug .t b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .aug .t p { color: var(--muted); font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .r-p { --rc: #c29bff; } .r-g { --rc: #f0d080; } .r-s { --rc: #c9d1da; }
+  .picker { position: relative; }
+  .picker .list { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; width: 300px; max-height: 320px; overflow-y: auto; padding: 6px; border-radius: 14px;
+    background: #121823; border: 1px solid rgba(240, 200, 110, .25); box-shadow: 0 20px 40px -12px #000; }
+  .picker .list div { cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 9px; }
+  .picker .list div:hover { background: rgba(240, 200, 110, .1); } .picker .list img { width: 28px; height: 28px; border-radius: 7px; }
+
+  /* Ajustes */
+  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .settings .col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .opt { cursor: pointer; display: flex; align-items: center; gap: 16px; padding: 15px 18px; }
+  .opt > div { flex: 1; } .opt b { display: block; font-size: 15px; } .opt span { color: var(--muted); font-size: 13px; }
+  .opt.sub { margin-left: 28px; } .opt.off { opacity: .45; pointer-events: none; }
+  .opt input { display: none; }
+  .sw { width: 46px; height: 26px; border-radius: 99px; background: #2a3442; position: relative; flex: none; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #c9d1da; transition: transform .2s, background .2s; }
+  .opt input:checked + .sw { background: linear-gradient(90deg, #d9a64a, #f0d080); }
+  .opt input:checked + .sw::after { transform: translateX(20px); background: #1a1206; }
+  .langs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+  .langs button { all: unset; cursor: pointer; padding: 16px; border-radius: 14px; background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .08); }
+  .langs button b { display: block; font-size: 18px; } .langs button span { color: var(--muted); font-size: 12.5px; }
+  .langs button.on { background: linear-gradient(135deg, rgba(240, 200, 110, .22), rgba(240, 200, 110, .06)); border-color: var(--gold2); }
+
+  /* Acerca de */
+  .about .hero2 { display: flex; gap: 18px; align-items: center; } .about .hero2 .hex { width: 70px; height: 70px; font-size: 30px; }
+  .about h2 { font-size: 26px; } .about p { margin: 6px 0; color: #d4d9e0; }
+  .credit { display: flex; gap: 12px; margin: 7px 0; } .credit b { color: var(--gold2); min-width: 150px; }
+  .hidden { display: none !important; }
+
+  /* Ventanas estrechas */
+  @media (max-width: 1150px) { .stats { grid-template-columns: repeat(3, 1fr); } .cols { grid-template-columns: 1fr; } .three { grid-template-columns: 1fr; } .settings { grid-template-columns: 1fr; }
+    .match { grid-template-columns: 5px 42px 110px 80px minmax(0, 1fr) 80px; } .match .icons:not(.ai) { display: none; } }
+</style>
+<link rel="stylesheet" href="partidas.css">
+</head>
+<body>
+<div class="app">
+  <nav>
+    <div class="brand"><span class="hex">M</span><div><b>Mayhem Advisor</b><small data-t="mode"></small></div></div>
+    <button data-tab="home" class="on"><i></i><span data-t="nav.home"></span></button>
+    <button data-tab="games"><i></i><span data-t="nav.games"></span></button>
+    <button data-tab="champs"><i></i><span data-t="nav.champs"></span></button>
+    <button data-tab="augs"><i></i><span data-t="nav.augs"></span></button>
+    <button data-tab="settings"><i></i><span data-t="nav.settings"></span></button>
+    <button data-tab="about"><i></i><span data-t="nav.about"></span></button>
+    <div class="nav-foot"><span data-t="nav.auto"></span>: <b id="footAuto">–</b><br><span id="footGames"></span></div>
+  </nav>
+
+  <main>
+    <!-- INICIO -->
+    <section id="home">
+      <div class="top"><h1 id="hello"></h1><div class="status" id="status"><i></i><span></span></div><div class="lang" data-lang></div></div>
+      <div class="card livecard hidden" id="liveCard"></div>
+      <div class="card hidden" id="statsCard"><div class="lbl"><span data-t="home.stats"></span><em id="statsRange"></em></div><div class="stats" id="stats"></div></div>
+      <div class="cols">
+        <div class="card"><div class="lbl"><span data-t="home.history"></span><em id="historyCount"></em></div><div id="history"></div></div>
+        <div class="side" id="homeSide"></div>
+      </div>
+    </section>
+
+    <!-- PARTIDAS (partidas.js) -->
+    <section id="games" class="hidden">
+      <div class="top"><h1 id="gamesTitle"></h1><div class="lang" data-lang></div></div>
+      <div id="gamesBody" style="display:flex;flex-direction:column;gap:16px"></div>
+    </section>
+
+    <!-- CAMPEONES -->
+    <section id="champs" class="hidden">
+      <div class="top"><h1><b data-t="nav.champs"></b><span id="champCount"></span></h1><div class="lang" data-lang></div></div>
+      <div id="champList">
+        <div class="toolbar" style="margin-bottom:14px"><input class="search" id="champSearch">
+          <button class="chip on" data-cf="all"></button><button class="chip" data-cf="mine"></button><button class="chip" data-cf="top"></button></div>
+        <div class="grid" id="champGrid"></div>
+      </div>
+      <div id="champDetail" class="hidden"></div>
+    </section>
+
+    <!-- AUMENTOS -->
+    <section id="augs" class="hidden">
+      <div class="top"><h1><b data-t="nav.augs"></b><span data-t="augs.sub"></span></h1><div class="lang" data-lang></div></div>
+      <div class="toolbar">
+        <div class="picker"><input class="search" id="augSearch"><div class="list hidden" id="augPick"></div></div>
+        <button class="chip on" data-rf="all"></button><button class="chip" data-rf="prismatic"></button><button class="chip" data-rf="gold"></button><button class="chip" data-rf="silver"></button>
+        <span class="muted" style="margin-left:auto;font-size:13px" data-t="augs.note"></span>
+      </div>
+      <div id="augHead"></div>
+      <div class="augs" id="augGrid"></div>
+      <div class="card tip"><div class="lbl gold" data-t="augs.tipTitle"></div><p data-t="augs.tip"></p></div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section id="settings" class="hidden">
+      <div class="top"><h1 data-t="nav.settings"></h1><div class="lang" data-lang></div></div>
+      <div class="settings">
+        <div class="col">
+          <div class="lbl" style="margin:0" data-t="set.game"></div>
+          <label class="card opt"><div><b data-t="set.accept"></b><span data-t="set.acceptSub"></span></div><input type="checkbox" data-key="autoAccept"><i class="sw"></i></label>
+          <label class="card opt sub" id="optOnly"><div><b data-t="set.only"></b><span data-t="set.onlySub"></span></div><input type="checkbox" data-key="autoAcceptOnlyMayhem"><i class="sw"></i></label>
+          <label class="card opt"><div><b data-t="set.panel"></b><span data-t="set.panelSub"></span></div><input type="checkbox" data-key="showPanel"><i class="sw"></i></label>
+          <label class="card opt"><div><b data-t="set.augTab"></b><span data-t="set.augTabSub"></span></div><input type="checkbox" data-key="autoAugmentsTab"><i class="sw"></i></label>
+          <label class="card opt"><div><b data-t="set.shop"></b><span data-t="set.shopSub"></span></div><input type="checkbox" data-key="shopItemSet"><i class="sw"></i></label>
+          <div class="lbl" style="margin:8px 0 0">PC</div>
+          <label class="card opt"><div><b data-t="set.startup"></b><span data-t="set.startupSub"></span></div><input type="checkbox" data-key="startup"><i class="sw"></i></label>
+        </div>
+        <div class="col">
+          <div class="lbl" style="margin:0">IDIOMA · LANGUAGE</div>
+          <div class="card langs"><button data-setlang="es"><b>Español</b><span>App, panel del juego y nombres de objetos y aumentos</span></button>
+            <button data-setlang="en"><b>English</b><span>App, in-game panel and item &amp; augment names</span></button></div>
+          <div class="lbl" style="margin:8px 0 0" data-t="set.data"></div>
+          <div class="card row"><div class="t"><b data-t="set.saved"></b><span id="savedText"></span></div><button class="btn" id="syncBtn" data-t="set.syncNow"></button></div>
+          <div class="card row hidden" id="adminData"><div class="t"><b data-t="set.folder"></b><span data-t="set.folderSub"></span></div><button class="btn ghost" id="openData" data-t="set.open"></button></div>
+          <div class="card muted" style="font-size:12.5px" id="setFoot"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACERCA DE -->
+    <section id="about" class="hidden">
+      <div class="top"><h1 data-t="nav.about"></h1><div class="lang" data-lang></div></div>
+      <div class="about" style="max-width:780px;display:flex;flex-direction:column;gap:14px">
+        <div class="card hero2"><span class="hex">M</span><div><h2>Mayhem Advisor</h2><div class="muted" id="aboutVersion"></div>
+          <div class="gold" style="font-weight:700;margin-top:6px" data-t="madeBy"></div></div></div>
+        <div class="card"><div class="lbl" data-t="about.how"></div><p data-t="about.howText"></p><p class="muted" data-t="about.tray"></p></div>
+        <div class="card"><div class="lbl" data-t="about.credits"></div>
+          <div class="credit"><b>mayhemmeta.com</b><span data-t="about.c1"></span></div>
+          <div class="credit"><b>AramHex</b><span data-t="about.c4"></span></div>
+          <div class="credit"><b>ARAMKit</b><span data-t="about.c5"></span></div>
+          <div class="credit"><b>CommunityDragon</b><span data-t="about.c2"></span></div>
+          <div class="credit"><b data-t="about.yours"></b><span data-t="about.c3"></span></div>
+          <p class="muted" style="font-size:12px;margin-top:12px" data-t="about.legal"></p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="partidas.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const send = m => window.chrome.webview.postMessage(m);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// ── Textos en los dos idiomas ──
+const T = {
+  es: {
+    mode: "ARAM: Caos", "nav.home": "Inicio", "nav.games": "Partidas", "nav.champs": "Campeones", "nav.augs": "Aumentos", "nav.settings": "Ajustes", "nav.about": "Acerca de",
+    "nav.auto": "Aceptar partida", hello: n => n ? `Hola, ${n}` : "¡Hola!", games: n => `${n} partidas guardadas`, level: "nivel",
+    "home.stats": "TUS ESTADÍSTICAS EN ARAM: CAOS", "home.history": "HISTORIAL DE PARTIDAS", last: n => `últimas ${n} partidas`,
+    win: "Victoria", loss: "Derrota", winrate: "victorias", kdaAvg: "KDA medio", dmg: "daño por partida", bestChamp: "tu mejor campeón", starAug: "tu aumento estrella",
+    vsWeek: d => `${d >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(d * 100))} % vs. la semana pasada`, gamesWr: (g, w) => `${g} partidas · ${w}`, timesPicked: g => `elegido ${g} veces`,
+    last10: "TUS ÚLTIMAS 10", record: (w, l) => `${w} victorias · ${l} derrotas`, streak: (w, n) => ` · racha: <b class="${w ? "up" : "down"}">${n} ${w ? (n === 1 ? "victoria" : "victorias") : (n === 1 ? "derrota" : "derrotas")}</b>`,
+    topChamps: "CAMPEONES QUE MÁS JUEGAS", tip: "CONSEJO", min: m => `${m} min`,
+    noHistory: "Aún no hay partidas tuyas guardadas. Abre el cliente de LoL: la app copia tu historial de ARAM: Caos sola (o pulsa «Copiar ahora» en Ajustes).",
+    liveIn: c => `En partida con <b>${c}</b>`, liveNext: n => `compra ahora: <b class="gold">${n}</b>`, liveSelect: "Selección de campeón", liveBest: n => `Mejor opción del banco: <b class="gold">${n}</b>`,
+    champSearch: "Buscar campeón…", cfAll: "Todos", cfMine: "Los que juego", cfTop: "Mejor tier", champCount: n => `${n} campeones`, patch: p => ` · parche ${p}`,
+    noChamps: "No hay campeones con ese filtro.", you: (w, g) => `Tú: ${w} V · ${g - w} D`, wrPill: w => `${w} de victorias`, gamesPill: g => `${g} partidas`, tierPill: tr => `Tier ${tr}`,
+    back: "‹ Todos los campeones", build: "BUILD MÁS POPULAR", wr: "% victorias", prismatic: "PRISMÁTICOS", gold: "DE ORO", silver: "DE PLATA", bestAugs: "AUMENTOS CON MEJOR NOTA", confTip: c => `Fiabilidad ${c}/3 (por las partidas que hay)`,
+    nGames: g => g == 1 ? "1 partida" : `${g} partidas`, noData: "Sin datos suficientes todavía.", loading: "Cargando…",
+    "augs.sub": "los mejores para cada campeón", "augs.note": "Ordenados por % de victorias · mínimo 30 partidas", rfAll: "Todos", rfP: "Prismáticos", rfG: "Oro", rfS: "Plata",
+    rarP: "PRISMÁTICO", rarG: "ORO", rarS: "PLATA", withChamp: (g, c) => `${g} partidas con ${c}`,
+    "augs.tipTitle": "EN LA PARTIDA", "augs.tip": "Cuando te salgan las cartas, el panel te enseña estos mismos aumentos de la rareza que te toca y te avisa si alguno está en tus cartas.",
+    "set.game": "PARTIDA", "set.accept": "Aceptar partida automáticamente", "set.acceptSub": "Cuando salga «¡Partida encontrada!», la app pulsa Aceptar por ti.",
+    "set.only": "Solo partidas de ARAM: Caos", "set.onlySub": "Las demás colas las aceptas tú.", "set.panel": "Mostrar panel en la partida", "set.panelSub": "Compra, Adaptar y los mejores aumentos dentro del juego.",
+    "set.shop": "Mandar la build a la tienda del juego", "set.shopSub": "En la selección de campeón se guarda la build de la app (y qué cambiar contra daño mágico o físico) en las builds recomendadas de la tienda.",
+    "set.augTab": "Saltar a «Aumentos» al salir las cartas", "set.augTabSub": "El panel te enseña los mejores de esa rareza y vuelve solo al elegir.",
+    "set.startup": "Iniciar con Windows", "set.startupSub": "Se abre sola al encender el PC y se queda junto al reloj.", "set.data": "DATOS",
+    "set.saved": "Partidas guardadas", saved: n => `${n} partidas · se copian solas del cliente después de cada partida`, "set.syncNow": "Copiar ahora", syncing: "Copiando…",
+    "set.folder": "Carpeta de datos", "set.folderSub": "Tus partidas y el registro (overlay.log), por si hay que revisar un fallo.", "set.open": "Abrir",
+    setFoot: v => `Mayhem Advisor ${v} · Creado por ItzStorDz · © 2026`,
+    "about.how": "CÓMO FUNCIONA", "about.howText": "Lee la pantalla del juego con el OCR de Windows (sin tocar los archivos de LoL), puntúa cada aumento de 0 a 100 y te dice qué comprar según tu campeón, tus aumentos y el equipo enemigo. Todo se calcula en tu PC.",
+    "about.tray": "Clic derecho en el icono dorado de la bandeja (junto al reloj) para abrir esta ventana, cambiar los ajustes o salir.", "about.credits": "CRÉDITOS DE DATOS",
+    "about.c1": "Tier, % de victorias, objetos, hechizos y aumentos por campeón en ARAM: Caos.", "about.c2": "Datos del juego: campeones, objetos, aumentos, iconos y precios.",
+    "about.c4": "Notas de los aumentos por campeón (servidor chino, github.com/czgreat/aramhex-data, CC BY-NC 4.0).", "about.c5": "Aumentos que AramHex aún no tiene y estilos de build con cada aumento (aramkit.com).",
+    "about.yours": "Tus partidas", "about.c3": "Se leen del cliente de LoL de tu PC y se guardan solo en tu PC.",
+    "about.legal": "Mayhem Advisor es una app independiente creada por ItzStorDz. No está afiliada a Riot Games ni avalada por Riot Games ni por los sitios citados. League of Legends y todos sus recursos son marcas o propiedad de Riot Games, Inc.",
+    version: v => `Versión ${v} · Consejero de aumentos, objetos y hechizos para ARAM: Caos`, on: "ON", off: "OFF", madeBy: "Creado por ItzStorDz · © 2026",
+  },
+  en: {
+    mode: "ARAM: Mayhem", "nav.home": "Home", "nav.games": "Games", "nav.champs": "Champions", "nav.augs": "Augments", "nav.settings": "Settings", "nav.about": "About",
+    "nav.auto": "Auto-accept", hello: n => n ? `Hi, ${n}` : "Hi!", games: n => `${n} games saved`, level: "level",
+    "home.stats": "YOUR ARAM: MAYHEM STATS", "home.history": "MATCH HISTORY", last: n => `last ${n} games`,
+    win: "Victory", loss: "Defeat", winrate: "win rate", kdaAvg: "average KDA", dmg: "damage per game", bestChamp: "your best champion", starAug: "your star augment",
+    vsWeek: d => `${d >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(d * 100))}% vs. last week`, gamesWr: (g, w) => `${g} games · ${w}`, timesPicked: g => `picked ${g} times`,
+    last10: "YOUR LAST 10", record: (w, l) => `${w} wins · ${l} losses`, streak: (w, n) => ` · streak: <b class="${w ? "up" : "down"}">${n} ${w ? (n === 1 ? "win" : "wins") : (n === 1 ? "loss" : "losses")}</b>`,
+    topChamps: "MOST PLAYED CHAMPIONS", tip: "TIP", min: m => `${m} min`,
+    noHistory: "No games of yours saved yet. Open the League client: the app copies your ARAM: Mayhem history on its own (or press “Copy now” in Settings).",
+    liveIn: c => `In game with <b>${c}</b>`, liveNext: n => `buy now: <b class="gold">${n}</b>`, liveSelect: "Champion select", liveBest: n => `Best bench pick: <b class="gold">${n}</b>`,
+    champSearch: "Search champion…", cfAll: "All", cfMine: "I play", cfTop: "Best tier", champCount: n => `${n} champions`, patch: p => ` · patch ${p}`,
+    noChamps: "No champions with that filter.", you: (w, g) => `You: ${w} W · ${g - w} L`, wrPill: w => `${w} win rate`, gamesPill: g => `${g} games`, tierPill: tr => `${tr} tier`,
+    back: "‹ All champions", build: "MOST POPULAR BUILD", wr: "win rate", prismatic: "PRISMATIC", gold: "GOLD", silver: "SILVER", bestAugs: "TOP-SCORED AUGMENTS", confTip: c => `Confidence ${c}/3 (from the number of games)`,
+    nGames: g => g == 1 ? "1 game" : `${g} games`, noData: "Not enough data yet.", loading: "Loading…",
+    "augs.sub": "the best for each champion", "augs.note": "Sorted by win rate · at least 30 games", rfAll: "All", rfP: "Prismatic", rfG: "Gold", rfS: "Silver",
+    rarP: "PRISMATIC", rarG: "GOLD", rarS: "SILVER", withChamp: (g, c) => `${g} games with ${c}`,
+    "augs.tipTitle": "IN GAME", "augs.tip": "When your cards show up, the panel shows these same augments for that rarity and tells you if one of them is in your cards.",
+    "set.game": "GAME", "set.accept": "Auto-accept matches", "set.acceptSub": "When “Match found!” pops up, the app presses Accept for you.",
+    "set.only": "Only ARAM: Mayhem matches", "set.onlySub": "You accept other queues yourself.", "set.panel": "Show in-game panel", "set.panelSub": "Buy, Adapt and best augments inside the game.",
+    "set.shop": "Send the build to the in-game shop", "set.shopSub": "In champion select the app's build (and what to change against magic or physical damage) is saved in the shop's recommended builds.",
+    "set.augTab": "Jump to “Augments” when cards show up", "set.augTabSub": "The panel shows the best of that rarity and goes back after you pick.",
+    "set.startup": "Start with Windows", "set.startupSub": "Opens when your PC starts and stays next to the clock.", "set.data": "DATA",
+    "set.saved": "Saved games", saved: n => `${n} games · copied from the client after each game`, "set.syncNow": "Copy now", syncing: "Copying…",
+    "set.folder": "Data folder", "set.folderSub": "Your games and the log (overlay.log), in case a bug needs checking.", "set.open": "Open",
+    setFoot: v => `Mayhem Advisor ${v} · Made by ItzStorDz · © 2026`,
+    "about.how": "HOW IT WORKS", "about.howText": "It reads the game screen with Windows OCR (without touching any LoL files), scores each augment from 0 to 100 and tells you what to buy based on your champion, your augments and the enemy team. Everything runs on your PC.",
+    "about.tray": "Right-click the gold icon in the tray (next to the clock) to open this window, change settings or quit.", "about.credits": "DATA CREDITS",
+    "about.c1": "Tier, win rate, items, spells and augments per champion in ARAM: Mayhem.", "about.c2": "Game data: champions, items, augments, icons and prices.",
+    "about.c4": "Augment scores per champion (Chinese server, github.com/czgreat/aramhex-data, CC BY-NC 4.0).", "about.c5": "Augments AramHex doesn't have yet and build styles with each augment (aramkit.com).",
+    "about.yours": "Your games", "about.c3": "Read from the League client on your PC and saved only on your PC.",
+    "about.legal": "Mayhem Advisor is an independent app made by ItzStorDz. It is not affiliated with or endorsed by Riot Games or the sites above. League of Legends and all related assets are trademarks or property of Riot Games, Inc.",
+    version: v => `Version ${v} · Augment, item and spell advisor for ARAM: Mayhem`, on: "ON", off: "OFF", madeBy: "Made by ItzStorDz · © 2026",
+  },
+};
+let lang = "es";
+const t = (k, ...a) => { const v = T[lang][k] ?? T.es[k] ?? k; return typeof v === "function" ? v(...a) : v; };
+const pct = (v, d = 0) => v == null ? "–" : (v * 100).toLocaleString(lang, { minimumFractionDigits: d, maximumFractionDigits: d }) + (lang === "es" ? " %" : "%");
+const num = v => Math.round(v ?? 0).toLocaleString(lang);
+const dec = (v, d = 1) => (v ?? 0).toLocaleString(lang, { minimumFractionDigits: d, maximumFractionDigits: d });
+const when = ts => new Date(ts).toLocaleString(lang, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const tierChip = tr => tr ? `<span class="tier g-${esc(tr)}">${esc(tr)}</span>` : "";
+// Nota de un aumento (rango + 0-100) y su fiabilidad en 3 rayitas. Nunca su % de victorias: Riot no lo permite en apps.
+const augScore = a => `<span class="ascore"><span class="tier g-${esc(a.grade)}">${esc(a.grade)}</span><b>${dec(a.score)}</b></span>`;
+const confBars = c => `<span class="conf c${c}" title="${esc(t("confTip", c))}"><i></i><i></i><i></i></span>`;
+
+// ── Estado ──
+let init = null, home = null, settings = null, live = null, champDetail = null, augChampion = null, champFilter = "all", rarityFilter = "all";
+
+function applyStatic() {
+  document.documentElement.lang = lang;
+  $$("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
+  $$("[data-lang]").forEach(el => el.innerHTML = ["es", "en"].map(l => `<button data-setlang="${l}" class="${l === lang ? "on" : ""}">${l.toUpperCase()}</button>`).join(""));
+  $$(".langs [data-setlang]").forEach(b => b.classList.toggle("on", b.dataset.setlang === lang));
+  $("#champSearch").placeholder = t("champSearch"); $("#augSearch").placeholder = t("champSearch");
+  $('[data-cf="all"]').textContent = t("cfAll"); $('[data-cf="mine"]').textContent = t("cfMine"); $('[data-cf="top"]').textContent = t("cfTop");
+  $('[data-rf="all"]').textContent = t("rfAll"); $('[data-rf="prismatic"]').textContent = t("rfP"); $('[data-rf="gold"]').textContent = t("rfG"); $('[data-rf="silver"]').textContent = t("rfS");
+}
+function renderAll() { applyStatic(); renderHome(); renderLive(); renderChamps(); renderChampDetail(); renderAugs(); renderSettings(); renderAbout(); renderGames(); }
+
+// Pestañas
+$$("nav button[data-tab]").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function showTab(id) {
+  $$("nav button[data-tab]").forEach(x => x.classList.toggle("on", x.dataset.tab === id));
+  ["home", "games", "champs", "augs", "settings", "about"].forEach(s => $("#" + s).classList.toggle("hidden", s !== id));
+  if (id === "home") send({ type: "home" });
+  if (id === "games") { gameOpen = null; gameDetail = null; renderGames(); send({ type: "games" }); }
+}
+const PAGES = { inicio: "home", partidas: "games", acerca: "about", campeones: "champs", aumentos: "augs", ajustes: "settings", vivo: "home" };
+const goto = page => page?.startsWith("partida:") ? openGame(decodeURIComponent(page.slice(8))) : PAGES[page] && showTab(PAGES[page]);
+// Cambiar idioma: lo guarda el programa y nos devuelve todo traducido (también los nombres de objetos y aumentos).
+document.addEventListener("click", e => { const b = e.target.closest("[data-setlang]"); if (b && b.dataset.setlang !== lang) send({ type: "setLanguage", value: b.dataset.setlang }); });
+
+window.chrome.webview.addEventListener("message", e => {
+  const m = e.data;
+  if (m.type === "init") {
+    init = m; if (m.lang) lang = m.lang;
+    renderAll();
+    if (!augChampion) pickDefaultAug(); else send({ type: "champion", champion: augChampion.want });
+    if (champDetail) send({ type: "champion", champion: champDetail.want });
+  }
+  if (m.type === "home") { home = m; renderHome(); }
+  if (m.type === "settings") { settings = m; if (m.language && m.language !== lang) { lang = m.language; renderAll(); } else renderSettings(); }
+  if (m.type === "live") { live = m; renderLive(); }
+  if (m.type === "champion") {
+    if (m.alias === champDetail?.want) { champDetail = { ...m, want: m.alias }; renderChampDetail(); }
+    if (m.alias === augChampion?.want) { augChampion = { ...m, want: m.alias }; renderAugs(); }
+  }
+  if (m.type === "goto") goto(m.page);
+});
+
+// ── Inicio ──
+function renderHome() {
+  const p = home?.profile;
+  $("#hello").innerHTML = esc(t("hello", p?.name)) + (p ? `<span>${p.tag ? "#" + esc(p.tag) : ""}${p.level ? ` · ${t("level")} ${p.level}` : ""}</span>` : "");
+  const s = home?.stats;
+  $("#statsCard").classList.toggle("hidden", !s);
+  if (s) {
+    $("#statsRange").textContent = t("last", s.games);
+    $("#stats").innerHTML = `
+      <div class="stat"><b class="${s.winRate >= .5 ? "up" : "down"}">${pct(s.winRate)}</b><span>${t("winrate")}</span>${s.trend != null ? `<small class="${s.trend >= 0 ? "up" : "down"}">${t("vsWeek", s.trend)}</small>` : `<small class="muted">${t("record", s.wins, s.losses)}</small>`}</div>
+      <div class="stat"><b>${dec(s.kda)}</b><span>${t("kdaAvg")}</span><small class="gold">${dec(s.kills)} / ${dec(s.deaths)} / ${dec(s.assists)}</small></div>
+      <div class="stat"><b>${dec(s.damage / 1000)} k</b><span>${t("dmg")}</span></div>
+      <div class="stat">${s.best ? `<div class="mini"><img class="ico" src="${esc(s.best.icon)}"><div><b>${esc(s.best.name)}</b><span>${t("gamesWr", s.best.games, pct(s.best.winRate))}</span></div></div><small class="gold">${t("bestChamp")}</small>` : ""}</div>
+      <div class="stat">${s.star ? `<div class="mini"><img class="ico r" src="${esc(s.star.icon)}"><div><b>${esc(s.star.name)}</b><span>${t("timesPicked", s.star.games)}</span></div></div><small class="gold">${t("starAug")}</small>` : ""}</div>`;
+  }
+  const h = home?.history ?? [];
+  $("#historyCount").textContent = h.length ? t("last", h.length) : "";
+  $("#history").innerHTML = h.length ? h.map(g => `
+    <div class="match ${g.win ? "win" : "loss"}"><i class="bar"></i><img class="ch" src="${esc(g.icon)}">
+      <div class="r"><b class="${g.win ? "up" : "down"}">${t(g.win ? "win" : "loss")}</b><span>${esc(g.champion)} · ${t("min", g.minutes)}</span></div>
+      <div class="kda"><b>${g.k} / ${g.d} / ${g.a}</b><span>KDA ${dec(g.kda)}</span></div>
+      <div class="icons ai">${g.augments.map(a => `<img src="${esc(a.icon)}" title="${esc(a.name)}">`).join("")}</div>
+      <div class="icons">${g.items.map(i => `<img src="${esc(i.icon)}" title="${esc(i.name)}">`).join("")}</div>
+      <div class="when">${when(g.date)}</div></div>`).join("") : `<div class="empty">${t("noHistory")}</div>`;
+  $("#homeSide").innerHTML = s ? `
+    <div class="card"><div class="lbl">${t("last10")}</div><div class="chart">${s.last10.map(g => `<i style="height:${Math.min(100, 25 + g.kda * 12)}%;background:${g.win ? "var(--green)" : "var(--red)"}" title="KDA ${g.kda}"></i>`).join("")}</div>
+      <div class="muted" style="margin-top:8px;font-size:12px">${t("record", s.last10.filter(g => g.win).length, s.last10.filter(g => !g.win).length)}${t("streak", s.streak.win, s.streak.count)}</div></div>
+    <div class="card"><div class="lbl">${t("topChamps")}</div>${s.top.map(c => `<div class="row"><img class="ico" src="${esc(c.icon)}"><div class="t"><b>${esc(c.name)}</b><span>${t("nGames", c.games)} · KDA ${dec(c.kda)}</span></div><span class="pill ${c.winRate >= .5 ? "g" : "r"}">${pct(c.winRate)}</span></div>`).join("")}</div>
+    <div class="card tip"><div class="lbl gold">${t("tip")}</div>${s.tips.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : "";
+}
+
+function renderLive() {
+  const st = $("#status");
+  st.className = "status " + (live?.phase === "ingame" || live?.phase === "champselect" ? "live" : "wait");
+  st.querySelector("span").textContent = live?.status ?? "–";
+  const card = $("#liveCard");
+  const inGame = live?.phase === "ingame" && live.game, inSelect = live?.phase === "champselect" && live.champSelect?.length;
+  if (inGame) {
+    const g = live.game, next = g.nextOptions?.[0] ?? g.next;
+    card.innerHTML = `<span class="pill g">● LIVE</span><div style="flex:1">${t("liveIn", esc(g.championName))}${next ? ` · ${t("liveNext", esc(next.name))}` : ""}</div>`;
+  } else if (inSelect) {
+    const best = [...live.champSelect].filter(o => o.mayhemWinRate != null).sort((a, b) => b.mayhemWinRate - a.mayhemWinRate)[0];
+    card.innerHTML = `<span class="pill g">● ${t("liveSelect")}</span><div style="flex:1">${best ? t("liveBest", esc(best.name)) + ` · ${pct(best.mayhemWinRate, 1)}` : ""}</div>
+      <div class="icons">${live.champSelect.map(o => `<img src="${esc(o.icon)}" title="${esc(o.name)}" style="width:34px;height:34px">`).join("")}</div>`;
+  }
+  card.classList.toggle("hidden", !inGame && !inSelect);
+}
+
+// ── Campeones ──
+$("#champSearch").oninput = renderChamps;
+$$("[data-cf]").forEach(b => b.onclick = () => { champFilter = b.dataset.cf; $$("[data-cf]").forEach(x => x.classList.toggle("on", x === b)); renderChamps(); });
+const TIERS = ["OP", "S", "A", "B", "C", "D", "F"];
+const tierRank = tr => { const i = TIERS.indexOf(tr); return i < 0 ? TIERS.length : i; };
+function renderChamps() {
+  if (!init) return;
+  const q = $("#champSearch").value.trim().toLowerCase();
+  let list = init.champions.filter(c => c.name.toLowerCase().includes(q));
+  if (champFilter === "mine") list = list.filter(c => c.games > 0);
+  if (champFilter === "top") list = list.filter(c => ["OP", "S", "A"].includes(c.tier));
+  list.sort((a, b) => champFilter === "mine" ? b.games - a.games : (tierRank(a.tier) - tierRank(b.tier)) || ((b.mayhemWinRate ?? 0) - (a.mayhemWinRate ?? 0)));
+  $("#champCount").textContent = t("champCount", init.champions.length) + (init.mayhemPatch ? t("patch", init.mayhemPatch) : "");
+  $("#champGrid").innerHTML = list.map(c => `<div class="tile" data-champ="${esc(c.alias)}"><img src="${esc(c.icon)}"><div class="t"><b>${esc(c.name)}</b>
+    <span>${c.mayhemWinRate != null ? pct(c.mayhemWinRate, 1) : "–"}${c.games ? ` · ${t("you", Math.round((c.winRate ?? 0) * c.games), c.games)}` : ""}</span></div>${tierChip(c.tier)}</div>`).join("")
+    || `<div class="empty" style="grid-column:1/-1">${t("noChamps")}</div>`;
+}
+$("#champGrid").onclick = e => { const el = e.target.closest("[data-champ]"); if (el) openChampion(el.dataset.champ); };
+function openChampion(alias) {
+  champDetail = { want: alias, loading: true };
+  $("#champList").classList.add("hidden"); $("#champDetail").classList.remove("hidden");
+  renderChampDetail();
+  send({ type: "champion", champion: alias });
+}
+function renderChampDetail() {
+  const c = champDetail;
+  if (!c) return;
+  if (c.loading) { $("#champDetail").innerHTML = `<button class="back" data-back>${t("back")}</button><div class="empty" style="margin-top:12px">${t("loading")}</div>`; return; }
+  const augList = (list, rc) => list.length ? list.slice(0, 4).map(a => `<div class="row"><img class="ico r" src="${esc(a.icon)}" style="border:2px solid ${rc}"><div class="t"><b>${esc(a.name)}</b><span>${t("nGames", num(a.games))} ${confBars(a.confidence)}</span></div>${augScore(a)}</div>`).join("") : `<div class="muted">${t("noData")}</div>`;
+  $("#champDetail").innerHTML = `<button class="back" data-back>${t("back")}</button>
+    <div class="card hero" style="margin-top:12px"><img class="bg" src="${esc(c.splash)}" onerror="this.remove()">
+      <div class="in"><img src="${esc(c.icon)}"><div><h2>${esc(c.name)}</h2><div class="roles">${c.roles.map(esc).join(" · ")}</div>
+        <div class="pills">${c.tier ? `<span class="pill tier g-${esc(c.tier)}" style="height:auto">${t("tierPill", esc(c.tier))}</span>` : ""}
+          ${c.winRate != null ? `<span class="pill ${c.winRate >= .5 ? "g" : "r"}">${t("wrPill", pct(c.winRate, 1))}</span>` : ""}
+          ${c.games ? `<span class="pill n">${t("gamesPill", num(c.games))}</span>` : ""}
+          ${c.mine ? `<span class="pill" style="background:rgba(240,200,110,.15);color:var(--gold2)">${t("you", c.mine.wins, c.mine.games)} · KDA ${dec(c.mine.kda)}</span>` : ""}</div></div></div></div>
+    <div class="three" style="margin-top:16px">
+      <div class="card"><div class="lbl"><span>${t("build")}</span><em>${t("wr")}</em></div>${c.items.length ? c.items.map(i => `<div class="row"><img class="ico" src="${esc(i.icon)}"><div class="t"><b>${esc(i.name)}</b><span>${t("nGames", num(i.games))}</span></div><span class="pill ${i.winRate >= (c.winRate ?? .5) ? "g" : "r"}">${pct(i.winRate, 1)}</span></div>`).join("") : `<div class="muted">${t("noData")}</div>`}</div>
+      <div class="card"><div class="lbl"><span>${t("bestAugs")}</span><em>${t("prismatic")}</em></div>${augList(c.augments.prismatic, "#c29bff")}<div class="lbl" style="margin-top:14px">${t("gold")}</div>${augList(c.augments.gold, "#f0d080")}</div>
+      <div class="card"><div class="lbl">${t("silver")}</div>${augList(c.augments.silver, "#c9d1da")}</div>
+    </div>`;
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-back]")) { champDetail = null; $("#champDetail").classList.add("hidden"); $("#champList").classList.remove("hidden"); } });
+
+// ── Aumentos ──
+function pickDefaultAug() {
+  if (!init?.champions?.length) return;
+  const mine = [...init.champions].filter(c => c.games > 0).sort((a, b) => b.games - a.games)[0];
+  selectAugChampion((mine ?? [...init.champions].sort((a, b) => (b.mayhemGames ?? 0) - (a.mayhemGames ?? 0))[0]).alias);
+}
+function selectAugChampion(alias) {
+  augChampion = { want: alias, loading: true };
+  $("#augPick").classList.add("hidden"); $("#augSearch").value = "";
+  renderAugs();
+  send({ type: "champion", champion: alias });
+}
+$("#augSearch").oninput = () => {
+  const q = $("#augSearch").value.trim().toLowerCase();
+  const list = (init?.champions ?? []).filter(c => c.name.toLowerCase().includes(q)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 40);
+  $("#augPick").innerHTML = list.map(c => `<div data-pick="${esc(c.alias)}"><img src="${esc(c.icon)}"><b style="flex:1">${esc(c.name)}</b>${tierChip(c.tier)}</div>`).join("");
+  $("#augPick").classList.toggle("hidden", !q || !list.length);
+};
+$("#augSearch").onkeydown = e => { if (e.key === "Enter") { const first = $("#augPick [data-pick]"); if (first) selectAugChampion(first.dataset.pick); } if (e.key === "Escape") $("#augPick").classList.add("hidden"); };
+$("#augPick").onclick = e => { const el = e.target.closest("[data-pick]"); if (el) selectAugChampion(el.dataset.pick); };
+document.addEventListener("mousedown", e => { if (!e.target.closest(".picker")) $("#augPick").classList.add("hidden"); });
+$$("[data-rf]").forEach(b => b.onclick = () => { rarityFilter = b.dataset.rf; $$("[data-rf]").forEach(x => x.classList.toggle("on", x === b)); renderAugs(); });
+function renderAugs() {
+  const c = augChampion;
+  if (!c || c.loading) { $("#augHead").innerHTML = ""; $("#augGrid").innerHTML = c ? `<div class="empty" style="grid-column:1/-1">${t("loading")}</div>` : ""; return; }
+  $("#augHead").innerHTML = `<div class="row"><img class="ico" src="${esc(c.icon)}" style="width:40px;height:40px"><div class="t"><b style="font-size:18px">${esc(c.name)}</b><span>${c.roles.map(esc).join(" · ")}</span></div></div>`;
+  const groups = [["prismatic", "r-p", "rarP"], ["gold", "r-g", "rarG"], ["silver", "r-s", "rarS"]].filter(([k]) => rarityFilter === "all" || rarityFilter === k);
+  const tiles = groups.flatMap(([k, cls, label]) => c.augments[k].map(a => `<div class="card aug ${cls}"><img src="${esc(a.icon)}"><div class="t"><div class="rar">${t(label)}</div><b>${esc(a.name)}</b>
+      <p>${esc(t("withChamp", num(a.games), c.name))} ${confBars(a.confidence)}${a.desc ? " · " + esc(a.desc) : ""}</p></div>${augScore(a)}</div>`));
+  $("#augGrid").innerHTML = tiles.join("") || `<div class="empty" style="grid-column:1/-1">${t("noData")}</div>`;
+}
+
+// ── Ajustes ──
+function renderSettings() {
+  const s = settings; if (!s) return;
+  $$("#settings input[data-key]").forEach(i => i.checked = !!s[i.dataset.key]);
+  $("#optOnly").classList.toggle("off", !s.autoAccept);
+  $("#adminData").classList.toggle("hidden", !s.admin); // solo para el administrador (el creador)
+  $("#footAuto").textContent = t(s.autoAccept ? "on" : "off"); $("#footAuto").className = s.autoAccept ? "" : "off";
+  $("#footGames").textContent = t("games", s.matchCount ?? 0);
+  $("#savedText").textContent = t("saved", s.matchCount ?? 0);
+}
+$$("#settings input[data-key]").forEach(i => i.onchange = () => send({ type: "setSetting", key: i.dataset.key, value: i.checked }));
+$("#openData").onclick = () => send({ type: "openData" });
+$("#syncBtn").onclick = () => { $("#syncBtn").textContent = t("syncing"); send({ type: "sync" }); setTimeout(() => $("#syncBtn").textContent = t("set.syncNow"), 4000); };
+
+function renderAbout() {
+  const v = init?.version ?? "";
+  $("#aboutVersion").textContent = t("version", v);
+  $("#setFoot").textContent = t("setFoot", v);
+}
+
+// Al volver a la ventana (p. ej. después de una partida) se piden de nuevo el historial y las estadísticas.
+window.addEventListener("focus", () => send({ type: "home" }));
+
+// Pestaña pedida al abrir (index.html#acerca, desde la bandeja).
+applyStatic();
+// Primero «listo»: el programa solo contesta a la página después (si no, la partida pedida por #partida:… se perdía).
+send({ type: "ready" });
+goto(decodeURIComponent(location.hash.slice(1)));
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+﻿<Window x:Class="MayhemAdvisor.Overlay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mayhem Advisor Overlay"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ShowActivated="False"
+        ResizeMode="NoResize" Left="0" Top="0"
+        TextElement.FontFamily="Segoe UI">
+    <!-- Todo lo que se dibuja aquí deja pasar los clics al juego. -->
+    <Canvas x:Name="Layer" IsHitTestVisible="False">
+        <Border x:Name="StatusBox" Canvas.Left="12" Canvas.Top="12" Visibility="Collapsed"
+                Background="#E60E1217" BorderBrush="#33C8AA6E" BorderThickness="1" CornerRadius="8" Padding="12,7">
+            <TextBlock x:Name="StatusText" Foreground="#F0E6D2" FontSize="13" />
+        </Border>
+
+        <!-- Panel lateral: en partida (compras) o en selección de campeón. -->
+        <Border x:Name="SidePanel" Visibility="Collapsed" Width="320"
+                Background="#EB0B0F14" BorderBrush="#55C8AA6E" BorderThickness="1" CornerRadius="10">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.6" />
+            </Border.Effect>
+            <StackPanel x:Name="SideContent" Margin="14,12" />
+        </Border>
+    </Canvas>
+</Window>

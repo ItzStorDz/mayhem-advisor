@@ -1,0 +1,30 @@
+# Compilación
+bin/
+obj/
+.vs/
+*.user
+node_modules/
+dist/
+out/
+
+# Instalador: solo se suben el script y los textos; los .exe van en las Releases de GitHub
+instalador/*
+!instalador/MayhemAdvisor.iss
+!instalador/LEEME.txt
+!instalador/README-en.txt
+!instalador/Crear instalador.bat
+
+# Notas internas, material de promoción y lanzadores de mi PC
+notas/
+promo/
+*.bat
+!instalador/Crear instalador.bat
+herramientas/comparar-yourgg.mjs
+pruebas/simulador-partida/fondo-partida.png
+
+# Datos de terceros que no se pueden redistribuir: se bajan con herramientas/*.mjs
+datos/aramkit-*.json
+datos/mayhem-*.json
+
+# Historial interno en español (las novedades públicas van en las Releases)
+CAMBIOS.md

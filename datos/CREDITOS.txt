@@ -1,0 +1,41 @@
+Mayhem Advisor — créditos de datos
+==================================
+
+Este archivo debe distribuirse junto con la aplicación (se copia a la carpeta
+"datos" al compilar). Si se quita, la atribución de los datos se pierde.
+
+Datos del juego
+---------------
+Campeones, objetos, aumentos, iconos y precios: CommunityDragon (Riot Games),
+el espejo público de los assets del cliente de League of Legends.
+https://raw.communitydragon.org/
+
+Estadísticas de Mayhem
+----------------------
+Tier, win rate, pick rate, objetos, botas, hechizos y aumentos por campeón en
+ARAM Mayhem (cola 2400): mayhemmeta.com — https://mayhemmeta.com/
+
+% de victorias de cada campeón con cada aumento en el servidor chino (punto de
+partida de las notas de las cartas): AramHex — 海克斯大乱斗统计数据
+(github.com/czgreat/aramhex-data), CC BY-NC 4.0 (aramhex-augments.json).
+https://creativecommons.org/licenses/by-nc/4.0/ — sin uso comercial.
+
+Para los aumentos que AramHex aún no tiene: ARAMKit — https://aramkit.com/
+(aramkit-augments.json). Uso personal y no comercial, descargado una vez por
+parche; no son datos oficiales de Riot ni de ARAMKit.
+
+Estilo de build con cada aumento (apoyo, AP, tanque, crítico…), cuánto gana y
+qué objetos se compran en él: también ARAMKit (aramkit-builds.json), en las
+mismas condiciones.
+
+Partidas
+--------
+Las partidas de la cola 2400 son del usuario: las lee del cliente de LoL y las
+guarda en matches.jsonl. No provienen de terceros.
+
+Notas
+-----
+- Los números cambian con cada parche; los archivos guardan el campo "patch".
+- Los ids de objetos y aumentos son los de Riot, así que cruzan sin traducción
+  con el catálogo del juego.
+- Mayhem Advisor no está avalado por Riot Games ni por los sitios citados.

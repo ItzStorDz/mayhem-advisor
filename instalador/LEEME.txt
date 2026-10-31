@@ -1,0 +1,30 @@
+﻿Mayhem Advisor
+Creado por ItzStorDz · © 2026
+
+Consejero para ARAM: Caos (Mayhem) de League of Legends. Lee la pantalla del juego
+y te dice qué aumento elegir (nota de 0 a 100), qué objetos comprar y qué hechizos
+llevar, en un panel encima del juego.
+
+Cómo se usa
+-----------
+1. Abre Mayhem Advisor (acceso directo del Escritorio o del menú Inicio).
+   Se queda como un icono dorado en la bandeja, junto al reloj.
+2. Juega una partida de ARAM: Caos. Las recomendaciones aparecen solas.
+3. Clic derecho en el icono de la bandeja: abrir la ventana principal, iniciar
+   con Windows, salir...
+
+Requisitos: Windows 10 o 11 de 64 bits y el juego en un idioma con OCR de Windows
+instalado (español o inglés). No hace falta instalar nada más.
+Juega en modo sin bordes o en ventana: en pantalla completa la app no ve las cartas.
+
+Créditos de datos
+-----------------
+- Estadísticas de ARAM: Caos: mayhemmeta.com (https://mayhemmeta.com/)
+- Notas de los aumentos: AramHex (github.com/czgreat/aramhex-data, CC BY-NC 4.0)
+  y ARAMKit (https://aramkit.com/)
+- Datos del juego (campeones, objetos, aumentos, iconos): CommunityDragon
+  (https://raw.communitydragon.org/)
+
+Mayhem Advisor es una app independiente creada por ItzStorDz. No está afiliada a Riot Games ni avalada
+por Riot Games ni por los sitios citados. League of Legends es una marca de
+Riot Games, Inc.

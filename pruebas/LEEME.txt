@@ -1,0 +1,22 @@
+﻿Pruebas de Mayhem Advisor (no van en el instalador)
+====================================================
+
+Todas usan una carpeta de datos aparte (variable MAYHEM_DATA_DIR): nunca tocan tus partidas ni tus ajustes.
+
+simulador-partida\  Una "partida" falsa a pantalla completa con la API del juego simulada: cartas, clics, panel
+                    (mover, cambiar tamaño, pestañas, rueda), elecciones difíciles (Rammus, Garen, yunques) y el
+                    guardado de la partida al acabar. Compilar:  dotnet build pruebas\simulador-partida -c Debug
+                    Usar (PowerShell, con el juego CERRADO y la app cerrada, porque el overlay solo se abre una vez):
+                      $env:MAYHEM_DATA_DIR = "<carpeta de prueba con una copia de tus datos>"
+                      $env:FG_REMOVE_ID = "<id de una partida>"   (opcional: la quita antes del final para ver que se guarda)
+                      & "pruebas\simulador-partida\bin\Debug\net9.0-windows\League of Legends.exe" <salida> <MayhemAdvisor.exe> es|en [encards]
+                    Deja capturas, el texto del panel (*-overlay.txt) e informe.txt en <salida>.
+
+ventana-ingles.js   Recorre la ventana principal en inglés (también cambiando de idioma con páginas abiertas) y apunta
+                    el texto que parece español. Abrir la app con WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333
+                    y luego:  set ELECTRON_RUN_AS_NODE=1 & overlay-electron\node_modules\electron\dist\electron.exe pruebas\ventana-ingles.js <salida>
+
+medir-dano-enemigo.py  Compara, con tus partidas guardadas, formas de calcular el % de daño mágico del equipo enemigo
+                    contra el daño real.  python pruebas\medir-dano-enemigo.py "%LOCALAPPDATA%\MayhemAdvisor"
+
+simulador-partida necesita una captura del juego llamada fondo-partida.png junto al .exe (no va en el repositorio).

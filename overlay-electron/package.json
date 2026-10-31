@@ -1,0 +1,11 @@
+{
+  "name": "mayhem-advisor-overlay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Overlay de Mayhem Advisor en Electron, pegado a la ventana del juego",
+  "main": "main.js",
+  "dependencies": {
+    "electron": "39.8.10",
+    "electron-overlay-window": "4.1.0"
+  }
+}
