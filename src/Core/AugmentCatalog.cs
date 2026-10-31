@@ -22,6 +22,20 @@ public sealed record Augment(int Id, string ApiName, string Rarity, Dictionary<s
     [System.Text.Json.Serialization.JsonIgnore]
     public string DisplayDescription => Lang.English && ExtraDescription != "" ? ExtraDescription : Description;
     public string[] StatList => Stats ?? [];
+    /// <summary>True si sella tu definitiva (De Vuelta a lo Básico).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool SealsUltimate => ApiName.Equals("ARAM_BacktoBasics", StringComparison.OrdinalIgnoreCase);
+    /// <summary>True si su efecto sale de lanzar la definitiva o de su enfriamiento: con la definitiva sellada no hace nada.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool NeedsUltimate => UltimateAugments.Contains(ApiName);
+
+    // Sacados de las descripciones que hablan de la definitiva. No están Francotirador Hábil (es para las otras
+    // habilidades), A Girar (habilidades giratorias) ni Reina del Baile (te da la definitiva de Rakan).
+    static readonly HashSet<string> UltimateAugments = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ARAM_CantTouchThis", "ARAM_UltimateRevolution", "ARAM_UltimateUnstoppable", "ARAM_FeyMagic", "ARAM_ItsKillingTime",
+        "FinalForm", "UltimateAwakening", "ARAM_StuckInHereWithMe", "SkipTheBasics", "UltimateRecursion", "ArcaneAxiom",
+    };
 
     // Algún aumento de evento viene sin nombre (en blanco o "GoH_PentakillAug_Generic_BlankName"): se usa el del evento.
     string? RealName(string locale) =>

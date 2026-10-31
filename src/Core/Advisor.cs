@@ -601,6 +601,12 @@ public sealed partial class Advisor(StatsStore stats)
     public AugmentSynergy? SynergyWith(Augment candidate, IReadOnlyList<Augment> mine, string champion, IReadOnlyList<int>? myItems = null)
     {
         if (candidate.IsAnvil) return null;
+        // De Vuelta a lo Básico sella la definitiva: con un aumento que vive de ella (Axioma Arcano, Forma Final…) uno de
+        // los dos no hace nada. Casi nadie los junta, así que no hay partidas que lo midan: va siempre al fondo.
+        if (mine.FirstOrDefault(m => candidate.SealsUltimate ? m.NeedsUltimate : candidate.NeedsUltimate && m.SealsUltimate) is { } clash)
+            return new AugmentSynergy(-0.12, candidate.SealsUltimate
+                ? L($"Sella tu definitiva, y «{clash.DisplayName}» la necesita", $"Seals your ultimate, which “{clash.DisplayName}” needs")
+                : L($"Necesita tu definitiva, y «{clash.DisplayName}» la sella", $"Needs your ultimate, which “{clash.DisplayName}” seals"));
         bool magic = PlaysMagic(champion, myItems ?? [], mine);
         var useful = UsefulTags(candidate, magic);
         var needs = stats.Links.RequiredBy(candidate.Id);
