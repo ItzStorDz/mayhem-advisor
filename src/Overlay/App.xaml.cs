@@ -78,6 +78,8 @@ public partial class App : System.Windows.Application
         _overlay.Suppressed = _bridge is not null;
         _panelEnabled = _settings.ShowPanel;
         Lang.English = _settings.Language == "en";
+        Cloud.Allowed = _settings.ShareData;
+        Cloud.NoticeShown = _settings.DataNoticeShown;
         CreateTray();
         new Thread(ClickWatcher) { IsBackground = true, Name = "Clics", Priority = ThreadPriority.AboveNormal }.Start();
         new Thread(WheelWatcher) { IsBackground = true, Name = "Rueda", Priority = ThreadPriority.AboveNormal }.Start();
@@ -123,6 +125,7 @@ public partial class App : System.Windows.Application
         // MAYHEM_OPEN: solo para las pruebas (abre la ventana en una pestaña, p. ej. "partida:LA1_123").
         if (System.Diagnostics.Process.GetProcessesByName("League of Legends").Length == 0) OpenDashboard(Environment.GetEnvironmentVariable("MAYHEM_OPEN"));
         _ = UpdateLoopAsync(_cts.Token);
+        _ = CloudLoopAsync(_cts.Token);
         await RunLoopAsync(reader, _cts.Token);
     }
 
@@ -692,6 +695,8 @@ public partial class App : System.Windows.Application
             if (await SyncHistoryAsync(quiet: true) is > 0)
             {
                 Log.Write($"Partida guardada {(DateTime.UtcNow - endedUtc).TotalSeconds:0} s después de acabar");
+                Cloud.QueueNewMatches();
+                await Cloud.FlushAsync(ct);
                 return;
             }
         }
@@ -954,6 +959,17 @@ public partial class App : System.Windows.Application
             case "installUpdate":
                 await InstallUpdateAsync();
                 return null;
+            case "dataNotice":
+                // El aviso de los datos anónimos: «Vale» (se queda activado) o «Desactivar».
+                _settings.DataNoticeShown = Cloud.NoticeShown = true;
+                if (msg.GetProperty("value").GetString() == "off") SetSetting("shareData", false);
+                else { _settings.Save(); _dashboard?.Push(SettingsMessage()); _ = CloudAfterChangeAsync(); }
+                Log.Write($"Aviso de datos anónimos: {(_settings.ShareData ? "activado" : "desactivado")}");
+                return null;
+            case "privacy":
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                    "https://github.com/ItzStorDz/mayhem-advisor/blob/main/PRIVACY.md") { UseShellExecute = true });
+                return null;
             case "releaseNotes":
                 OpenReleasePage();
                 return null;
@@ -979,7 +995,7 @@ public partial class App : System.Windows.Application
         {
             type = "init",
             version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3), lang = Lang.Code,
-            matchCount = _stats.MatchCount,
+            matchCount = _stats.OwnMatchCount,
             patch = _stats.Patch,
             mayhemPatch = _mayhem.IsEmpty ? null : _mayhem.Patch,
             mayhemDate = _mayhem.IsEmpty ? null : _mayhem.FetchedAt.ToLocalTime().ToString("d MMM"),
@@ -1202,10 +1218,12 @@ public partial class App : System.Windows.Application
 
     void ReloadStats()
     {
-        var stamp = File.Exists(Paths.Matches) ? File.GetLastWriteTimeUtc(Paths.Matches) : DateTime.MinValue;
+        // Tus partidas y las de la comunidad (Cloud.cs las baja cada 12 horas): se recarga si cambia cualquiera.
+        DateTime Stamp(string p) => File.Exists(p) ? File.GetLastWriteTimeUtc(p) : DateTime.MinValue;
+        var stamp = new[] { Stamp(Paths.Matches), Stamp(Cloud.CommunityFile) }.Max();
         if (stamp != _statsLoadedFrom || _stats.Data != _data)
         {
-            _stats = StatsStore.Load(Paths.Matches, _data);
+            _stats = StatsStore.Load(Paths.Matches, _data, Cloud.CommunityFile);
             _statsLoadedFrom = stamp;
         }
         ReloadMayhem();
@@ -1356,9 +1374,10 @@ public partial class App : System.Windows.Application
         type = "settings",
         showPanel = _settings.ShowPanel, autoAccept = _settings.AutoAccept, autoAcceptOnlyMayhem = _settings.AutoAcceptOnlyMayhem,
         autoAugmentsTab = _settings.AutoAugmentsTab, shopItemSet = _settings.ShopItemSet, startup = WindowsStartup.Enabled, language = Lang.Code,
+        shareData = _settings.ShareData, dataNotice = !_settings.DataNoticeShown,
         // Opciones de administrador (carpeta de datos): ajuste "Admin" o la cuenta de LoL del creador.
         admin = _settings.Admin || string.Equals(MyMatches.LoadProfile()?.Name, "ITzStorDz", StringComparison.OrdinalIgnoreCase),
-        matchCount = _stats.MatchCount,
+        matchCount = _stats.OwnMatchCount,
     };
 
     /// <summary>Cambia el idioma de todo (ventana principal, panel del juego y bandeja) y lo guarda.</summary>
@@ -1395,6 +1414,10 @@ public partial class App : System.Windows.Application
                 if (!value && _leagueDir is { } dir) ItemSets.DeleteAll(dir);
                 break;
             case "startup": WindowsStartup.Enabled = value; break;
+            case "shareData":
+                _settings.ShareData = Cloud.Allowed = value;
+                if (value) _ = CloudAfterChangeAsync();
+                break;
             default: return;
         }
         _settings.Save();

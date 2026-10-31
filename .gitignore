@@ -28,3 +28,8 @@ datos/mayhem-*.json
 
 # Historial interno en español (las novedades públicas van en las Releases)
 CAMBIOS.md
+
+# Servidor: dependencias y secretos locales
+cloud/node_modules/
+cloud/.wrangler/
+cloud/.dev.vars

@@ -1,0 +1,16 @@
+{
+  "name": "mayhem-advisor-cloud",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev --local --test-scheduled",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.0"
+  },
+  "allowScripts": {
+    "workerd@1.20261012.1": true,
+    "esbuild@0.28.2": true,
+    "sharp@0.35.5": true
+  }
+}

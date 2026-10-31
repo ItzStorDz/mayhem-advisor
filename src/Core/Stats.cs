@@ -70,6 +70,8 @@ public sealed class StatsStore
     double _avgHeal;
 
     public int MatchCount { get; private set; }
+    /// <summary>De esas, las tuyas (matches.jsonl); el resto son de la comunidad (comunidad.jsonl).</summary>
+    public int OwnMatchCount { get; private set; }
     public string? Patch { get; private set; }
     public GameData Data { get; private set; } = new();
     /// <summary>
@@ -90,18 +92,21 @@ public sealed class StatsStore
     /// <summary>Mínimo de partidas de un campeón con un aumento para usar la cifra de todos los jugadores.</summary>
     const int MinGlobalGames = 30;
 
-    public static StatsStore Load(string path, GameData data)
+    /// <param name="communityPath">
+    /// Partidas de la comunidad (las que comparten los demás usuarios, sin nombres). Se suman a las tuyas, sin las que
+    /// ya tienes: la misma partida se reconoce por sus 10 campeones y su daño (el id viene cifrado del servidor).
+    /// </param>
+    public static StatsStore Load(string path, GameData data, string? communityPath = null)
     {
         var store = new StatsStore { Data = data };
-        if (!File.Exists(path)) return store;
-
-        var records = new List<MatchRecord>();
-        foreach (var line in File.ReadLines(path))
+        var records = ReadRecords(path);
+        store.OwnMatchCount = records.Count;
+        if (communityPath is not null)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            try { if (JsonSerializer.Deserialize<MatchRecord>(line) is { } r) records.Add(r); }
-            catch (JsonException) { /* línea cortada si se cerró el recolector a medias */ }
+            var known = records.Select(Signature).ToHashSet();
+            records.AddRange(ReadRecords(communityPath).Where(r => known.Add(Signature(r))));
         }
+        if (records.Count == 0) return store;
 
         // Los aumentos cambian cada parche: si hay suficientes partidas del parche más nuevo, usamos solo esas.
         var byPatch = records.GroupBy(r => PatchOf(r.Version)).OrderByDescending(g => g.Key, PatchComparer.Instance).ToList();
@@ -125,6 +130,25 @@ public sealed class StatsStore
         foreach (var r in records) store.Add(r);
         return store;
     }
+
+    static List<MatchRecord> ReadRecords(string path)
+    {
+        var records = new List<MatchRecord>();
+        if (!File.Exists(path)) return records;
+        try
+        {
+            foreach (var line in File.ReadLines(path))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                try { if (JsonSerializer.Deserialize<MatchRecord>(line) is { } r) records.Add(r); }
+                catch (JsonException) { /* línea cortada si se cerró el recolector a medias */ }
+            }
+        }
+        catch (IOException) { }
+        return records;
+    }
+
+    static string Signature(MatchRecord r) => string.Join(",", r.Players.Select(p => $"{p.Champion}:{p.PhysicalDamage}:{p.MagicDamage}"));
 
     void Add(MatchRecord r)
     {

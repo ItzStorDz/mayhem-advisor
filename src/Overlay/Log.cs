@@ -23,6 +23,7 @@ public static class Log
                 File.AppendAllText(FilePath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}  {message}{Environment.NewLine}");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { } // nunca tumbar el programa por el registro
+            Cloud.Note(message); // errores y datos de salud para el resumen anónimo (si no está desactivado)
         }
     }
 }

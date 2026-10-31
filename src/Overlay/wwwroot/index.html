@@ -184,6 +184,8 @@
 
   <main>
     <div class="card upd hidden" id="updBar"></div>
+    <div class="card upd plain hidden" id="dataBar"><div class="t"><b data-t="data.title"></b><span data-t="data.text"></span></div>
+      <button class="btn ghost" data-data="privacy" data-t="data.details"></button><button class="btn ghost" data-data="off" data-t="data.off"></button><button class="btn" data-data="ok" data-t="data.ok"></button></div>
     <!-- INICIO -->
     <section id="home">
       <div class="top"><h1 id="hello"></h1><div class="status" id="status"><i></i><span></span></div><div class="lang" data-lang></div></div>
@@ -238,6 +240,7 @@
           <label class="card opt"><div><b data-t="set.shop"></b><span data-t="set.shopSub"></span></div><input type="checkbox" data-key="shopItemSet"><i class="sw"></i></label>
           <div class="lbl" style="margin:8px 0 0">PC</div>
           <label class="card opt"><div><b data-t="set.startup"></b><span data-t="set.startupSub"></span></div><input type="checkbox" data-key="startup"><i class="sw"></i></label>
+          <label class="card opt"><div><b data-t="set.share"></b><span><span data-t="set.shareSub"></span> <a href="#" data-data="privacy" data-t="data.details"></a></span></div><input type="checkbox" data-key="shareData"><i class="sw"></i></label>
         </div>
         <div class="col">
           <div class="lbl" style="margin:0">IDIOMA · LANGUAGE</div>
@@ -314,6 +317,9 @@ const T = {
     "upd.title": "Actualizaciones", "upd.latest": v => `Tienes la última versión (${v}).`, "upd.checking": "Buscando versiones nuevas…",
     "upd.auto": "La app lo mira sola al abrirse y cada 6 horas (en GitHub).", "upd.check": "Buscar ahora",
     "upd.offline": "No se pudo mirar si hay versiones nuevas (¿sin internet?).",
+    "data.title": "Ayuda a mejorar Mayhem Advisor", "data.text": "La app envía tus partidas de ARAM: Caos (campeones, aumentos, objetos y resultado) y sus errores, de forma anónima: sin tu nombre ni nada de tu cuenta. Puedes quitarlo cuando quieras en Ajustes.",
+    "data.ok": "Vale", "data.off": "Desactivar", "data.details": "Detalles",
+    "set.share": "Compartir datos anónimos", "set.shareSub": "Partidas y errores sin nombres, para mejorar las recomendaciones y arreglar fallos.",
     "about.how": "CÓMO FUNCIONA", "about.howText": "Lee la pantalla del juego con el OCR de Windows (sin tocar los archivos de LoL), puntúa cada aumento de 0 a 100 y te dice qué comprar según tu campeón, tus aumentos y el equipo enemigo. Todo se calcula en tu PC.",
     "about.tray": "Clic derecho en el icono dorado de la bandeja (junto al reloj) para abrir esta ventana, cambiar los ajustes o salir.", "about.credits": "CRÉDITOS DE DATOS",
     "about.c1": "Tier, % de victorias, objetos, hechizos y aumentos por campeón en ARAM: Caos.", "about.c2": "Datos del juego: campeones, objetos, aumentos, iconos y precios.",
@@ -356,6 +362,9 @@ const T = {
     "upd.title": "Updates", "upd.latest": v => `You have the latest version (${v}).`, "upd.checking": "Checking for new versions…",
     "upd.auto": "The app checks by itself when it opens and every 6 hours (on GitHub).", "upd.check": "Check now",
     "upd.offline": "Couldn't check for new versions (no internet?).",
+    "data.title": "Help improve Mayhem Advisor", "data.text": "The app sends your ARAM: Mayhem games (champions, augments, items and result) and its errors anonymously: no name, nothing from your account. You can turn it off anytime in Settings.",
+    "data.ok": "OK", "data.off": "Turn off", "data.details": "Details",
+    "set.share": "Share anonymous data", "set.shareSub": "Games and errors without names, to improve the recommendations and fix bugs.",
     "about.how": "HOW IT WORKS", "about.howText": "It reads the game screen with Windows OCR (without touching any LoL files), scores each augment from 0 to 100 and tells you what to buy based on your champion, your augments and the enemy team. Everything runs on your PC.",
     "about.tray": "Right-click the gold icon in the tray (next to the clock) to open this window, change settings or quit.", "about.credits": "DATA CREDITS",
     "about.c1": "Tier, win rate, items, spells and augments per champion in ARAM: Mayhem.", "about.c2": "Game data: champions, items, augments, icons and prices.",
@@ -413,7 +422,7 @@ window.chrome.webview.addEventListener("message", e => {
     if (champDetail) send({ type: "champion", champion: champDetail.want });
   }
   if (m.type === "home") { home = m; renderHome(); }
-  if (m.type === "settings") { settings = m; if (m.language && m.language !== lang) { lang = m.language; renderAll(); } else renderSettings(); }
+  if (m.type === "settings") { $("#dataBar").classList.toggle("hidden", !m.dataNotice); settings = m; if (m.language && m.language !== lang) { lang = m.language; renderAll(); } else renderSettings(); }
   if (m.type === "live") { live = m; renderLive(); }
   if (m.type === "champion") {
     if (m.alias === champDetail?.want) { champDetail = { ...m, want: m.alias }; renderChampDetail(); }
@@ -447,6 +456,13 @@ function renderUpdate() {
       s === "checking" ? "" : btn("check", "upd.check")}`;
 }
 document.addEventListener("click", e => {
+  const d = e.target.closest("[data-data]");
+  if (d) {
+    e.preventDefault();
+    if (d.dataset.data === "privacy") send({ type: "privacy" });
+    else { send({ type: "dataNotice", value: d.dataset.data }); $("#dataBar").classList.add("hidden"); }
+    return;
+  }
   const b = e.target.closest("[data-upd]");
   if (!b) return;
   if (b.dataset.upd === "install") send({ type: "installUpdate" });

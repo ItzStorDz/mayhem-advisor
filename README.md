@@ -37,7 +37,9 @@ The code is public so you can check it yourself. Mayhem Advisor:
   [Live Client Data API](https://developer.riotgames.com/docs/lol#game-client-api);
 - reads the augment cards from the screen with Windows' built-in text recognition (OCR), like a screenshot;
 - does not show augment win rates (Riot's policy for third-party apps); it shows its own scores instead;
-- connects only to CommunityDragon (game data) and GitHub (to check for updates).
+- connects only to CommunityDragon (game data), GitHub (to check for updates) and its own server, which receives
+  **anonymous** game data and error reports (no names, no account info) — you can turn that off in Settings.
+  Details: [PRIVACY.md](PRIVACY.md).
 
 ## Install
 

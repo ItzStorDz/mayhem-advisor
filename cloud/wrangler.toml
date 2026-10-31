@@ -1,0 +1,21 @@
+name = "mayhem-advisor"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+preview_urls = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mayhem-advisor"
+database_id = "f52f8a51-6db4-497a-a720-0e807ccfc861"
+
+[vars]
+REPORT_REPO = "ItzStorDz/mayhem-advisor-reports"
+
+# Informe diario a las 14:00 UTC (8:00 en hora de Centroamérica / México).
+[triggers]
+crons = ["0 14 * * *"]
+
+# Secretos (no van aquí; se ponen con  npx wrangler secret put NOMBRE):
+#   HMAC_SECRET   clave para cifrar los ids de partida y las IPs
+#   GITHUB_TOKEN  token de GitHub (solo Issues del repositorio privado de informes)
