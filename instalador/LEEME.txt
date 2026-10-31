@@ -13,6 +13,10 @@ Cómo se usa
 3. Clic derecho en el icono de la bandeja: abrir la ventana principal, iniciar
    con Windows, salir...
 
+Actualizaciones: cuando sale una versión nueva, la app te avisa (en la bandeja y en
+la ventana principal) y se instala con un clic, encima de la que tienes. Tus partidas
+y ajustes se conservan. Nunca se instala con el juego abierto.
+
 Requisitos: Windows 10 o 11 de 64 bits y el juego en un idioma con OCR de Windows
 instalado (español o inglés). No hace falta instalar nada más.
 Juega en modo sin bordes o en ventana: en pantalla completa la app no ve las cartas.

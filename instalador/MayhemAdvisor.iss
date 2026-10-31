@@ -106,6 +106,8 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:OpenNow}"; Flags: nowait postinstall skipifsilent
+; Actualización desde la app (/UPDATE=1, ver Updater.cs): la app se cerró para instalar, así que se vuelve a abrir sola.
+Filename: "{app}\{#AppExe}"; Flags: nowait; Check: IsUpdate
 
 [UninstallRun]
 ; Cierra el programa y su overlay antes de borrar los archivos.
@@ -113,6 +115,11 @@ Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM {#AppExe}"; Flags: runhidden
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /FI ""IMAGENAME eq electron.exe"" /FI ""WINDOWTITLE eq Mayhem*"""; Flags: runhidden; RunOnceId: "CerrarOverlay"
 
 [Code]
+function IsUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:UPDATE|0}') = '1';
+end;
+
 // Si se activó "Iniciar con Windows" desde la bandeja (no desde el instalador), también se quita al desinstalar.
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin

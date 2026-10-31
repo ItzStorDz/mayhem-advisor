@@ -122,6 +122,7 @@ public partial class App : System.Windows.Application
         // Si ya estás jugando, no abrimos la ventana principal para no sacarte del juego.
         // MAYHEM_OPEN: solo para las pruebas (abre la ventana en una pestaña, p. ej. "partida:LA1_123").
         if (System.Diagnostics.Process.GetProcessesByName("League of Legends").Length == 0) OpenDashboard(Environment.GetEnvironmentVariable("MAYHEM_OPEN"));
+        _ = UpdateLoopAsync(_cts.Token);
         await RunLoopAsync(reader, _cts.Token);
     }
 
@@ -926,6 +927,7 @@ public partial class App : System.Windows.Application
                 _dashboard?.Push(SettingsMessage());
                 _dashboard?.Push(HomeMessage());
                 if (_lastLive is not null) _dashboard?.Push(_lastLive);
+                _dashboard?.Push(UpdateMessage());
                 return InitMessage();
             case "sync":
                 await SyncHistoryAsync();
@@ -946,6 +948,15 @@ public partial class App : System.Windows.Application
                             score: score, grade: AugmentScale.Grade(score));
                     });
                 return new { type = "augments", champion = champ, list };
+            case "checkUpdate":
+                await CheckUpdateAsync(manual: true);
+                return null;
+            case "installUpdate":
+                await InstallUpdateAsync();
+                return null;
+            case "releaseNotes":
+                OpenReleasePage();
+                return null;
             case "opgg":
                 // Abre la página del campeón en OP.GG en tu navegador (no descargamos sus datos).
                 if (_data.Champion(msg.GetProperty("champion").GetString() ?? "") is { } c)
@@ -1164,6 +1175,7 @@ public partial class App : System.Windows.Application
                 if (MyMatches.Load().FirstOrDefault() is { } last)
                 {
                     _balloonGame = last.Id;
+                    _balloonUpdate = false;
                     _tray.ShowBalloonTip(5000, "Mayhem Advisor",
                         L($"{(last.Win ? "Victoria" : "Derrota")} con {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Pulsa aquí para ver el resumen.",
                           $"{(last.Win ? "Victory" : "Defeat")} with {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Click to see the summary."),
@@ -1291,7 +1303,11 @@ public partial class App : System.Windows.Application
             ContextMenuStrip = menu,
         };
         _tray.DoubleClick += (_, _) => OpenDashboard();
-        _tray.BalloonTipClicked += (_, _) => { if (_balloonGame is { } id) OpenDashboard("partida:" + id); };
+        _tray.BalloonTipClicked += (_, _) =>
+        {
+            if (_balloonUpdate) OpenDashboard("actualizar");
+            else if (_balloonGame is { } id) OpenDashboard("partida:" + id);
+        };
 
         menu.Opening += (_, _) => SyncTray();
         BuildTrayMenu();
@@ -1304,6 +1320,9 @@ public partial class App : System.Windows.Application
         menu.Items.Clear();
         menu.Items.Add(new Forms.ToolStripLabel("Mayhem Advisor") { Font = new System.Drawing.Font(menu.Font, System.Drawing.FontStyle.Bold) });
         menu.Items.Add(new Forms.ToolStripSeparator());
+        if (_update is { } update && _updateState is "available" or "ingame" or "error")
+            menu.Items.Add(new Forms.ToolStripMenuItem(L($"Instalar la versión {update.Version.ToString(3)}", $"Install version {update.Version.ToString(3)}"),
+                null, (_, _) => OpenDashboard("actualizar")) { Font = new System.Drawing.Font(menu.Font, System.Drawing.FontStyle.Bold) });
         menu.Items.Add(L("Abrir Mayhem Advisor", "Open Mayhem Advisor"), null, (_, _) => OpenDashboard());
         menu.Items.Add(L("Ajustes", "Settings"), null, (_, _) => OpenDashboard("ajustes"));
         menu.Items.Add(new Forms.ToolStripSeparator());

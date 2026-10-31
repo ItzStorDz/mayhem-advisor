@@ -13,6 +13,10 @@ How to use it
 3. Right-click the tray icon: open the main window, start with Windows, quit...
    The app language (English / Spanish) is in Settings.
 
+Updates: when a new version comes out, the app tells you (in the tray and in the
+main window) and installs it with one click, on top of the one you have. Your games
+and settings are kept. Nothing is installed while the game is open.
+
 Requirements: 64-bit Windows 10 or 11, with the game in a language that has a
 Windows OCR pack installed (English or Spanish). Nothing else to install.
 Play in borderless or windowed mode: in fullscreen the app can't see the cards.

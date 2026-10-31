@@ -153,6 +153,14 @@
   .about .hero2 { display: flex; gap: 18px; align-items: center; } .about .hero2 .hex { width: 70px; height: 70px; font-size: 30px; }
   .about h2 { font-size: 26px; } .about p { margin: 6px 0; color: #d4d9e0; }
   .credit { display: flex; gap: 12px; margin: 7px 0; } .credit b { color: var(--gold2); min-width: 150px; }
+  /* Versión nueva (arriba en todas las pestañas, y en Acerca de) */
+  .upd { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; border-color: rgba(240, 200, 110, .45);
+    background: linear-gradient(135deg, rgba(240, 200, 110, .16), rgba(240, 200, 110, .04)); }
+  .about .upd { margin-bottom: 0; }
+  .upd .t { flex: 1; min-width: 0; } .upd .t b { display: block; font-size: 14.5px; } .upd .t span { color: #c9d1da; font-size: 12.5px; }
+  .upd .bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .1); margin-top: 8px; overflow: hidden; }
+  .upd .bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffe7a3, #d9a64a); }
+  .upd.plain { border-color: var(--line); background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .02)); }
   .hidden { display: none !important; }
 
   /* Ventanas estrechas */
@@ -175,6 +183,7 @@
   </nav>
 
   <main>
+    <div class="card upd hidden" id="updBar"></div>
     <!-- INICIO -->
     <section id="home">
       <div class="top"><h1 id="hello"></h1><div class="status" id="status"><i></i><span></span></div><div class="lang" data-lang></div></div>
@@ -248,6 +257,7 @@
       <div class="about" style="max-width:780px;display:flex;flex-direction:column;gap:14px">
         <div class="card hero2"><span class="hex">M</span><div><h2>Mayhem Advisor</h2><div class="muted" id="aboutVersion"></div>
           <div class="gold" style="font-weight:700;margin-top:6px" data-t="madeBy"></div></div></div>
+        <div class="card upd plain" id="updAbout"></div>
         <div class="card"><div class="lbl" data-t="about.how"></div><p data-t="about.howText"></p><p class="muted" data-t="about.tray"></p></div>
         <div class="card"><div class="lbl" data-t="about.credits"></div>
           <div class="credit"><b>mayhemmeta.com</b><span data-t="about.c1"></span></div>
@@ -295,6 +305,15 @@ const T = {
     "set.saved": "Partidas guardadas", saved: n => `${n} partidas · se copian solas del cliente después de cada partida`, "set.syncNow": "Copiar ahora", syncing: "Copiando…",
     "set.folder": "Carpeta de datos", "set.folderSub": "Tus partidas y el registro (overlay.log), por si hay que revisar un fallo.", "set.open": "Abrir",
     setFoot: v => `Mayhem Advisor ${v} · Creado por ItzStorDz · © 2026`,
+    "upd.new": v => `Hay una versión nueva: ${v}`, "upd.have": v => `Tienes la ${v}. Se instala encima: tus partidas y ajustes no se tocan.`,
+    "upd.install": mb => `Instalar ahora (${mb} MB)`, "upd.notes": "Novedades",
+    "upd.down": (v, p) => `Bajando la versión ${v}… ${p} %`, "upd.downSub": "Puedes seguir usando la app mientras tanto.",
+    "upd.inst": v => `Instalando la versión ${v}…`, "upd.instSub": "La app se cierra y se vuelve a abrir sola en unos segundos.",
+    "upd.game": "Cierra el juego para instalarla", "upd.gameSub": "Con una partida abierta no se instala nada. Al acabar, pulsa otra vez.",
+    "upd.err": "No se pudo completar la actualización", "upd.retry": "Reintentar",
+    "upd.title": "Actualizaciones", "upd.latest": v => `Tienes la última versión (${v}).`, "upd.checking": "Buscando versiones nuevas…",
+    "upd.auto": "La app lo mira sola al abrirse y cada 6 horas (en GitHub).", "upd.check": "Buscar ahora",
+    "upd.offline": "No se pudo mirar si hay versiones nuevas (¿sin internet?).",
     "about.how": "CÓMO FUNCIONA", "about.howText": "Lee la pantalla del juego con el OCR de Windows (sin tocar los archivos de LoL), puntúa cada aumento de 0 a 100 y te dice qué comprar según tu campeón, tus aumentos y el equipo enemigo. Todo se calcula en tu PC.",
     "about.tray": "Clic derecho en el icono dorado de la bandeja (junto al reloj) para abrir esta ventana, cambiar los ajustes o salir.", "about.credits": "CRÉDITOS DE DATOS",
     "about.c1": "Tier, % de victorias, objetos, hechizos y aumentos por campeón en ARAM: Caos.", "about.c2": "Datos del juego: campeones, objetos, aumentos, iconos y precios.",
@@ -328,6 +347,15 @@ const T = {
     "set.saved": "Saved games", saved: n => `${n} games · copied from the client after each game`, "set.syncNow": "Copy now", syncing: "Copying…",
     "set.folder": "Data folder", "set.folderSub": "Your games and the log (overlay.log), in case a bug needs checking.", "set.open": "Open",
     setFoot: v => `Mayhem Advisor ${v} · Made by ItzStorDz · © 2026`,
+    "upd.new": v => `A new version is available: ${v}`, "upd.have": v => `You have ${v}. It installs on top: your games and settings are kept.`,
+    "upd.install": mb => `Install now (${mb} MB)`, "upd.notes": "What's new",
+    "upd.down": (v, p) => `Downloading version ${v}… ${p}%`, "upd.downSub": "You can keep using the app meanwhile.",
+    "upd.inst": v => `Installing version ${v}…`, "upd.instSub": "The app closes and reopens by itself in a few seconds.",
+    "upd.game": "Close the game to install it", "upd.gameSub": "Nothing gets installed while a game is open. Click again when it's over.",
+    "upd.err": "The update couldn't be completed", "upd.retry": "Try again",
+    "upd.title": "Updates", "upd.latest": v => `You have the latest version (${v}).`, "upd.checking": "Checking for new versions…",
+    "upd.auto": "The app checks by itself when it opens and every 6 hours (on GitHub).", "upd.check": "Check now",
+    "upd.offline": "Couldn't check for new versions (no internet?).",
     "about.how": "HOW IT WORKS", "about.howText": "It reads the game screen with Windows OCR (without touching any LoL files), scores each augment from 0 to 100 and tells you what to buy based on your champion, your augments and the enemy team. Everything runs on your PC.",
     "about.tray": "Right-click the gold icon in the tray (next to the clock) to open this window, change settings or quit.", "about.credits": "DATA CREDITS",
     "about.c1": "Tier, win rate, items, spells and augments per champion in ARAM: Mayhem.", "about.c2": "Game data: champions, items, augments, icons and prices.",
@@ -360,17 +388,18 @@ function applyStatic() {
   $('[data-cf="all"]').textContent = t("cfAll"); $('[data-cf="mine"]').textContent = t("cfMine"); $('[data-cf="top"]').textContent = t("cfTop");
   $('[data-rf="all"]').textContent = t("rfAll"); $('[data-rf="prismatic"]').textContent = t("rfP"); $('[data-rf="gold"]').textContent = t("rfG"); $('[data-rf="silver"]').textContent = t("rfS");
 }
-function renderAll() { applyStatic(); renderHome(); renderLive(); renderChamps(); renderChampDetail(); renderAugs(); renderSettings(); renderAbout(); renderGames(); }
+function renderAll() { applyStatic(); renderHome(); renderLive(); renderChamps(); renderChampDetail(); renderAugs(); renderSettings(); renderAbout(); renderGames(); renderUpdate(); }
 
 // Pestañas
 $$("nav button[data-tab]").forEach(b => b.onclick = () => showTab(b.dataset.tab));
 function showTab(id) {
   $$("nav button[data-tab]").forEach(x => x.classList.toggle("on", x.dataset.tab === id));
   ["home", "games", "champs", "augs", "settings", "about"].forEach(s => $("#" + s).classList.toggle("hidden", s !== id));
+  renderUpdate(); // en «Acerca de» el aviso va dentro de la página, no arriba
   if (id === "home") send({ type: "home" });
   if (id === "games") { gameOpen = null; gameDetail = null; renderGames(); send({ type: "games" }); }
 }
-const PAGES = { inicio: "home", partidas: "games", acerca: "about", campeones: "champs", aumentos: "augs", ajustes: "settings", vivo: "home" };
+const PAGES = { actualizar: "about", inicio: "home", partidas: "games", acerca: "about", campeones: "champs", aumentos: "augs", ajustes: "settings", vivo: "home" };
 const goto = page => page?.startsWith("partida:") ? openGame(decodeURIComponent(page.slice(8))) : PAGES[page] && showTab(PAGES[page]);
 // Cambiar idioma: lo guarda el programa y nos devuelve todo traducido (también los nombres de objetos y aumentos).
 document.addEventListener("click", e => { const b = e.target.closest("[data-setlang]"); if (b && b.dataset.setlang !== lang) send({ type: "setLanguage", value: b.dataset.setlang }); });
@@ -391,6 +420,38 @@ window.chrome.webview.addEventListener("message", e => {
     if (m.alias === augChampion?.want) { augChampion = { ...m, want: m.alias }; renderAugs(); }
   }
   if (m.type === "goto") goto(m.page);
+  if (m.type === "update") { update = m; renderUpdate(); }
+});
+
+// ── Versión nueva ──
+let update = null;
+function renderUpdate() {
+  const u = update, s = u?.state;
+  const btn = (act, key, ...a) => `<button class="btn${act === "notes" || act === "check" ? " ghost" : ""}" data-upd="${act}">${esc(t(key, ...a))}</button>`;
+  // Lo que se ve cuando hay una versión nueva (igual arriba y en Acerca de).
+  let bar = "";
+  if (u?.latest) {
+    if (s === "downloading") bar = `<div class="t"><b>${esc(t("upd.down", u.latest, Math.round(u.pct * 100)))}</b><span>${esc(t("upd.downSub"))}</span>
+      <div class="bar"><i style="width:${(u.pct * 100).toFixed(1)}%"></i></div></div>`;
+    else if (s === "installing") bar = `<div class="t"><b>${esc(t("upd.inst", u.latest))}</b><span>${esc(t("upd.instSub"))}</span></div>`;
+    else if (s === "ingame") bar = `<div class="t"><b>${esc(t("upd.game"))}</b><span>${esc(t("upd.gameSub"))}</span></div>${btn("install", "upd.retry")}`;
+    else if (s === "error") bar = `<div class="t"><b>${esc(t("upd.err"))}</b><span>${esc(u.error)}</span></div>${btn("install", "upd.retry")}`;
+    else bar = `<div class="t"><b>${esc(t("upd.new", u.latest))}</b><span>${esc(t("upd.have", u.current))}</span></div>${btn("notes", "upd.notes")}${btn("install", "upd.install", u.sizeMb)}`;
+  }
+  $("#updBar").innerHTML = bar;
+  $("#updBar").classList.toggle("hidden", !bar || !$("#about").classList.contains("hidden"));
+  const about = $("#updAbout");
+  about.classList.toggle("plain", !bar);
+  about.innerHTML = bar || `<div class="t"><b>${esc(t("upd.title"))}</b><span>${esc(
+      s === "checking" ? t("upd.checking") : s === "error" ? t("upd.offline") : s === "uptodate" ? t("upd.latest", u.current) : t("upd.auto"))}</span></div>${
+      s === "checking" ? "" : btn("check", "upd.check")}`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-upd]");
+  if (!b) return;
+  if (b.dataset.upd === "install") send({ type: "installUpdate" });
+  if (b.dataset.upd === "check") send({ type: "checkUpdate" });
+  if (b.dataset.upd === "notes") send({ type: "releaseNotes" });
 });
 
 // ── Inicio ──

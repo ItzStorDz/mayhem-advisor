@@ -36,13 +36,17 @@ The code is public so you can check it yourself. Mayhem Advisor:
 - reads only what Riot exposes on your own PC: the League client's local API and the in-game
   [Live Client Data API](https://developer.riotgames.com/docs/lol#game-client-api);
 - reads the augment cards from the screen with Windows' built-in text recognition (OCR), like a screenshot;
-- does not show augment win rates (Riot's policy for third-party apps); it shows its own scores instead.
+- does not show augment win rates (Riot's policy for third-party apps); it shows its own scores instead;
+- connects only to CommunityDragon (game data) and GitHub (to check for updates).
 
 ## Install
 
 Download the latest installer from **[Releases](https://github.com/ItzStorDz/mayhem-advisor/releases)** and run it.
 Windows 10/11, 64-bit. Windows SmartScreen may warn you because the installer is not signed yet: choose
 *More info → Run anyway*.
+
+After that, the app tells you when a new version is out and installs it with one click (never while the game is
+open; your games and settings are kept). The download is checked against GitHub's SHA-256 fingerprint before it runs.
 
 ## Data sources
 
