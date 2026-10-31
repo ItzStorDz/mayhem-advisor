@@ -51,6 +51,7 @@ static class P
     static Form Game = null!;
     static string[]? Cards;
     static bool CardsEn; // nombres de las cartas en inglés (si no, en español como el juego del usuario) // nombres dibujados (null = sin cartas)
+    static Image? Showcase; // FG_SHOWCASE: una captura del juego con cartas de verdad (para imágenes de promoción)
     static string? Stray;   // un nombre suelto más arriba que la fila de las cartas (animación al elegir, como con Rammus)
 
     static void Note(string s) { var line = $"{DateTime.Now:HH:mm:ss.fff}  {s}"; Console.WriteLine(line); Report.AppendLine(line); }
@@ -100,6 +101,13 @@ static class P
         typeof(Form).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(Game, true);
         Game.Paint += (_, e) =>
         {
+            if (Showcase is { } sc)
+            {
+                // Que llene la pantalla sin deformarse (se recorta lo que sobre por los lados o arriba y abajo).
+                float k = Math.Max(screen.Width / (float)sc.Width, screen.Height / (float)sc.Height);
+                e.Graphics.DrawImage(sc, (screen.Width - sc.Width * k) / 2, (screen.Height - sc.Height * k) / 2, sc.Width * k, sc.Height * k);
+                return;
+            }
             e.Graphics.DrawImage(bg, 0, 0, screen.Width, screen.Height);
             if (Stray is not null)
             {
@@ -134,12 +142,12 @@ static class P
         return false;
     }
 
-    static void Shot(string name)
+    static void Shot(string name, bool full = false)
     {
         var b = Screen.PrimaryScreen!.Bounds;
         using var bmp = new Bitmap(b.Width, b.Height);
         using (var g = Graphics.FromImage(bmp)) g.CopyFromScreen(b.Location, Point.Empty, b.Size);
-        using var small = new Bitmap(bmp, b.Width / 2, b.Height / 2);
+        using var small = full ? new Bitmap(bmp) : new Bitmap(bmp, b.Width / 2, b.Height / 2);
         small.Save(Path.Combine(Out, name + ".png"), ImageFormat.Png);
         // El overlay ya no sale en las capturas (a propósito): su propia imagen la guarda Electron en modo prueba.
         try { File.Copy(Path.Combine(Out, "overlay.png"), Path.Combine(Out, name + "-overlay.png"), true); } catch { }
@@ -192,6 +200,18 @@ static class P
             await Front();
             if (!await WaitLog("DEBUG botones:", 20_000)) { Note("FALLO: el panel no publicó sus botones"); Shot("00-sin-panel"); return; }
             await Task.Delay(1500);
+            if (Environment.GetEnvironmentVariable("FG_SHOWCASE") is { Length: > 0 } showcase)
+            {
+                // Solo la imagen de promoción: la app lee las cartas de la captura y se guarda todo a tamaño completo.
+                int seen0 = Count("Cartas en pantalla");
+                Showcase = Image.FromFile(showcase); Game.Invalidate(); Game.Update();
+                var tc = Stopwatch.StartNew();
+                while (Count("Cartas en pantalla") == seen0 && tc.ElapsedMilliseconds < 15_000) await Task.Delay(50);
+                Note(Count("Cartas en pantalla") > seen0 ? "cartas de la captura reconocidas" : "FALLO: no reconoció las cartas de la captura");
+                await Task.Delay(2500);
+                Shot($"{lang}-showcase", full: true);
+                return;
+            }
             Shot($"{lang}-1-compra");
 
             // Botones del panel.
