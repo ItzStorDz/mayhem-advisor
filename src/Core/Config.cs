@@ -13,5 +13,6 @@ public static class Paths
     // aumentos con icono de Mayhem que faltaban (Ult Bot, High Roller…): hay que recalcular la caché.
     // v10 (1.6.1): el enfriamiento propio del aumento ya no lo hace "de habilidades" y los efectos que escalan con AD y AP
     // a la vez cuentan como fuerza adaptable (Rápido y Seguro, El Bum y el Bajo): hay que recalcular las estadísticas.
-    public static string CatalogCache => Path.Combine(DataDir, "augments-v10.json");
+    // v11 (1.7.2): lo que vale con «ataques o habilidades» (Desgarraoro, Patada Aérea, Captura al Paso…) ya no pide ataques.
+    public static string CatalogCache => Path.Combine(DataDir, "augments-v11.json");
 }

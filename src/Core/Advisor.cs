@@ -628,6 +628,25 @@ public sealed partial class Advisor(StatsStore stats)
         var (usualAp, usualAbility, _) = BuildProfile(champion, [], []);
         return Math.Abs(ap - usualAp) > 0.3 || Math.Abs(ability - usualAbility) > 0.3;
     }
+    /// <summary>
+    /// Combos de mecánica para parejas sin partidas que las midan: dos aumentos de la definitiva (Revolución Definitiva +
+    /// Despertar Definitivo: cada definitiva extra te vuelve a reiniciar las básicas) o dos que se activan al inmovilizar
+    /// (Devorador de Almas + Infranqueable). Medido con las parejas de mayhemmeta con 1.000+ partidas (2026-11-01): las de
+    /// la definitiva ganan ~1 punto más que esos mismos aumentos con otros (13 de 14 positivas), las de inmovilizar ~0,7
+    /// (10 de 10). Con el enfriamiento no se mide nada aparte. (Partida de Alistar del 2026-11-01: salían con B.)
+    /// </summary>
+    static AugmentSynergy? Combo(Augment candidate, Augment mine)
+    {
+        if (candidate.NeedsUltimate && mine.NeedsUltimate)
+            return new AugmentSynergy(UltComboBonus, L($"combo con «{mine.DisplayName}»: los dos giran en torno a tu definitiva",
+                                                        $"combo with “{mine.DisplayName}”: both revolve around your ultimate"));
+        if (StatTags.TriggersOnImmobilize(candidate) && StatTags.TriggersOnImmobilize(mine))
+            return new AugmentSynergy(ImmobilizeComboBonus, L($"combo con «{mine.DisplayName}»: al inmovilizar se activan los dos",
+                                                               $"combo with “{mine.DisplayName}”: immobilizing triggers both"));
+        return null;
+    }
+    const double UltComboBonus = 0.01, ImmobilizeComboBonus = 0.007;
+
     /// <summary>Aumentos que potencian curaciones y escudos (Botiquín, Batido de Proteínas…).</summary>
     static readonly System.Text.RegularExpressions.Regex HealShieldPower = new(@"curaciones y escudos|heal(ing)? and shield(ing)?",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -673,6 +692,7 @@ public sealed partial class Advisor(StatsStore stats)
             Add(Math.Min(amount, room), why);
         }
 
+        Augment? comboWith = null;
         foreach (var m in mine.Where(m => !m.IsAnvil && m.Id != candidate.Id))
         {
             // Primero los datos de todos los jugadores (miles de partidas); si no hay, tus partidas guardadas.
@@ -688,6 +708,11 @@ public sealed partial class Advisor(StatsStore stats)
                 Add(Math.Clamp(pair.Lift, -0.05, 0.05), pair.Lift > 0
                     ? L($"combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"good combo with “{m.DisplayName}” in your games ({pair.Games})")
                     : L($"no combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"bad combo with “{m.DisplayName}” in your games ({pair.Games})"));
+            else if (Combo(candidate, m) is { } combo)
+            {
+                Add(combo.Bonus, combo.Reason);
+                comboWith = m; // lo medido de la familia ya incluye que «potencien lo mismo»
+            }
 
             var sharedItems = needs.Intersect(stats.Links.RequiredBy(m.Id)).Select(Data.Item).OfType<ItemInfo>().ToList();
             if (sharedItems.Count > 0) Add(0.04, L($"va con «{m.DisplayName}»: los dos piden {sharedItems[0].DisplayName}", $"fits “{m.DisplayName}”: both want {sharedItems[0].DisplayName}"));
@@ -695,7 +720,7 @@ public sealed partial class Advisor(StatsStore stats)
             // Las estadísticas muy comunes (habilidades, prisa) cuentan la mitad: casi todos los aumentos las tienen.
             var shared = useful.Intersect(UsefulTags(m, magic)).OrderBy(t => t is "Abilities" or "Haste").ToList();
             double tagBonus = shared.Take(3).Sum(t => t is "Abilities" or "Haste" ? 0.0075 : 0.015);
-            if (tagBonus > 0)
+            if (tagBonus > 0 && comboWith != m)
                 Guess(tagBonus, L($"va con «{m.DisplayName}»: los dos potencian {string.Join(" y ", shared.Take(2).Select(StatTags.Label))}", $"fits “{m.DisplayName}”: both boost {string.Join(" and ", shared.Take(2).Select(StatTags.Label))}"));
         }
 

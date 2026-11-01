@@ -338,6 +338,11 @@ public static class StatTags
         // El enfriamiento propio del aumento ("(5 second cooldown)", "(X seg de enfriamiento)") no lo hace de habilidades:
         // Rápido y Seguro salía como «pide habilidades» con Vayne (Wakka, 2026-10-31).
         text = Regex.Replace(text, @"\([^()]*\b(cooldown|enfriamiento)\b[^()]*\)", " ");
+        // «Con un ataque o una habilidad» (Desgarraoro, Patada Aérea, Captura al Paso, Alma Hextech…) vale con cualquier daño:
+        // no pide ataques básicos ni habilidades. Desgarraoro salía «Pide ataques básicos» con Alistar (partida del 2026-11-01).
+        text = AttackOrAbility.Replace(text, " cualquier golpe ");
+        // Un crítico garantizado («are critically struck»: Provocación Infernal a los que tienen poca vida) no pide crítico.
+        text = Regex.Replace(text, W(@"(are|is) critically struck"), " golpe garantizado ");
         // Convertir poder de habilidad en daño de ataque (escAPADe) es de AD, no de AP (el AP solo sale para decir cuánto da).
         if (Regex.IsMatch(text, @"\b(convert|convierte)\b[^.]*?(ability power|poder de habilidad)[^.]*?(attack damage|dano de ataque)"))
             text = Regex.Replace(text, @"<scaleap[^>]*>|ability power|poder de habilidad|\bap\b", " ");
@@ -373,6 +378,14 @@ public static class StatTags
     /// <summary>¿Te da probabilidad de crítico? (Absorción de Alma, Es Crítico…): con el 100 % ya no suma.</summary>
     public static bool GivesCritChance(Augment a) => CritGive.IsMatch(Plain(a));
     static readonly Regex CritGive = new(@"(gain|gains|grants|obtienes)[^.]{0,30}(critical strike chance|probabilidad de golpe critico)");
+
+    /// <summary>¿Se activa al inmovilizar a un enemigo? (Devorador de Almas, Infranqueable, Crueldad, Vínculo Voraz…).</summary>
+    public static bool TriggersOnImmobilize(Augment a) => Immobilize.IsMatch(Plain(a));
+    static readonly Regex Immobilize = new(@"immobiliz(ing|e) or ground|(after|when you) immobiliz|(al|tras|despues de) inmovilizar");
+
+    static readonly Regex AttackOrAbility = new(
+        W(@"(basic )?attacks?( on-hit)? (or|and|and/or) (an )?abilit(y|ies)( hits?)?") + "|" + W(@"abilit(y|ies) (or|and) (basic )?attacks?") + "|"
+        + W(@"(al impactar(los|las|les?)? con )?ataques? (basicos? )?(o|y) (con )?(una |sus |tus )?habilidad(es)?") + "|" + W(@"habilidad(es)? (o|y) (un |tus )?ataques?"));
 
     /// <summary>Un ratio de AD o de AP en una descripción de mayhemmeta: "(+ 65% AD )", "(+ ( 50% / 25%) bonus AD )".</summary>
     static readonly Regex AdRatio = new(@"\+\s*\(?\s*[\d.]+%[^()+]*?\)?\s*(bonus |total )?(ad|attack damage)\b");

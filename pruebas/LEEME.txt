@@ -26,6 +26,20 @@ evaluar-objetos\    Mide lo bien que la app adivina los objetos con tus partidas
                     Para comparar con una versión anterior: -p:Antiguo=<carpeta codigo de un respaldo> (desde una copia
                     de la carpeta evaluar-objetos, para no mezclar lo compilado).
 
+auditar-campeones\  Cuando un jugador avisa de un fallo con un campeón, lo mismo se comprueba con los 173 (crítico al 100 %,
+                    aumentos que «piden otra build», combos de la definitiva / de inmovilizar…): imprime «N de M» por apartado.
+                      $env:MAYHEM_DATA_DIR = "<copia de tus datos y de datos\>"
+                      dotnet run --project pruebas\auditar-campeones -c Release [-- detalle]
+                    Antes → ahora: -p:Antiguo=<carpeta codigo de un respaldo> (desde una copia de la carpeta, como evaluar-objetos).
+
+evaluar-cartas\     Con las elecciones reales que llegan a la nube: ¿la carta mejor puntuada es la que eligieron los que ganaron?
+                    Exporta las partidas con  npx wrangler d1 execute mayhem-advisor --remote --json --command "SELECT data FROM matches"
+                    (desde cloud\) a un .json y:  dotnet run --project pruebas\evaluar-cartas -c Release -- <ese .json>
+
+explicar-partida\   Explica la nota de cada carta de una partida tuya (archivo de la carpeta diario de tus datos): datos del
+                    campeón con el aumento, combinaciones medidas con los que ya llevabas y la nota que sale.
+                      dotnet run --project pruebas\explicar-partida -c Release -- <diario\AAAAMMDD-HHMMSS-Campeón.json> [detalle]
+
 medir-dano-enemigo.py  Compara, con tus partidas guardadas, formas de calcular el % de daño mágico del equipo enemigo
                     contra el daño real.  python pruebas\medir-dano-enemigo.py "%LOCALAPPDATA%\MayhemAdvisor"
 

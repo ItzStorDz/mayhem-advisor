@@ -1,4 +1,4 @@
-// Auditoría con TODOS los campeones: cuando un jugador avisa de un fallo con un campeón (Wakka: el Coleccionista con Vayne,
+﻿// Auditoría con TODOS los campeones: cuando un jugador avisa de un fallo con un campeón (Wakka: el Coleccionista con Vayne,
 // el fragmento de crítico con Cho'Gath…), se comprueba lo mismo con los 173 para ver a cuántos les pasa.
 // Uso: MAYHEM_DATA_DIR=<copia de tus datos y de datos\> dotnet run -c Release [-- detalle]
 // Cada apartado imprime cuántos campeones/aumentos fallan y, con "detalle", cuáles.
@@ -137,3 +137,42 @@ foreach (var c in champions)
     if (bad.Count > 0) loseBad.Add($"{c} ({champWr:0.0} %): {string.Join(", ", bad.Select(a => $"{a.Item.NameEn} {stats.GlobalItem(c, a.Item.Id)!.WinRate:0.0} %"))}");
 }
 Report($"Campeones a los que se recomienda de primeras un objeto que gana 2+ puntos menos ({loseItems} objetos)", loseBad.Count, loseTotal, loseBad);
+
+// 7. Aumentos que valen con ataques O habilidades (Desgarraoro, Patada Aérea, Captura al Paso…) no deben «pedir» ninguno de
+// los dos (Desgarraoro salía «Pide ataques básicos» con Alistar, partida del usuario del 2026-11-01).
+string Plain(Augment a) => new string((a.Description + " " + a.ExtraDescription).Normalize(System.Text.NormalizationForm.FormD)
+    .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark).Select(char.ToLowerInvariant).ToArray());
+// (No cuenta «el siguiente ataque o habilidad de tu aliado» de Amanecer Abrasador: eso lo hace tu aliado, el aumento va de tus habilidades.)
+var eitherRx = new System.Text.RegularExpressions.Regex(@"(?<!ally's next (basic )?)((basic )?attacks? (or|and) (an )?abilit(y|ies)|abilit(y|ies) (or|and) (basic )?attacks?)|(ataques? (basicos? )?(o|y) (con )?(una |sus |tus )?habilidad(es)?|habilidad(es)? (o|y) (un |tus )?ataques?)(?! de tu aliado)");
+var either = augments.Where(a => eitherRx.IsMatch(Plain(a))).ToList();
+var eitherBad = new List<(Augment Aug, string Champ, string Reason)>(); int eitherTotal = 0;
+foreach (var a in either)
+    foreach (var c in champions)
+    {
+        eitherTotal++;
+        if (advisor.BuildFit(a, c, [], []) is { Bonus: < 0 } f && (f.Reason.Contains("ataques") || f.Reason.Contains("habilidades"))) eitherBad.Add((a, c, f.Reason));
+    }
+Report($"Aumentos de «ataques o habilidades» ({string.Join(", ", either.Select(a => a.Names["default"]))}) que piden uno de los dos", eitherBad.Count, eitherTotal,
+    eitherBad.GroupBy(x => x.Aug).OrderByDescending(g => g.Count()).Select(g => $"{g.Key.Names["default"]} [{string.Join(", ", g.Key.StatList)}]: {g.Count()} campeones, p. ej. {g.First().Champ}: {g.First().Reason}"));
+
+// 8. Combos de mecánica sin partidas que midan la pareja (dos de la definitiva, dos que se activan al inmovilizar): ¿los
+// reconoce la app? (Revolución Definitiva + Despertar Definitivo y Devorador de Almas + Infranqueable con Alistar.)
+var ccRx = new System.Text.RegularExpressions.Regex(@"immobiliz(ing|e) or ground|(after|when you) immobiliz|(al|tras|despues de) inmovilizar");
+var families = new[] { ("definitiva", augments.Where(a => a.NeedsUltimate).ToList()), ("inmovilizar", augments.Where(a => ccRx.IsMatch(Plain(a))).ToList()) };
+foreach (var (fam, set) in families)
+{
+    var unmeasured = set.SelectMany((a, i) => set.Skip(i + 1).Select(b => (a, b))).Where(p => table.Pair(p.a.Id, p.b.Id) is not { Games: >= 50 }).ToList();
+    var missed = new List<string>(); int famTotal = 0, unexplained = 0;
+    foreach (var c in champions)
+        foreach (var (a, b) in unmeasured)
+        {
+            famTotal++;
+            // Lo que suma la pareja: la nota con el otro aumento menos la nota sin él. Se mide ~+0,7 / +1 punto (ver Advisor.Combo).
+            var syn = advisor.SynergyWith(a, [b], c, []);
+            double gain = (syn?.Bonus ?? 0) - (advisor.SynergyWith(a, [], c, [])?.Bonus ?? 0);
+            if (gain < 0.006) missed.Add($"{a.Names["default"]} + {b.Names["default"]} con {c}: suma {gain * 100:+0.0;-0.0} · {syn?.Reason ?? "nada"}");
+            else if (!syn!.Reason.Contains("combo")) unexplained++;
+        }
+    Report($"Combos de {fam} sin partidas medidas ({unmeasured.Count} parejas × campeones) a los que la pareja no suma (+0,6 o más)", missed.Count, famTotal, missed);
+    Console.WriteLine($"   (y {unexplained} que suman pero la carta lo explica con otra cosa)");
+}
