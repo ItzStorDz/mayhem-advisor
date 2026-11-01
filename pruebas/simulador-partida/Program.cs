@@ -422,6 +422,26 @@ static class P
             var logNow = LogText();
             Note(logNow.Contains("Aumento elegido: Plan de Escape") ? "Garen: «Plan de Escape» se apuntó" : "FALLO: Garen: «Plan de Escape» no se apuntó");
 
+            // Wakka (2026-11-01): eliges la carta de la izquierda y enseguida haces clic en el centro para moverte (con las
+            // cartas aún en pantalla). Cuenta el primer clic: antes se apuntaba la carta del centro.
+            Cards = CardsEn ? ["Shrink Ray", "Armored Impact", "Long Range"] : ["Rayo Encogedor", "Impacto Blindado", "De Largo Alcance"];
+            seen = Count("Cartas en pantalla"); Game.Invalidate(); Game.Update();
+            t0.Restart(); while (Count("Cartas en pantalla") == seen && t0.ElapsedMilliseconds < 10_000) await Task.Delay(20);
+            await Task.Delay(800); await Front();
+            string left = CardsEn ? "clic en Shrink Ray" : "clic en Rayo Encogedor", middle = CardsEn ? "clic en Armored Impact" : "clic en Impacto Blindado";
+            int leftBefore = Count(left), middleBefore = Count(middle);
+            SetCursorPos((int)(b.Width * 0.29), (int)(b.Height * 0.45)); await Task.Delay(150);
+            mouse_event(0x02, 0, 0, 0, IntPtr.Zero); await Task.Delay(40); mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
+            await Task.Delay(150);
+            SetCursorPos((int)(b.Width * 0.5), (int)(b.Height * 0.45)); await Task.Delay(60);
+            mouse_event(0x02, 0, 0, 0, IntPtr.Zero); await Task.Delay(40); mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
+            await Task.Delay(250); Cards = null; Game.Invalidate(); Game.Update();
+            var tw = Stopwatch.StartNew();
+            while (Count(left) == leftBefore && Count(middle) == middleBefore && tw.ElapsedMilliseconds < 8000) await Task.Delay(50);
+            Note(Count(left) > leftBefore ? "Wakka: elegir y mover enseguida apunta la carta elegida"
+                : Count(middle) > middleBefore ? "FALLO: Wakka: se apuntó la carta del clic de moverse" : "FALLO: Wakka: no se apuntó nada");
+            await Task.Delay(3000);
+
             // Texto de otro overlay dentro del juego: 3 nombres casi pegados. No deben salir como cartas.
             int before2 = Count("Cartas en pantalla");
             Cards = null; Stray = "Barrera Azul   Sonata   Locomotora"; Game.Invalidate(); Game.Update(); await Task.Delay(3000);

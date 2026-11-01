@@ -618,7 +618,8 @@ public sealed partial class Advisor(StatsStore stats)
     static readonly System.Text.RegularExpressions.Regex HealShieldPower = new(@"curaciones y escudos|heal(ing)? and shield(ing)?",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-    public AugmentSynergy? SynergyWith(Augment candidate, IReadOnlyList<Augment> mine, string champion, IReadOnlyList<int>? myItems = null)
+    public AugmentSynergy? SynergyWith(Augment candidate, IReadOnlyList<Augment> mine, string champion, IReadOnlyList<int>? myItems = null,
+                                       double critChance = 0)
     {
         if (candidate.IsAnvil) return null;
         // De Vuelta a lo Básico sella la definitiva: con un aumento que vive de ella (Axioma Arcano, Forma Final…) uno de
@@ -679,6 +680,10 @@ public sealed partial class Advisor(StatsStore stats)
         {
             if (fit.Bonus > 0) Guess(fit.Bonus, fit.Reason); else Add(fit.Bonus, fit.Reason);
         }
+
+        // Con el 100 % de crítico, el crítico que da el aumento se pierde (Absorción de Alma salía con nota alta: Wakka, Jhin).
+        if (critChance >= CritCap && StatTags.GivesCritChance(candidate))
+            Add(-0.05, L("ya tienes el 100 % de crítico: el que da se pierde", "you are already at 100% crit: its crit is wasted"));
 
         // El kit del campeón (campeones-kit.json): un aumento de ataques rinde más si sus habilidades aplican efectos al
         // impactar (W de Kog'Maw), uno de crítico si las suyas lo usan (pasiva de Yasuo), y uno que potencia curaciones y
@@ -762,6 +767,12 @@ public sealed partial class Advisor(StatsStore stats)
             if (tags.Contains("Abilities")) ability += AugmentGold;
             if (tags.Contains("AS") || tags.Contains("Crit") || tags.Contains("OnHit")) attack += AugmentGold;
         }
+        // (El crítico de habilidades cuenta como habilidades: ver abajo.)
+        foreach (var m in mine.Where(m => !m.IsAnvil && StatTags.UsesCritChance(m) && m.StatList.Contains("Crit") && !m.StatList.Any(t => t is "AS" or "OnHit")))
+        {
+            attack -= AugmentGold;
+            ability += AugmentGold;
+        }
 
         double Share(double a, double b) => a + b <= 0 ? 0.5 : a / (a + b);
         return (Share(ap, ad), Share(ability, attack), ownGold >= 1000);
@@ -804,7 +815,7 @@ public sealed partial class Advisor(StatsStore stats)
     /// Lo que pierde un objeto de crítico con el crítico al tope (Wakka, 2026-10-31: le recomendaba El Coleccionista a una
     /// Vayne con el 100 %). El Filo del Infinito no: su fuerza es el daño crítico.
     /// </summary>
-    const double CritCappedPenalty = -0.12;
+    const double CritCappedPenalty = -0.2;
     const int InfinityEdge = 3031;
 
     /// <summary>True durante <see cref="Build"/> si tu build es de tanque (ver <see cref="TankShare"/>).</summary>
@@ -857,18 +868,23 @@ public sealed partial class Advisor(StatsStore stats)
         if (total == 0) return [];
         string active = _style?.Key ?? styles[0].Key;
         bool locked = _style?.Locked == true;
-        IReadOnlyList<ItemInfo> KeyItems(IReadOnlyDictionary<int, double> shares) => shares
-            .Where(kv => !Owns(myItems, kv.Key) && Data.Item(kv.Key) is { IsBoots: false, InStore: true, IsFinal: true })
-            .OrderByDescending(kv => kv.Value).Take(3).Select(kv => Data.Item(kv.Key)!).ToList();
+        // Los objetos clave son los propios de esa build: lo que sale en ella más que en las otras del campeón. Con solo "los más
+        // comprados", Teemo on-hit enseñaba el Tormento de Liandry, que se compra igual en su build de AP (Wakka, 2026-11-01);
+        // la auditoría lo veía en 244 de 388 builds.
+        double Other(int id, string key) => styles.Where(o => o.Key != key).Select(o => o.Items.GetValueOrDefault(id)).DefaultIfEmpty(0).Max();
+        IReadOnlyList<ItemInfo> KeyItems(IReadOnlyDictionary<int, double> shares, string key) => shares
+            .Where(kv => kv.Value >= 0.1 && !Owns(myItems, kv.Key) && Data.Item(kv.Key) is { IsBoots: false, InStore: true, IsFinal: true })
+            .OrderByDescending(kv => kv.Value - 0.8 * Other(kv.Key, key)).ThenByDescending(kv => kv.Value)
+            .Take(3).Select(kv => Data.Item(kv.Key)!).ToList();
         var options = styles.Where(s => (double)s.Games / total >= MinStyleShare || s.Key == active)
             .Select(s => new StyleOption(s.Key, StyleName(s.Key), (double)s.Games / total, s.WinRate,
-                KeyItems(s.Key == active && _style is not null ? _style.Items : s.Items), s.Key == active, s.Key == active && locked))
+                KeyItems(s.Key == active && _style is not null ? _style.Items : s.Items, s.Key), s.Key == active, s.Key == active && locked))
             .ToList();
         foreach (var key in new[] { active, "on_hit" })
         {
             if (options.Any(o => o.Key == key) || stats.AramkitBuilds.Generic(key) is not { } generic) continue;
             if (key == "on_hit" && key != active && stats.Kits.For(champion) is not { HasOnHit: true }) continue;
-            options.Add(new StyleOption(key, StyleName(key), 0, generic.WinRate, KeyItems(key == active && _style is not null ? _style.Items : generic.Items),
+            options.Add(new StyleOption(key, StyleName(key), 0, generic.WinRate, KeyItems(key == active && _style is not null ? _style.Items : generic.Items, key),
                 key == active, key == active && locked));
         }
         return options;
@@ -947,7 +963,10 @@ public sealed partial class Advisor(StatsStore stats)
         bool needsAp = tags.Overlaps(["AP", "MagicPen"]), needsAd = tags.Overlaps(["AD", "Crit", "Lethality"]);
         // Los aumentos de la definitiva (Axioma Arcano, Recursión Definitiva…) sirven a cualquiera que la use, también a un
         // Yi o un Twitch de ataques básicos: no piden build de habilidades.
-        bool needsAbilities = tags.Contains("Abilities") && !candidate.NeedsUltimate, needsAttacks = tags.Overlaps(["AS", "Crit", "OnHit"]);
+        // Ni el crítico de las habilidades (Guantelete Enjoyado, Fuego Gemelo, Curación Crítica) es de ataques básicos.
+        bool critForAbilities = StatTags.UsesCritChance(candidate);
+        bool needsAbilities = tags.Contains("Abilities") && !candidate.NeedsUltimate,
+             needsAttacks = tags.Overlaps(["AS", "OnHit"]) || (tags.Contains("Crit") && !critForAbilities);
         if (needsAp == needsAd && needsAbilities == needsAttacks) return null; // pide de todo o nada concreto
 
         var (apShare, abilityShare, fromItems) = BuildProfile(champion, myItems, mine);
@@ -1091,9 +1110,33 @@ public sealed partial class Advisor(StatsStore stats)
     /// motivo claro (un aumento, el equipo enemigo). Antes un objeto raro con buen % en pocas partidas le ganaba.
     /// Con otro estilo de build por tus aumentos (<see cref="_style"/>), cuenta lo que se compra en ese estilo.
     /// </summary>
-    double PopularBonus(string champion, int itemId) =>
-        _style is not null ? (_style.FromItems is null ? MaxPopularBonus : StyleItemsBonus) * Math.Min(_style.Items.GetValueOrDefault(itemId), 0.6) / 0.6
-        : stats.GlobalItem(champion, itemId) is { PickRate: { } pick } ? MaxPopularBonus * Math.Min(pick, 60) / 60 : 0;
+    double PopularBonus(string champion, int itemId) => WinFactor(champion, itemId) * (
+        _style is { Locked: true } ? StyleItemsBonus * Math.Min(LockedShare(champion, itemId), 0.6) / 0.6
+        : _style is not null ? (_style.FromItems is null ? MaxPopularBonus : StyleItemsBonus) * Math.Min(_style.Items.GetValueOrDefault(itemId), 0.6) / 0.6
+        : stats.GlobalItem(champion, itemId) is { PickRate: { } pick } ? MaxPopularBonus * Math.Min(pick, 60) / 60 : 0);
+
+    /// <summary>
+    /// Con la build que fijaste tú, lo que cuenta es lo propio de esa build: lo que sale en ella menos lo que sale igual en
+    /// las otras del campeón. Teemo con on-hit fijado recibía Liandry y Maldad (los compran también sus AP) en vez de lo
+    /// on-hit (Wakka, 2026-11-01). Con la que elige la app se sigue lo que compra la gente (acierta más, evaluar-objetos).
+    /// </summary>
+    double LockedShare(string champion, int itemId)
+    {
+        double share = _style!.Items.GetValueOrDefault(itemId);
+        double other = stats.AramkitBuilds.Styles(champion).Where(s => s.Key != _style.Key).Select(s => s.Items.GetValueOrDefault(itemId)).DefaultIfEmpty(0).Max();
+        return Math.Max(0, share - 0.8 * other);
+    }
+
+    /// <summary>
+    /// Lo que pesa que un objeto sea popular según lo que gana con el campeón (mayhemmeta, 300+ partidas): entero si pierde
+    /// como mucho 1 punto frente al campeón; menos cuanto más pierde (la mitad con −4 o peor). Que mucha gente lo compre no
+    /// lo hace bueno: El Coleccionista con Senna gana 3,4 puntos menos que Senna; con Xayah, 2,2 (Wakka, 2026-11-01, se
+    /// quejaba de él con Vayne, donde gana lo mismo). Con la auditoría: 8 → 3 campeones con un objeto perdedor de primeras,
+    /// sin bajar el acierto con lo que compran los que ganan (pruebas/evaluar-objetos). Premiar al que gana más bajaba el acierto.
+    /// </summary>
+    double WinFactor(string champion, int itemId) =>
+        stats.Global.For(champion) is { WinRate: { } champWr } build && build.Item(itemId) is { WinRate: { } wr } item && build.GamesWith(item) >= 300
+            ? Math.Clamp(1 + Math.Min(0, wr - champWr + 1) / 6, 0.5, 1) : 1;
     /// <summary>Con otro estilo de build, un objeto que sale en menos de esta parte de sus partidas no entra como candidato extra.</summary>
     const double StyleItemMin = 0.1;
     /// <summary>Tope de todo lo que suman tus aumentos a un objeto.</summary>

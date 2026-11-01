@@ -346,10 +346,33 @@ public static class StatTags
         if (AdRatio.IsMatch(text) && ApRatio.IsMatch(text))
             text = ApRatio.Replace(AdRatio.Replace(text, " fuerza adaptable "), " fuerza adaptable ");
         var tags = Rules.Where(r => r.Patterns.Any(text.Contains)).Select(r => r.Tag).ToList();
+        // Un aumento que mejora "cualquier estadística" (Arma del Destino enumera las 15) no pide ninguna: con todas sus
+        // estadísticas salía «→ AD/AP» y «pide ataques básicos» con Vladimir (Wakka, 2026-11-01).
+        if (tags.Count(CoreStats.Contains) >= 5) tags.RemoveAll(CoreStats.Contains);
         // "Fuerza adaptable" sirve a daño de ataque o a poder de habilidad, según el campeón.
         if (text.Contains("<scaleaf") || text.Contains("fuerza adaptable")) tags.Add("Adaptive");
         return tags.Distinct().ToArray();
     }
+
+    static readonly string[] CoreStats = ["AD", "AP", "AS", "Crit", "Armor", "MR", "Health", "Haste", "Lethality", "MagicPen", "Mana"];
+
+    /// <summary>Texto del aumento (juego y mayhemmeta) en minúsculas y sin acentos.</summary>
+    static string Plain(Augment a) => new string((a.Description + " " + a.ExtraDescription).Normalize(NormalizationForm.FormD)
+        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).Select(char.ToLowerInvariant).ToArray());
+
+    /// <summary>
+    /// ¿El crítico sirve con este aumento aunque no ataques? Habilidades, curaciones u objetos que asestan críticos, o algo
+    /// que escala con tu probabilidad de crítico: Guantelete Enjoyado, Pulsera Enjoyada, Fuego Gemelo, Curación Crítica,
+    /// Vulnerabilidad, Crítico y Hechizo… (Wakka, 2026-11-01: el fragmento de crítico salía «no te sirve» a Cho'Gath con el
+    /// Guantelete; la auditoría lo vio en los 82 campeones de AP).
+    /// </summary>
+    public static bool UsesCritChance(Augment a) => CritUse.IsMatch(Plain(a));
+    static readonly Regex CritUse = new(@"(abilities|ability|habilidades|habilidad|items and damage over time|efectos de tus objetos|heals and shields|curaciones y escudos)[^.]{0,40}(critically strike|asestar (un )?golpes? critico)"
+        + @"|per [\d.]+% critical strike chance|(equal to|equivalente a)[^.]{0,30}(critical strike chance|probabilidad de golpe critico)");
+
+    /// <summary>¿Te da probabilidad de crítico? (Absorción de Alma, Es Crítico…): con el 100 % ya no suma.</summary>
+    public static bool GivesCritChance(Augment a) => CritGive.IsMatch(Plain(a));
+    static readonly Regex CritGive = new(@"(gain|gains|grants|obtienes)[^.]{0,30}(critical strike chance|probabilidad de golpe critico)");
 
     /// <summary>Un ratio de AD o de AP en una descripción de mayhemmeta: "(+ 65% AD )", "(+ ( 50% / 25%) bonus AD )".</summary>
     static readonly Regex AdRatio = new(@"\+\s*\(?\s*[\d.]+%[^()+]*?\)?\s*(bonus |total )?(ad|attack damage)\b");

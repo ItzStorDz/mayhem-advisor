@@ -24,9 +24,11 @@ public partial class App : System.Windows.Application
     DateTime _nextSingleHitLog;
     int _lastSingleHitId;
     // Cuánto tiempo sin ver las cartas antes de quitarlas: depende de si hiciste clic en una (= elegiste).
+    // Sin clic sobre una carta se esperaba hasta 60 s y las tarjetas se quedaban en pantalla con la partida ya en marcha
+    // (Wakka, 2026-11-01). Si las cartas vuelven (las ocultaste para mirar el mapa), se leen y se enseñan otra vez.
     static readonly TimeSpan HideAfterPick = TimeSpan.FromSeconds(0.8),
-        HideAfterOtherClick = TimeSpan.FromSeconds(5),
-        HideWithoutClick = TimeSpan.FromSeconds(60);
+        HideAfterOtherClick = TimeSpan.FromSeconds(2.5),
+        HideWithoutClick = TimeSpan.FromSeconds(8);
     // Una carta que sigue sola tras este rato no es una carta: las de verdad salen de 3 en 3 y se leen en <1 s.
     // (Con Singed, una palabra del juego leída como "Vulnerabilidad" salió sola y se apuntó como aumento elegido.)
     static readonly TimeSpan LoneCardTimeout = TimeSpan.FromSeconds(3);
@@ -372,8 +374,8 @@ public partial class App : System.Windows.Application
                     {
                         var picked = ClickedCard();
                         Log.Write($"Cartas quitadas ({(picked is not null ? $"clic en {picked.Hit.Augment.Name}" : _clicks.Count > 0 ? "clic fuera de las cartas" : "sin clic, tiempo agotado")})");
-                        // Si el clic no cae en ninguna carta, apuntamos dónde estaban las cartas y los clics para poder ajustarlo.
-                        if (picked is null && _clicks.Count > 0)
+                        // Dónde estaban las cartas y los clics, para poder ajustarlo (también si hubo varios clics).
+                        if (_clicks.Count > (picked is null ? 0 : 1))
                             Log.Write($"   cartas (nombre x,y): {string.Join(" | ", _cards.Select(c => $"{c.Hit.Augment.Name} {c.Hit.Bounds.X + c.Hit.Bounds.Width / 2},{c.Hit.Bounds.Y}"))}" +
                                       $" · juego {_gameArea.X},{_gameArea.Y} {_gameArea.Width}x{_gameArea.Height} · clics: {string.Join(" ", _clicks.TakeLast(6).Select(c => $"{c.X},{c.Y}"))}");
                         RegisterPick();
@@ -581,7 +583,7 @@ public partial class App : System.Windows.Application
         if (hits[0].Augment.IsAnvil)
         {
             var ranking = Anvil.Rank(hits.Select(h => h.Augment), game.Champion, _stats,
-                advice?.Enemies ?? EnemyProfile.Build(game.Enemies, _stats, scores: game.EnemyScores), _myAugments, game.MyItems);
+                advice?.Enemies ?? EnemyProfile.Build(game.Enemies, _stats, scores: game.EnemyScores), _myAugments, game.MyItems, game.CritChance);
             _cards = hits.Select(h =>
             {
                 var r = ranking.First(x => x.Fragment.Id == h.Augment.Id);
@@ -599,7 +601,7 @@ public partial class App : System.Windows.Application
             _cards = hits.Select(h => (_cards.FirstOrDefault(c => c.Hit.Augment.Id == h.Augment.Id) is { } old
                 ? old with { Hit = h }
                 : new AugmentCard(h, _stats.Rate(game.Champion, h.Augment.Id, mix), advisor.ItemsForAugment(h.Augment, game.Champion, game.MyItems)))
-                with { Synergy = advisor.SynergyWith(h.Augment, _myAugments, game.Champion, game.MyItems) })
+                with { Synergy = advisor.SynergyWith(h.Augment, _myAugments, game.Champion, game.MyItems, game.CritChance) })
                 .Select(c =>
                 {
                     double score = ScaleFor(game.Champion, mix).Score(c.SortScore, AugmentScale.IsReliable(c.Rec));
@@ -860,13 +862,13 @@ public partial class App : System.Windows.Application
         // medio, elegir Crueldad apuntaba Archimaga (Wakka, 2026-10-31). Ahora ese clic no apunta nada.
         halfGap = Math.Min(halfGap, screenH * CardHalfWidth);
 
-        for (int i = _clicks.Count - 1; i >= 0; i--)
+        // El PRIMER clic sobre una carta es la elección: en Mayhem un clic en una carta ya la elige. Los de después son de
+        // volver a jugar (mucha gente mueve o ataca con el clic izquierdo mientras las cartas aún se van) y caían en la columna
+        // de otra carta. Con el último clic, la nube (1.5.0-1.7.0) mostraba la carta de al lado en el 8-9 % de las elecciones;
+        // y cortar por tiempo (1.7.0) dejaba sin apuntar el 21 %: el clic de elegir suele llegar después de la última
+        // lectura que aún veía las cartas.
+        foreach (var click in _clicks)
         {
-            var click = _clicks[i];
-            // Un clic de cuando las cartas ya no estaban no es elegir: es volver a jugar (mucha gente mueve o ataca con el
-            // clic izquierdo y ese clic caía en la columna de otra carta). En las partidas de la nube (159 elecciones de
-            // 1.5.0-1.6.0) la app apuntó 13 mal, casi siempre la carta de al lado de la elegida.
-            if (click.At > _cardsLastSeen + ClickAfterCardsGrace) continue;
             // Solo el cuerpo de la carta: desde el icono hasta la descripción. Los botones de abajo (refrescar) no cuentan.
             // Medido en tus partidas: un clic de elegir a +20 % bajo el nombre (Sombrero de Wooglet), refrescar a +30 % o más.
             var hit = centers.Where(c => Math.Abs(click.X - c.X) <= halfGap && click.Y > c.Y - screenH * 0.28 && click.Y < c.Y + screenH * 0.26)
@@ -876,8 +878,6 @@ public partial class App : System.Windows.Application
         return null;
     }
 
-    /// <summary>Lo que puede ir un clic por detrás de la última lectura que aún vio las cartas (una vuelta de lectura y algo).</summary>
-    static readonly TimeSpan ClickAfterCardsGrace = TimeSpan.FromSeconds(0.25);
     /// <summary>Media carta de ancho, en partes del alto de la ventana del juego (medido: 409 px entre cartas con 1200 de alto).</summary>
     const double CardHalfWidth = 0.17;
 

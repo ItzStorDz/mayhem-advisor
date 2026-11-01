@@ -65,7 +65,7 @@ public static class Anvil
 
     /// <summary>Ordena los fragmentos en pantalla de mejor a peor para tu campeón en esta partida.</summary>
     public static List<AnvilRating> Rank(IEnumerable<Augment> fragments, string champion, StatsStore stats,
-                                          EnemyProfile enemies, IReadOnlyList<Augment> myAugments, IReadOnlyList<int> myItems)
+                                          EnemyProfile enemies, IReadOnlyList<Augment> myAugments, IReadOnlyList<int> myItems, double critChance = 0)
     {
         var data = stats.Data;
         var roles = data.Champion(champion)?.Roles ?? [];
@@ -73,6 +73,9 @@ public static class Anvil
         bool marksman = roles.FirstOrDefault() == "marksman";
         bool frontline = roles.FirstOrDefault() is "tank" or "fighter";
         bool tanky = enemies.Tanks >= 2;
+        // Un aumento tuyo que hace útil el crítico sin ataques (Guantelete Enjoyado…) y el tope del 100 %.
+        bool critUse = myAugments.Any(StatTags.UsesCritChance);
+        bool critCapped = critChance >= 0.95;
 
         // Estadísticas que ya potencian tus aumentos y tus objetos: los fragmentos que las suman encajan mejor.
         var augmentTags = myAugments.SelectMany(a => a.StatList).Select(t => t == "Adaptive" ? (magic ? "AP" : "AD") : t).ToHashSet();
@@ -84,13 +87,18 @@ public static class Anvil
             var why = new List<string>();
             void Add(bool when, double pts, string reason) { if (when) { score += pts; why.Add(reason); } }
 
+            // El daño crítico sigue sirviendo con el 100 % de crítico (lo que se pierde es la probabilidad).
+            bool critDamage = f.ApiName.Contains("critdamage", StringComparison.OrdinalIgnoreCase);
             foreach (var t in f.StatList)
             {
                 Add(t == "AP" && magic, 3, L("tu daño es mágico", "your damage is magic"));
                 Add(t == "AD" && !magic, 3, L("tu daño es físico", "your damage is physical"));
                 Add(t == "MagicPen" && magic, tanky || enemies.MagicResistItems >= 3 ? 3 : 2, tanky ? L("penetración contra tanques", "penetration vs tanks") : L("más daño mágico", "more magic damage"));
                 Add(t == "Lethality" && !magic, tanky || enemies.ArmorItems >= 3 ? 3 : 2, tanky ? L("penetración contra tanques", "penetration vs tanks") : L("más daño físico", "more physical damage"));
-                Add(t == "Crit" && marksman && !magic, 2.5, L("eres tirador", "you are a marksman"));
+                Add(t == "Crit" && marksman && !magic && !critCapped, 2.5, L("eres tirador", "you are a marksman"));
+                Add(t == "Crit" && critUse && !critCapped, 2.5, L("tu aumento usa el crítico", "your augment uses crit"));
+                Add(t == "Crit" && critCapped && !critDamage, -4, L("ya tienes el 100 % de crítico", "you are already at 100% crit"));
+                Add(t == "Crit" && critCapped && critDamage && (critUse || marksman && !magic), 3, L("con el 100 % de crítico, más daño crítico", "at 100% crit, more crit damage"));
                 Add(t == "AS" && marksman, 2.5, L("eres tirador", "you are a marksman"));
                 Add(t == "Haste" && !marksman, 1.5, L("más habilidades", "more abilities"));
                 Add(t == "Armor" && enemies.Mix == DamageMix.Physical, frontline ? 3 : 2, L("mucho daño físico enemigo", "lots of enemy physical damage"));
@@ -102,12 +110,12 @@ public static class Anvil
                 Add(t is "MoveSpeed" or "Tenacity" or "HealShield", 0.5, Label(t));
 
                 // Sinergias con lo que ya llevas.
-                Add(augmentTags.Contains(t), 1.5, L("va con tus aumentos", "fits your augments"));
+                Add(augmentTags.Contains(t) && !(t == "Crit" && critCapped && !critDamage), 1.5, L("va con tus aumentos", "fits your augments"));
                 Add(StatTags.All.TryGetValue(t, out var info) && info.ItemCategories.Any(itemCats.Contains), 1, L("va con tus objetos", "fits your items"));
                 // Estadísticas que tu campeón casi no aprovecha.
                 Add(t == "AP" && !magic, -2, "");
                 Add(t == "AD" && magic, -2, "");
-                Add(t == "Crit" && magic, -2, "");
+                Add(t == "Crit" && magic && !critUse, -2, "");
             }
 
             var reason = why.Where(r => r != "").Distinct().Take(2).ToList();
