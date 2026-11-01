@@ -614,6 +614,20 @@ public sealed partial class Advisor(StatsStore stats)
     /// Además mira si el aumento encaja con tu build (ver <see cref="BuildFit"/>). Null si no hay nada que decir.
     /// </summary>
     const double MaxGuessBonus = 0.015;
+    /// <summary>Partidas del campeón con el aumento (todos los jugadores) a partir de las que mandan sus datos (fiabilidad 2/3).</summary>
+    const int ChampionDataGames = 300;
+
+    /// <summary>
+    /// ¿Tu build de esta partida no es la habitual del campeón? (tus objetos ya deciden, y van 30+ puntos más hacia AP/AD o
+    /// hacia ataques/habilidades que lo normal con él: un Shaco de AP, una Kayle de crítico…). Sin objetos, es la habitual.
+    /// </summary>
+    bool BuildDiffersFromUsual(string champion, IReadOnlyList<int> myItems, IReadOnlyList<Augment> mine)
+    {
+        var (ap, ability, fromItems) = BuildProfile(champion, myItems, mine);
+        if (!fromItems) return false;
+        var (usualAp, usualAbility, _) = BuildProfile(champion, [], []);
+        return Math.Abs(ap - usualAp) > 0.3 || Math.Abs(ability - usualAbility) > 0.3;
+    }
     /// <summary>Aumentos que potencian curaciones y escudos (Botiquín, Batido de Proteínas…).</summary>
     static readonly System.Text.RegularExpressions.Regex HealShieldPower = new(@"curaciones y escudos|heal(ing)? and shield(ing)?",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -630,6 +644,14 @@ public sealed partial class Advisor(StatsStore stats)
                 : L($"Necesita tu definitiva, y «{clash.DisplayName}» la sella", $"Needs your ultimate, which “{clash.DisplayName}” seals"));
         bool magic = PlaysMagic(champion, myItems ?? [], mine);
         var useful = UsefulTags(candidate, magic);
+        // Manda lo que dicen los datos de ESTE campeón con este aumento (cientos o miles de partidas): ya cuentan su kit y su
+        // build habitual. Los ajustes por tipo de build («pide habilidades», «los dos potencian…», el kit) solo valen sin esos
+        // datos o si tu build de esta partida no es la habitual del campeón. Antes movían la nota 10+ puntos en un tercio de
+        // los aumentos con 1.000+ partidas (Olaf con Mano del Barón: 97 → 1 por «pide build de AP»; Wakka, 2026-11-01:
+        // «la nota solo mira el tipo de build, no el campeón»).
+        var rec = stats.Rate(champion, candidate.Id);
+        bool champData = rec.Global && rec.Games >= ChampionDataGames;
+        bool heuristics = !champData || BuildDiffersFromUsual(champion, myItems ?? [], mine);
         var needs = stats.Links.RequiredBy(candidate.Id);
 
         double total = 0, bestWeight = 0, guessed = 0;
@@ -644,6 +666,7 @@ public sealed partial class Advisor(StatsStore stats)
         // (Gigantobola de Nieve con Teemo, −0,6) acababa con nota S por encima de otro que gana mucho más.
         void Guess(double amount, string why)
         {
+            if (!heuristics) return;
             double room = Math.Max(0, MaxGuessBonus - guessed);
             if (Math.Min(amount, room) <= 0) { if (reason is null) reason = why; return; }
             guessed += Math.Min(amount, room);
@@ -676,7 +699,7 @@ public sealed partial class Advisor(StatsStore stats)
                 Guess(tagBonus, L($"va con «{m.DisplayName}»: los dos potencian {string.Join(" y ", shared.Take(2).Select(StatTags.Label))}", $"fits “{m.DisplayName}”: both boost {string.Join(" and ", shared.Take(2).Select(StatTags.Label))}"));
         }
 
-        if (BuildFit(candidate, champion, myItems ?? [], mine) is { } fit)
+        if (heuristics && BuildFit(candidate, champion, myItems ?? [], mine) is { } fit)
         {
             if (fit.Bonus > 0) Guess(fit.Bonus, fit.Reason); else Add(fit.Bonus, fit.Reason);
         }
@@ -695,14 +718,14 @@ public sealed partial class Advisor(StatsStore stats)
                 Guess(0.01, L($"tu kit aplica efectos al impactar ({ChampionKit.Keys(kit.OnHit)})", $"your kit applies on-hit effects ({ChampionKit.Keys(kit.OnHit)})"));
             if (kit.HasCrit && tags.Contains("Crit"))
                 Guess(0.01, L($"tu kit usa el crítico ({ChampionKit.Keys(kit.Crit)})", $"your kit uses crit ({ChampionKit.Keys(kit.Crit)})"));
-            if (!kit.Heals && !kit.Shields && HealShieldPower.IsMatch(candidate.Description + " " + candidate.ExtraDescription))
+            if (!champData && !kit.Heals && !kit.Shields && HealShieldPower.IsMatch(candidate.Description + " " + candidate.ExtraDescription))
                 Add(-0.02, L($"potencia curaciones y escudos, y el kit de {Data.ChampionName(champion)} no tiene", $"boosts heals and shields, and {Data.ChampionName(champion)}'s kit has none"));
         }
 
         // Aumentos que mejoran o piden un objeto («Mejorar Filo del Infinito», «Descarga Tormentosa Mejorada»…): si ese
         // objeto no es para tu build, o no se puede llevar con lo que ya tienes, el aumento casi no te sirve.
         var needed = needs.Select(Data.Item).OfType<ItemInfo>().Where(i => i.IsFinal).ToList();
-        if (needed.Count > 0 && needed.All(i => WrongDamageFor(i, magic)))
+        if (heuristics && needed.Count > 0 && needed.All(i => WrongDamageFor(i, magic)))
             Add(-0.08, L($"Pide {needed[0].DisplayName}, que no es para tu build de {(magic ? "AP" : "AD")}", $"Wants {needed[0].DisplayName}, which doesn't fit your {(magic ? "AP" : "AD")} build"));
         else if (needed.Count > 0 && myItems is not null && needed.All(i => !myItems.Contains(i.Id) && ConflictsWithOwned(i, myItems)))
             Add(-0.08, L($"Pide {needed[0].DisplayName}, que no se puede llevar con lo que ya tienes", $"Wants {needed[0].DisplayName}, which can't be combined with your items"));

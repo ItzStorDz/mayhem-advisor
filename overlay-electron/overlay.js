@@ -51,7 +51,8 @@ function cardHtml(c) {
   const foot = anvil
     ? `<div class="why">${esc(c.note)}</div>`
     // Sin % de victorias del aumento (Riot no lo permite en overlays): partidas que respaldan la nota y su fiabilidad.
-    : `<div class="foot"><span class="stats">${c.global ? tr('games', `~${num(c.games)}`) : c.games > 0 ? tr('yours', c.games) : c.average ? tr('allChampsAvg') : tr('noData')}
+    // Con el nombre del campeón: la nota sale de sus partidas con ese aumento, no del tipo de build (Wakka, 2026-11-01).
+    : `<div class="foot"><span class="stats">${c.global ? (lastGame?.championName ? tr('gamesWith', `~${num(c.games)}`, lastGame.championName) : tr('games', `~${num(c.games)}`)) : c.games > 0 ? tr('yours', c.games) : c.average ? tr('allChampsAvg') : tr('noData')}
         ${confBars(c.confidence)}${c.popularityLabel ? ` · <span class="pop p${c.popularity}">${esc(c.popularityLabel)}</span>` : ''}</span>${items}</div>`;
   const synergy = c.synergy ? `<div class="syn ${c.synergy.good ? 'good' : 'bad'}">${c.synergy.good ? '⚡' : '✗'} ${esc(c.synergy.reason)}</div>` : '';
 
