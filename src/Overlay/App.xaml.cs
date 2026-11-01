@@ -288,7 +288,7 @@ public partial class App : System.Windows.Application
                 nextAdvice = DateTime.UtcNow.AddSeconds(2);
                 var enemyAugs = game.EnemyAugmentIds.ToDictionary(kv => kv.Key,
                     kv => (IReadOnlyList<Augment>)kv.Value.Select(_catalog.Get).OfType<Augment>().ToList());
-                advice = new Advisor(_stats).Build(game.Champion, game.MyItems, game.Enemies, _myAugments, game.Gold, enemyAugs, _keepItems, gamePhase, game.EnemyScores);
+                advice = new Advisor(_stats).Build(game.Champion, game.MyItems, game.Enemies, _myAugments, game.Gold, enemyAugs, _keepItems, gamePhase, game.EnemyScores, game.CritChance);
                 // Lo que recomendaba en cada momento (solo cuando cambia), con tus objetos y el dato enemigo.
                 var shown = $"{advice.Next?.Item.DisplayName ?? "-"} | build: {string.Join(", ", (advice.FullBuild ?? []).Select(b => b.Item.Item.DisplayName))}";
                 if (shown != _lastAdviceLog)
@@ -838,6 +838,10 @@ public partial class App : System.Windows.Application
         var screenH = _gameArea.Height; // alto de la ventana del juego: las cartas se escalan con ella
         var centers = _cards.Select(c => (Card: c, X: c.Hit.Bounds.X + c.Hit.Bounds.Width / 2, Y: c.Hit.Bounds.Y)).ToList();
         double halfGap = centers.Count > 1 ? (centers.Max(c => c.X) - centers.Min(c => c.X)) / (2.0 * (centers.Count - 1)) : screenH * 0.15;
+        // Nunca más ancho que media carta (las cartas miden ~0,29 del alto del juego y van separadas ~0,34). Si no se leyó el
+        // nombre de una carta y la elegías, el clic caía en la de al lado: con Archimaga y X leídas y Crueldad sin leer en
+        // medio, elegir Crueldad apuntaba Archimaga (Wakka, 2026-10-31). Ahora ese clic no apunta nada.
+        halfGap = Math.Min(halfGap, screenH * CardHalfWidth);
 
         for (int i = _clicks.Count - 1; i >= 0; i--)
         {
@@ -850,6 +854,9 @@ public partial class App : System.Windows.Application
         }
         return null;
     }
+
+    /// <summary>Media carta de ancho, en partes del alto de la ventana del juego (medido: 409 px entre cartas con 1200 de alto).</summary>
+    const double CardHalfWidth = 0.17;
 
     void ConfirmPick()
     {

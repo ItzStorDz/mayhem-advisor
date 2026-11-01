@@ -14,7 +14,8 @@ public sealed record GameSnapshot(
     double GameTime = 0,
     bool IsDead = false,
     double RespawnTimer = 0,
-    IReadOnlyDictionary<string, (int Kills, int Deaths)>? EnemyScores = null);
+    IReadOnlyDictionary<string, (int Kills, int Deaths)>? EnemyScores = null,
+    double CritChance = 0);
 
 /// <summary>
 /// Habla con la API oficial de Riot que el juego abre en tu PC durante la partida (127.0.0.1:2999).
@@ -76,7 +77,11 @@ public sealed class LiveClient : IDisposable
             double gameTime = root.GetProperty("gameData").TryGetProperty("gameTime", out var gt) && gt.ValueKind == JsonValueKind.Number ? gt.GetDouble() : 0;
             bool dead = mine.TryGetProperty("isDead", out var dd) && dd.ValueKind == JsonValueKind.True;
             double respawn = mine.TryGetProperty("respawnTimer", out var rt) && rt.ValueKind == JsonValueKind.Number ? rt.GetDouble() : 0;
-            return new GameSnapshot(Champion(mine), gold, Items(mine), enemies, myAugs, enemyAugs, gameTime, dead, respawn, enemyScores);
+            // Tu probabilidad de crítico (0-1): con el 100 % ya no conviene comprar más crítico.
+            double crit = active.TryGetProperty("championStats", out var cs) && cs.TryGetProperty("critChance", out var cc) && cc.ValueKind == JsonValueKind.Number
+                ? cc.GetDouble() : 0;
+            if (crit > 1.5) crit /= 100; // por si viniera en % y no en tanto por uno
+            return new GameSnapshot(Champion(mine), gold, Items(mine), enemies, myAugs, enemyAugs, gameTime, dead, respawn, enemyScores, crit);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException)
         {

@@ -278,9 +278,10 @@ public sealed partial class Advisor(StatsStore stats)
     public Advice Build(string myChampion, IReadOnlyList<int> myItems, IReadOnlyList<(string Champion, IReadOnlyList<int> Items)> enemies,
                         IReadOnlyList<Augment> myAugments, double gold, IReadOnlyDictionary<string, IReadOnlyList<Augment>>? enemyAugments = null,
                         IReadOnlySet<int>? keep = null, GamePhase phase = GamePhase.Mid,
-                        IReadOnlyDictionary<string, (int Kills, int Deaths)>? enemyScores = null)
+                        IReadOnlyDictionary<string, (int Kills, int Deaths)>? enemyScores = null, double critChance = 0)
     {
         keep ??= new HashSet<int>();
+        _critCapped = critChance >= CritCap;
         var profile = EnemyProfile.Build(enemies, stats, enemyAugments, enemyScores);
         SetQuestItems(myAugments);
         _tankBuild = TankShare(myChampion, myItems, myAugments) >= 0.6;
@@ -498,7 +499,8 @@ public sealed partial class Advisor(StatsStore stats)
             bool armorOnly = item.Has("Armor") && !item.Has("SpellBlock"), mrOnly = item.Has("SpellBlock") && !item.Has("Armor");
             bool apItem = ApItem.Any(item.Has) && !AdItem.Any(item.Has), adItem = AdItem.Any(item.Has) && !ApItem.Any(item.Has);
             bool attackItem = AttackItem.Any(item.Has) && !AbilityItem.Any(item.Has);
-            if (item.IsBoots && armorOnly && lean > 0.05) why = L($"botas de armadura y el {profile.MagicShare:P0} del daño enemigo es mágico: mejor Botas de Mercurio", $"armor boots but {profile.MagicShare:P0} of enemy damage is magic: get Mercury's Treads");
+            if (_critCapped && item.Has("CriticalStrike") && item.Id != InfinityEdge) why = L("da crítico y ya tienes el 100 %", "it gives crit and you are already at 100%");
+            else if (item.IsBoots && armorOnly && lean > 0.05) why = L($"botas de armadura y el {profile.MagicShare:P0} del daño enemigo es mágico: mejor Botas de Mercurio", $"armor boots but {profile.MagicShare:P0} of enemy damage is magic: get Mercury's Treads");
             else if (armorOnly && lean > 0.07) why = L($"da armadura y el {profile.MagicShare:P0} del daño enemigo es mágico", $"gives armor but {profile.MagicShare:P0} of enemy damage is magic");
             else if (mrOnly && lean < -0.07) why = L($"da resist. mágica y el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"gives magic resist but {1 - profile.MagicShare:P0} of enemy damage is physical");
             else if (apItem && apShare < 0.3) why = L("es de AP y tu build (objetos y aumentos) va de AD", "it is AP and your build (items and augments) is AD");
@@ -783,6 +785,16 @@ public sealed partial class Advisor(StatsStore stats)
         }
         return tank + damage <= 0 ? 0 : tank / (tank + damage);
     }
+
+    /// <summary>True durante <see cref="Build"/> si ya tienes (casi) el 100 % de crítico: más crítico se desperdicia.</summary>
+    bool _critCapped;
+    const double CritCap = 0.95;
+    /// <summary>
+    /// Lo que pierde un objeto de crítico con el crítico al tope (Wakka, 2026-10-31: le recomendaba El Coleccionista a una
+    /// Vayne con el 100 %). El Filo del Infinito no: su fuerza es el daño crítico.
+    /// </summary>
+    const double CritCappedPenalty = -0.12;
+    const int InfinityEdge = 3031;
 
     /// <summary>True durante <see cref="Build"/> si tu build es de tanque (ver <see cref="TankShare"/>).</summary>
     bool _tankBuild;
@@ -1177,7 +1189,10 @@ public sealed partial class Advisor(StatsStore stats)
             Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
                 $"con «{aug}» el {_style.Share:P0} va de {StyleName(_style.Key)} y gana más ({_style.WinRate:0.#} % frente a {_style.UsualWinRate:0.#} % de {StyleName(_style.Usual)}): lo compra el {share:P0}",
                 $"with “{aug}” {_style.Share:P0} go {StyleName(_style.Key)} and win more ({_style.WinRate:0.#}% vs {_style.UsualWinRate:0.#}% {StyleName(_style.Usual)}): {share:P0} buy it"));
-            Bonus(share < 0.05, _style.FromItems is null ? OffMetaPenalty : StyleItemsPenalty, "");
+            // Con el crítico al tope, lo que no da crítico y se compra con el campeón (Danza de la Muerte, Rey Arruinado con
+            // Vayne) es justo lo que toca después aunque el estilo no lo traiga.
+            bool afterCritCap = _critCapped && !item.Has("CriticalStrike") && stats.GlobalItem(champion, item.Id) is { PickRate: >= 5 };
+            Bonus(share < 0.05 && !afterCritCap, _style.FromItems is null ? OffMetaPenalty : StyleItemsPenalty, "");
         }
         else
         {
@@ -1206,6 +1221,8 @@ public sealed partial class Advisor(StatsStore stats)
         // Resistencias del tipo equivocado restan.
         Bonus(magicLean < -0.05 && item.Has("SpellBlock") && !item.Has("Armor"), -0.03, "");
         Bonus(magicLean > 0.05 && item.Has("Armor") && !item.Has("SpellBlock"), -0.03, "");
+
+        Bonus(_critCapped && item.Has("CriticalStrike") && item.Id != InfinityEdge, CritCappedPenalty, "");
 
         // Build de tanque (Amumu, Nasus… con objetos y aumentos de aguante): un objeto solo de daño encaja peor.
         // Los mixtos (Morellonomicón: AP + vida) también: de tanque se busca aguante (Cota de Espinas da las heridas graves).

@@ -156,8 +156,13 @@ public sealed class AugmentBuilds
                 options.Add((generic, GenericPrior * (kitFits?.Invoke(key) == true ? 3 : 1), true));
         if (options.Count == 0) return null;
 
+        // Las listas de aramkit solo traen los objetos más comprados de cada estilo: un objeto que no sale en la del campeón
+        // (Bailarín Espectral o Navori con Vayne) cuenta con la mitad de lo que sale en ese estilo con todos los campeones.
+        // Si no, con Filo + Bailarín + Navori no se sabía si Vayne iba de crítico (los dos últimos no salían en ningún estilo).
+        double Share(BuildStyle style, int id) =>
+            style.Items.TryGetValue(id, out var own) ? own : 0.5 * (_generic.GetValueOrDefault(style.Key)?.Items.GetValueOrDefault(id) ?? 0);
         var scored = options.Select(o => (o.Style, o.Generic,
-            Log: Math.Log(o.Prior) + items.Sum(id => Math.Log(Math.Clamp(o.Style.Items.GetValueOrDefault(id), MissingShare, 0.98))))).ToList();
+            Log: Math.Log(o.Prior) + items.Sum(id => Math.Log(Math.Clamp(Share(o.Style, id), MissingShare, 0.98))))).ToList();
         double max = scored.Max(s => s.Log);
         double sum = scored.Sum(s => Math.Exp(s.Log - max));
         var best = scored.MaxBy(s => s.Log);

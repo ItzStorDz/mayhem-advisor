@@ -335,11 +335,25 @@ public static class StatTags
         // (El juego los envuelve en etiquetas <healing>…</healing>, <shield>…</shield>, que también se quitan.)
         text = Regex.Replace(text, @"(?:<[^>]*>)*(?:" + W("healing and shield(ing|s)") + "|" + @"curaci(on|ones)(?:<[^>]*>)*," + W(" escudos") + @")(?:<[^>]*>)*",
             " potencia de sanacion ");
+        // El enfriamiento propio del aumento ("(5 second cooldown)", "(X seg de enfriamiento)") no lo hace de habilidades:
+        // Rápido y Seguro salía como «pide habilidades» con Vayne (Wakka, 2026-10-31).
+        text = Regex.Replace(text, @"\([^()]*\b(cooldown|enfriamiento)\b[^()]*\)", " ");
+        // Convertir poder de habilidad en daño de ataque (escAPADe) es de AD, no de AP (el AP solo sale para decir cuánto da).
+        if (Regex.IsMatch(text, @"\b(convert|convierte)\b[^.]*?(ability power|poder de habilidad)[^.]*?(attack damage|dano de ataque)"))
+            text = Regex.Replace(text, @"<scaleap[^>]*>|ability power|poder de habilidad|\bap\b", " ");
+        // Un efecto que escala con AD y con AP a la vez ("(+ 65% AD) (+ 26% AP)": Rápido y Seguro, El Bum y el Bajo) sirve
+        // a cualquier daño: cuenta como fuerza adaptable, no como «pide AP y AD» (salía «→ AP/AD» y estilo híbrido en Vayne).
+        if (AdRatio.IsMatch(text) && ApRatio.IsMatch(text))
+            text = ApRatio.Replace(AdRatio.Replace(text, " fuerza adaptable "), " fuerza adaptable ");
         var tags = Rules.Where(r => r.Patterns.Any(text.Contains)).Select(r => r.Tag).ToList();
         // "Fuerza adaptable" sirve a daño de ataque o a poder de habilidad, según el campeón.
         if (text.Contains("<scaleaf") || text.Contains("fuerza adaptable")) tags.Add("Adaptive");
         return tags.Distinct().ToArray();
     }
+
+    /// <summary>Un ratio de AD o de AP en una descripción de mayhemmeta: "(+ 65% AD )", "(+ ( 50% / 25%) bonus AD )".</summary>
+    static readonly Regex AdRatio = new(@"\+\s*\(?\s*[\d.]+%[^()+]*?\)?\s*(bonus |total )?(ad|attack damage)\b");
+    static readonly Regex ApRatio = new(@"\+\s*\(?\s*[\d.]+%[^()+]*?\)?\s*(ap|ability power)\b");
 
     /// <summary>Patrón de varias palabras que admite espacios y etiquetas (&lt;scaleArmor&gt;…) entre ellas.</summary>
     static string W(string words) => words.Replace(" ", @"(?:\s|<[^>]*>)+");

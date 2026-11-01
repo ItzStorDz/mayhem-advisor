@@ -95,16 +95,19 @@ public sealed partial class Advisor
             var main = new[] { (L("AP", "AP"), x), (L("AD", "AD"), y), (L("aguante", "tankiness"), z) }.MaxBy(t => t.Item2).Item1;
             why.Add($"{a.DisplayName} ({main})");
         }
-        // Tus objetos (si ya llevas algo) cuentan como un aumento y medio: no te decimos que cambies todo de golpe.
+        // Tus objetos (si ya llevas algo) cuentan más cuantos más llevas: con uno, como un aumento y medio (no te decimos que
+        // cambies todo de golpe); con 4 o 5 ya mandan ellos. Antes siempre 1,5: una Vayne con Filo del Infinito, Matakrakens
+        // y 100 % de crítico salía «híbrido AD/AP» por sus aumentos (Wakka, 2026-10-31).
         int gold = myItems.Select(Data.Item).OfType<ItemInfo>().Where(i => !i.IsBoots).Sum(i => i.PriceTotal);
         if (gold >= 1000)
         {
             var (apShare, _, _) = BuildProfile(champion, myItems, []);
             // Rylai, Liandry o el Bastón de las Eras dan vida, pero son de mago: cuentan como daño, no como tanque.
             double tankShare = TankShare(champion, myItems, [], apHybridIsDamage: true);
-            tank += 1.5 * tankShare;
-            ap += 1.5 * (1 - tankShare) * apShare;
-            ad += 1.5 * (1 - tankShare) * (1 - apShare);
+            double weight = Math.Clamp(gold / 2500.0, 1.5, 6);
+            tank += weight * tankShare;
+            ap += weight * (1 - tankShare) * apShare;
+            ad += weight * (1 - tankShare) * (1 - apShare);
             why.Add(L("tus objetos", "your items"));
         }
         if (ap + ad + tank < 0.5) return null;

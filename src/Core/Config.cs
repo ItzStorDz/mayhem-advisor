@@ -11,5 +11,7 @@ public static class Paths
     // v5: descripciones de Mayhem (kiwi_) antes que las de Arena (cherry_), claves "*_desc" y palabras clave {{ ... }}.
     // v9 (1.3.2): las estadísticas de cada aumento se leen mejor (Mejora de Brillo, Eureka, Sobrecarga…) y entran los
     // aumentos con icono de Mayhem que faltaban (Ult Bot, High Roller…): hay que recalcular la caché.
-    public static string CatalogCache => Path.Combine(DataDir, "augments-v9.json");
+    // v10 (1.6.1): el enfriamiento propio del aumento ya no lo hace "de habilidades" y los efectos que escalan con AD y AP
+    // a la vez cuentan como fuerza adaptable (Rápido y Seguro, El Bum y el Bajo): hay que recalcular las estadísticas.
+    public static string CatalogCache => Path.Combine(DataDir, "augments-v10.json");
 }
