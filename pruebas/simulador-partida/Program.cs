@@ -142,6 +142,14 @@ static class P
         return false;
     }
 
+    /// <summary>Espera a que el texto salga en el registro más veces que <paramref name="before"/>.</summary>
+    static async Task<bool> WaitCount(string text, int before, int ms)
+    {
+        var sw = Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < ms) { if (Count(text) > before) return true; await Task.Delay(50); }
+        return false;
+    }
+
     static void Shot(string name, bool full = false)
     {
         var b = Screen.PrimaryScreen!.Bounds;
@@ -168,6 +176,14 @@ static class P
             return new Rectangle(n[0], n[1], n[2], n[3]);
         }
         return null;
+    }
+
+    /// <summary>Las builds del selector del panel (ids de los botones "style"), en orden.</summary>
+    static List<string> StyleIds()
+    {
+        var line = LogText().Split('\n').LastOrDefault(l => l.Contains("DEBUG botones:"));
+        return line is null ? [] : line[(line.IndexOf("DEBUG botones:") + 14)..].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Split('@')[0].Split(':')).Where(k => k[0] == "style" && k.Length > 1).Select(k => k[1]).Distinct().ToList();
     }
 
     static async Task<bool> Click(string act, string? id = null)
@@ -213,6 +229,21 @@ static class P
                 return;
             }
             Shot($"{lang}-1-compra");
+
+            // Selector de build (1.7.0): fijar otra build y soltarla.
+            var styleIds = StyleIds();
+            if (styleIds.Count < 2) Note($"FALLO: el selector de build tiene {styleIds.Count} opciones");
+            else
+            {
+                int locks = Count("Build fijada");
+                await Click("style", styleIds[1]);
+                if (!await WaitCount("Build fijada", locks, 5_000)) Note("FALLO: fijar la build no llegó a la app");
+                else { await Task.Delay(2500); Note("build fijada: " + styleIds[1]); Shot($"{lang}-1b-build-fijada"); }
+                int autos = Count("Build: la elige la app");
+                await Click("style", styleIds[1]);
+                Note(await WaitCount("Build: la elige la app", autos, 5_000) ? "build suelta: la vuelve a elegir la app" : "FALLO: soltar la build no llegó a la app");
+                await Task.Delay(1500);
+            }
 
             // Botones del panel.
             int before = Count("Clic en el botón del panel");

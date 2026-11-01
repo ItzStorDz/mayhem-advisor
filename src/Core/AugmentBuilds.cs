@@ -17,8 +17,10 @@ public sealed record BuildStyle(string Key, int Games, double WinRate, IReadOnly
 /// </summary>
 /// <param name="FromItems">Si el estilo lo dicen tus objetos (no tus aumentos): los que lo deciden, para el texto ("" = aún sin objetos).</param>
 /// <param name="Generic">El campeón no tiene ese estilo en sus datos: sale de la media de todos los campeones.</param>
+/// <param name="Locked">Lo elegiste tú en el panel (selector de build): manda sobre lo que dicen tus objetos y aumentos.</param>
 public sealed record StylePick(string Key, string Usual, double Share, double WinRate, double UsualWinRate, int Games,
-                               int AugmentId, IReadOnlyDictionary<int, double> Items, string? FromItems = null, bool Generic = false)
+                               int AugmentId, IReadOnlyDictionary<int, double> Items, string? FromItems = null, bool Generic = false,
+                               bool Locked = false)
 {
     public bool Changed => Key != Usual;
 }
@@ -128,6 +130,9 @@ public sealed class AugmentBuilds
             best = popular;
         return new StylePick(best.Key, usual, best.Share, best.Raw, usualOption.Raw, best.Games, best.Lead, best.Items);
     }
+
+    /// <summary>Un estilo con todos los campeones juntos ("on_hit", "crit"…), o null si no hay datos.</summary>
+    public BuildStyle? Generic(string key) => _generic.GetValueOrDefault(key);
 
     /// <summary>Estilos que se pueden sacar de la media de todos los campeones (apoyo e híbrido dependen demasiado de cada uno).</summary>
     static readonly string[] GenericStyles = ["on_hit", "crit", "lethality", "bruiser", "ap", "tank"];

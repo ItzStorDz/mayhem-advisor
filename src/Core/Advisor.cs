@@ -154,7 +154,15 @@ public sealed record Advice(
     IReadOnlyList<ItemAdvice>? Building = null,
     CounterPlan? Plan = null,
     BuildDirection? Direction = null,
-    GamePhase Phase = GamePhase.Mid);
+    GamePhase Phase = GamePhase.Mid,
+    IReadOnlyList<StyleOption>? Styles = null,
+    string? StyleSource = null);
+
+/// <summary>
+/// Una build que se juega con tu campeón (selector del panel): cuánta gente la juega (0-1), cuánto gana (0-100), sus
+/// objetos clave que aún no tienes, si es la que sigue la app ahora y si la fijaste tú.
+/// </summary>
+public sealed record StyleOption(string Key, string Name, double Share, double WinRate, IReadOnlyList<ItemInfo> Items, bool Active, bool Locked);
 
 /// <summary>Un objeto de la build habitual que conviene saltarse, y por qué.</summary>
 public sealed record Discard(ItemInfo Item, string Reason);
@@ -278,7 +286,8 @@ public sealed partial class Advisor(StatsStore stats)
     public Advice Build(string myChampion, IReadOnlyList<int> myItems, IReadOnlyList<(string Champion, IReadOnlyList<int> Items)> enemies,
                         IReadOnlyList<Augment> myAugments, double gold, IReadOnlyDictionary<string, IReadOnlyList<Augment>>? enemyAugments = null,
                         IReadOnlySet<int>? keep = null, GamePhase phase = GamePhase.Mid,
-                        IReadOnlyDictionary<string, (int Kills, int Deaths)>? enemyScores = null, double critChance = 0)
+                        IReadOnlyDictionary<string, (int Kills, int Deaths)>? enemyScores = null, double critChance = 0,
+                        string? lockedStyle = null)
     {
         keep ??= new HashSet<int>();
         _critCapped = critChance >= CritCap;
@@ -292,9 +301,11 @@ public sealed partial class Advisor(StatsStore stats)
         // el daño contrario (Ezreal con 2 objetos de AD y un aumento "de AP"), manda tu build y el estilo no se usa.
         bool physicalStyle = _style?.Key is "ad" or "crit" or "lethality" or "on_hit";
         if (_fromItems && ((_style?.Key == "ap" && _apShare < 0.35) || (physicalStyle && _apShare > 0.65))) _style = null;
-        // Tus objetos ya dicen el estilo (Yi con Rey Arruinado y Fin del Ingenio = on-hit): manda lo que se compra en ese
-        // estilo, sea o no el habitual del campeón. Pesa más que tus aumentos: la build ya está empezada.
-        if (StyleFromItems(myChampion, myItems) is { } byItems) _style = byItems;
+        // La build que elegiste en el panel manda sobre todo. Si no, tus objetos ya dicen el estilo (Yi con Rey Arruinado y
+        // Fin del Ingenio = on-hit): manda lo que se compra en ese estilo, sea o no el habitual del campeón. Pesa más que tus
+        // aumentos: la build ya está empezada.
+        if (lockedStyle is not null && LockedStyle(myChampion, lockedStyle) is { } locked) _style = locked;
+        else if (StyleFromItems(myChampion, myItems) is { } byItems) _style = byItems;
         if (_style is not null && !_fromItems)
         {
             if (_style.Key == "ap") iAmMagic = true;
@@ -383,7 +394,7 @@ public sealed partial class Advisor(StatsStore stats)
         var building = ranked.Where(a => a.InProgress && a.Item.Id != next?.Item.Id).Take(2).ToList();
         var plan = Plan(myChampion, myItems, enemies, profile, myAugments, iAmMagic, ranked, fullBuild);
         return new Advice(profile, items, boots, next, skills, myAugments, swap, full, fullBuild, building, plan,
-            Direction(myChampion, myItems, myAugments), phase);
+            Direction(myChampion, myItems, myAugments), phase, StyleOptions(myChampion, myItems), StyleSource(myChampion, myAugments));
     }
 
     /// <summary>En el inicio de partida, dos objetos casi igual de buenos se desempatan por el más barato.</summary>
@@ -818,6 +829,62 @@ public sealed partial class Advisor(StatsStore stats)
     };
 
     /// <summary>
+    /// El estilo que fijaste en el selector del panel: el del campeón con ese nombre o, si no lo juega casi nadie con él
+    /// (Twitch on-hit), el de todos los campeones. Null si no existe.
+    /// </summary>
+    StylePick? LockedStyle(string champion, string key)
+    {
+        var styles = stats.AramkitBuilds.Styles(champion);
+        var own = styles.FirstOrDefault(s => s.Key == key);
+        if ((own ?? stats.AramkitBuilds.Generic(key)) is not { } style) return null;
+        int total = styles.Sum(s => s.Games);
+        return new StylePick(key, styles.FirstOrDefault()?.Key ?? key, own is null || total == 0 ? 0 : (double)own.Games / total, style.WinRate,
+            styles.FirstOrDefault()?.WinRate ?? style.WinRate, style.Games, 0, style.Items, L("la elegiste tú", "your pick"), own is null, Locked: true);
+    }
+
+    /// <summary>Lo menos jugado que sale en el selector de build (parte de las partidas del campeón).</summary>
+    const double MinStyleShare = 0.03;
+
+    /// <summary>
+    /// Las builds que se juegan con tu campeón para el selector del panel, con la que sigue la app ahora marcada (aunque
+    /// casi nadie la juegue con él: Twitch on-hit) y 3 objetos clave de cada una que aún no tienes. Con un kit on-hit
+    /// también sale on-hit aunque el campeón no lo tenga en sus datos, para poder elegirlo.
+    /// </summary>
+    IReadOnlyList<StyleOption> StyleOptions(string champion, IReadOnlyList<int> myItems)
+    {
+        var styles = stats.AramkitBuilds.Styles(champion);
+        int total = styles.Sum(s => s.Games);
+        if (total == 0) return [];
+        string active = _style?.Key ?? styles[0].Key;
+        bool locked = _style?.Locked == true;
+        IReadOnlyList<ItemInfo> KeyItems(IReadOnlyDictionary<int, double> shares) => shares
+            .Where(kv => !Owns(myItems, kv.Key) && Data.Item(kv.Key) is { IsBoots: false, InStore: true, IsFinal: true })
+            .OrderByDescending(kv => kv.Value).Take(3).Select(kv => Data.Item(kv.Key)!).ToList();
+        var options = styles.Where(s => (double)s.Games / total >= MinStyleShare || s.Key == active)
+            .Select(s => new StyleOption(s.Key, StyleName(s.Key), (double)s.Games / total, s.WinRate,
+                KeyItems(s.Key == active && _style is not null ? _style.Items : s.Items), s.Key == active, s.Key == active && locked))
+            .ToList();
+        foreach (var key in new[] { active, "on_hit" })
+        {
+            if (options.Any(o => o.Key == key) || stats.AramkitBuilds.Generic(key) is not { } generic) continue;
+            if (key == "on_hit" && key != active && stats.Kits.For(champion) is not { HasOnHit: true }) continue;
+            options.Add(new StyleOption(key, StyleName(key), 0, generic.WinRate, KeyItems(key == active && _style is not null ? _style.Items : generic.Items),
+                key == active, key == active && locked));
+        }
+        return options;
+    }
+
+    /// <summary>Por qué la app sigue esa build: la elegiste tú, tus objetos, tus aumentos o lo habitual con el campeón.</summary>
+    string? StyleSource(string champion, IReadOnlyList<Augment> mine) => _style switch
+    {
+        null or { FromItems: "" } => L($"lo habitual con {Data.ChampionName(champion)}", $"the usual {Data.ChampionName(champion)} build"),
+        { Locked: true } => L("la elegiste tú · púlsala otra vez para que elija la app", "your pick · tap it again to let the app choose"),
+        { FromItems: { } decisive } => L($"por tus objetos: {decisive}", $"from your items: {decisive}"),
+        _ => mine.FirstOrDefault(a => a.Id == _style.AugmentId) is { } aug
+            ? L($"por tu aumento «{aug.DisplayName}»", $"from your augment “{aug.DisplayName}”") : null,
+    };
+
+    /// <summary>
     /// El estilo que dicen tus objetos terminados (ver <see cref="AugmentBuilds.StyleFromItems"/>). Con él se recomienda lo
     /// que se compra en ESE estilo y no la mezcla de todas las builds del campeón (los Yi de crítico y los on-hit juntos).
     /// Si es el mismo que piden tus aumentos, se queda el de tus aumentos (trae lo que se compra con ellos). Si el campeón
@@ -1177,7 +1244,11 @@ public sealed partial class Advisor(StatsStore stats)
             // Otro estilo de build por tus aumentos: manda lo que compra la gente en ese estilo, no la build habitual.
             double share = _style.Items.GetValueOrDefault(item.Id);
             string? aug = myAugments.FirstOrDefault(a => a.Id == _style.AugmentId)?.DisplayName;
-            if (_style.FromItems == "")
+            if (_style.Locked)
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+                    $"tu build {StyleName(_style.Key)} (la elegiste tú): lo compra el {share:P0} de los que van así",
+                    $"your {StyleName(_style.Key)} build (your pick): {share:P0} of those builds have it"));
+            else if (_style.FromItems == "")
                 Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
                     $"build habitual de {Data.ChampionName(champion)} ({StyleName(_style.Key)}): lo compra el {share:P0}",
                     $"standard {Data.ChampionName(champion)} build ({StyleName(_style.Key)}): {share:P0} buy it"));

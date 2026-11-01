@@ -170,9 +170,20 @@ function buyTab(game) {
   // Momento de la partida y el dato del equipo enemigo que más condiciona la build.
   const facts = [game.gamePhase, game.enemyFact].filter(Boolean);
   if (facts.length) parts.push(`<div class="pn-facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>`);
-  // Hacia dónde empujan tus aumentos (y tus objetos): AP, AD, tanque o mezcla, con 3 objetos para seguir ese camino.
+  // Selector de build (1.7.0): las builds que se juegan con tu campeón, la que sigue la app marcada (AUTO) y, con un clic,
+  // la tuya fijada para el resto de la partida: todas las compras la siguen. Sin datos de builds, la dirección de antes.
+  const styles = game.styles ?? [];
   const d = game.direction;
-  if (d) parts.push(`<div class="pn-dir"><div class="pn-dir-h">🧭 ${tr('dirTitle')} <b>${esc(d.label)}</b></div>
+  if (styles.length) {
+    const active = styles.find(s => s.active) ?? styles[0];
+    const pc = x => Math.round(x * 100) + (LANG === 'en' ? '%' : ' %');
+    parts.push(`<div class="pn-dir pn-style"><div class="pn-dir-h">🧭 ${tr('buildTitle')} <b>${esc(active.name)}</b>
+        <span class="${active.locked ? 'pn-lock' : 'pn-auto'}">${active.locked ? '🔒 ' + tr('lockedTag') : tr('autoTag')}</span></div>
+      <div class="pn-chips">${styles.map(s => `<button class="pn-chip${s.active ? ' on' : ''}${s.locked ? ' lock' : ''}" data-act="style" data-id="${esc(s.key)}"
+          title="${esc(s.locked ? tr('unlockHint') : tr('lockHint', s.name))}"><b>${esc(s.name)}</b><small>${s.share > 0 ? pc(s.share) : tr('anyChamp')} · ${tr('chipWr', pc(s.winRate))}</small></button>`).join('')}</div>
+      ${game.styleSource ? `<div class="pn-src">${esc(game.styleSource)}</div>` : ''}
+      ${active.items?.length ? `<div class="pn-three">${active.items.map(i => `<div title="${esc(i.name)}">${icon(i.icon, 'icon')}</div>`).join('')}</div>` : ''}</div>`);
+  } else if (d) parts.push(`<div class="pn-dir"><div class="pn-dir-h">🧭 ${tr('dirTitle')} <b>${esc(d.label)}</b></div>
     ${d.reason ? `<div class="pn-text">${esc(d.reason)}</div>` : ''}
     <div class="pn-three">${d.items.map(i => `<div title="${esc(i.name)}">${icon(i.icon, 'icon')}<small>${i.winRate != null ? Math.round(i.winRate * 100) + (LANG === 'en' ? '%' : ' %') : '–'}</small></div>`).join('')}</div>
     ${d.warning ? `<div class="pn-warn">⚠ ${esc(d.warning)}</div>` : ''}</div>`);
@@ -429,6 +440,16 @@ function doAction(act, id) {
     try { localStorage.setItem('panelMinimized', minimized ? '1' : '0'); } catch { }
   }
   if (act === 'next') nextIndex++;
+  if (act === 'style') {
+    // Se marca ya en el panel; la app recalcula las compras y manda la build nueva en un momento.
+    const styles = lastGame?.styles ?? [];
+    const chosen = styles.find(s => s.key === id);
+    const unlock = chosen?.locked;
+    if (!unlock) for (const s of styles) { s.active = s.key === id; s.locked = s.key === id; }
+    else chosen.locked = false;
+    window.mayhem.send({ type: 'style', key: id });
+    toast(unlock ? tr('styleAuto') : tr('styleLocked', chosen?.name ?? id));
+  }
   if (act === 'keep') {
     if (keptHere.has(Number(id))) return;
     keptHere.add(Number(id));

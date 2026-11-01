@@ -251,6 +251,7 @@ public partial class App : System.Windows.Application
                 lastContext = null;
                 _myAugments.Clear();
                 _keepItems.Clear();
+                _lockedStyle = null;
                 _nameRowRel = null;
                 _pendingPick = null;
                 ReloadStats(); // por si se añadieron partidas desde la última vez
@@ -266,7 +267,7 @@ public partial class App : System.Windows.Application
             var context = $"{string.Join(";", game.MyItems)}|{(int)game.Gold / 100}|{string.Join(";", _myAugments.Select(a => a.Id))}|" +
                           string.Join(";", game.Enemies.Select(en => en.Champion + ":" + string.Join(",", en.Items) + ":" +
                               string.Join(",", game.EnemyAugmentIds.GetValueOrDefault(en.Champion) ?? [])));
-            context += "|" + string.Join(";", _keepItems);
+            context += "|" + string.Join(";", _keepItems) + "|" + _lockedStyle;
             // Fase de la partida (14 / 25 min) y muerte: al cambiar de fase o al morir (es cuando compras)
             // se recalcula al momento, sin esperar los 2 s.
             var gamePhase = GamePhases.From(game.GameTime);
@@ -290,7 +291,7 @@ public partial class App : System.Windows.Application
                 nextAdvice = DateTime.UtcNow.AddSeconds(2);
                 var enemyAugs = game.EnemyAugmentIds.ToDictionary(kv => kv.Key,
                     kv => (IReadOnlyList<Augment>)kv.Value.Select(_catalog.Get).OfType<Augment>().ToList());
-                advice = new Advisor(_stats).Build(game.Champion, game.MyItems, game.Enemies, _myAugments, game.Gold, enemyAugs, _keepItems, gamePhase, game.EnemyScores, game.CritChance);
+                advice = new Advisor(_stats).Build(game.Champion, game.MyItems, game.Enemies, _myAugments, game.Gold, enemyAugs, _keepItems, gamePhase, game.EnemyScores, game.CritChance, _lockedStyle);
                 // Lo que recomendaba en cada momento (solo cuando cambia), con tus objetos y el dato enemigo.
                 var shown = $"{advice.Next?.Item.DisplayName ?? "-"} | build: {string.Join(", ", (advice.FullBuild ?? []).Select(b => b.Item.Item.DisplayName))}";
                 if (shown != _lastAdviceLog)
@@ -622,6 +623,8 @@ public partial class App : System.Windows.Application
     /// <summary>Objetos con los que dijiste "me quedo con el item" en el overlay (solo esta partida).</summary>
     readonly HashSet<int> _keepItems = [];
     bool _keepChanged;
+    /// <summary>La build que fijaste en el selector del panel ("on_hit", "crit"…) esta partida; null = la elige la app.</summary>
+    string? _lockedStyle;
     volatile bool _forceAdvice;
     GamePhase _lastPhase = GamePhase.Early;
     string? _lastAdviceLog;
@@ -663,6 +666,13 @@ public partial class App : System.Windows.Application
             if (!_keepItems.Add(itemId)) return; // el mismo botón pulsado otra vez
             _keepChanged = true;
             Log.Write($"Me quedo con el objeto: {_data.Item(itemId)?.Name ?? itemId.ToString()}");
+        }
+        // Selector de build del panel: fija esa build, o la suelta si ya estaba fijada (vuelve a elegir la app).
+        if (msg.TryGetProperty("type", out var st) && st.GetString() == "style" && msg.TryGetProperty("key", out var sk) && sk.GetString() is { Length: > 0 } key)
+        {
+            _lockedStyle = _lockedStyle == key ? null : key;
+            _keepChanged = true; // recalcula ya, sin esperar los 2 s
+            Log.Write(_lockedStyle is null ? "Build: la elige la app" : $"Build fijada: {key}");
         }
     }
 
@@ -1162,6 +1172,12 @@ public partial class App : System.Windows.Application
                     discards = pl.Discards.Select(d => new { name = d.Item.DisplayName, icon = d.Item.Icon, reason = d.Reason }),
                 } : null,
                 inventoryFull = g.Advice.InventoryFull,
+                styles = (g.Advice.Styles ?? []).Select(s => new
+                {
+                    key = s.Key, name = s.Name, share = s.Share, winRate = s.WinRate / 100, active = s.Active, locked = s.Locked,
+                    items = s.Items.Select(i => new { name = i.DisplayName, icon = i.Icon }),
+                }),
+                styleSource = g.Advice.StyleSource,
                 fullBuild = (g.Advice.FullBuild ?? []).Select(b => new { item = ItemDto(b.Item), owned = b.Owned }),
                 augments = _myAugments.Select(a => new { name = a.DisplayName, icon = a.Icon }),
                 cards = _cards.Select(c => AugmentDto(c.Hit.Augment, c.Rec, c.GoodItems, c.Rec.AugmentId == bestId, c.Anvil?.Reason, c.Synergy,
