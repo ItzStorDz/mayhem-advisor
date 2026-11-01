@@ -58,10 +58,12 @@ public partial class App : System.Windows.Application
     // Estado de la partida actual
     readonly List<Augment> _myAugments = [];
     List<AugmentCard> _cards = [];
-    readonly List<System.Drawing.Point> _clicks = [];
+    readonly List<Click> _clicks = [];
+    /// <summary>Un clic izquierdo mientras se ven las cartas: dónde (en la pantalla) y cuándo.</summary>
+    readonly record struct Click(int X, int Y, DateTime At);
     // Los clics se vigilan en un hilo aparte: el hilo principal se ocupa de leer la pantalla y a veces tarda,
     // y con un temporizador en él se perdían clics rápidos (justo el de elegir carta).
-    readonly System.Collections.Concurrent.ConcurrentQueue<System.Drawing.Point> _clickQueue = new();
+    readonly System.Collections.Concurrent.ConcurrentQueue<Click> _clickQueue = new();
     volatile bool _trackClicks;
     object? _lastLive;
 
@@ -549,6 +551,11 @@ public partial class App : System.Windows.Application
             // centro, se borraba el clic de elegir y el aumento («Impacto Blindado») se perdía.
             if (!SameRow(h.Bounds, merged)) continue;
             int col = merged.FindIndex(m => Math.Abs(Center(m.Bounds) - Center(h.Bounds)) < column);
+            // Las cartas salen de 3 en 3: con 3 ya leídas, una nueva es el refresco de la más cercana aunque se leyera algo
+            // desplazada (animación). Antes entraba como cuarta y el clic de elegir podía irse a la carta vieja: en la nube,
+            // con 4 cartas la app apuntó mal 6 de 20 elecciones; con 3, 6 de 136.
+            if (col < 0 && merged.Count >= 3)
+                col = merged.Select((m, i) => (i, d: Math.Abs(Center(m.Bounds) - Center(h.Bounds)))).MinBy(x => x.d).i;
             if (col >= 0)
             {
                 // Refresco de esa carta (re-roll): los clics en esa columna eran sobre la carta de antes o su botón.
@@ -557,7 +564,7 @@ public partial class App : System.Windows.Application
                 _clicks.RemoveAll(c => Math.Abs(c.X - x0) < column);
                 merged[col] = h; seen = replaced = true;
             }
-            else if (merged.Count < 4) { merged.Add(h); seen = replaced = true; } // una que no se leyó al principio
+            else { merged.Add(h); seen = replaced = true; } // una que no se leyó al principio (con menos de 3)
         }
 
         if (seen) _cardsLastSeen = now;
@@ -746,7 +753,7 @@ public partial class App : System.Windows.Application
                         if (hit.Act != "panel") Log.Write($"Clic en el botón del panel: {hit.Act}");
                     }
                 }
-                else if (_trackClicks) _clickQueue.Enqueue(new System.Drawing.Point(p.X, p.Y));
+                else if (_trackClicks) _clickQueue.Enqueue(new Click(p.X, p.Y, DateTime.UtcNow));
             }
             if (dragFrom is { } from)
             {
@@ -846,6 +853,10 @@ public partial class App : System.Windows.Application
         for (int i = _clicks.Count - 1; i >= 0; i--)
         {
             var click = _clicks[i];
+            // Un clic de cuando las cartas ya no estaban no es elegir: es volver a jugar (mucha gente mueve o ataca con el
+            // clic izquierdo y ese clic caía en la columna de otra carta). En las partidas de la nube (159 elecciones de
+            // 1.5.0-1.6.0) la app apuntó 13 mal, casi siempre la carta de al lado de la elegida.
+            if (click.At > _cardsLastSeen + ClickAfterCardsGrace) continue;
             // Solo el cuerpo de la carta: desde el icono hasta la descripción. Los botones de abajo (refrescar) no cuentan.
             // Medido en tus partidas: un clic de elegir a +20 % bajo el nombre (Sombrero de Wooglet), refrescar a +30 % o más.
             var hit = centers.Where(c => Math.Abs(click.X - c.X) <= halfGap && click.Y > c.Y - screenH * 0.28 && click.Y < c.Y + screenH * 0.26)
@@ -855,6 +866,8 @@ public partial class App : System.Windows.Application
         return null;
     }
 
+    /// <summary>Lo que puede ir un clic por detrás de la última lectura que aún vio las cartas (una vuelta de lectura y algo).</summary>
+    static readonly TimeSpan ClickAfterCardsGrace = TimeSpan.FromSeconds(0.25);
     /// <summary>Media carta de ancho, en partes del alto de la ventana del juego (medido: 409 px entre cartas con 1200 de alto).</summary>
     const double CardHalfWidth = 0.17;
 

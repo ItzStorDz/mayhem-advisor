@@ -131,7 +131,7 @@ public sealed class GameReports(GameData data, AugmentCatalog catalog, StatsStor
         double minutes = Math.Max(1, g.Duration / 60.0);
         var champ = Champ(me.Alias);
         string alias = champ?.Alias ?? me.Alias;
-        var journal = GameJournal.Find(alias, g.Created, g.Duration);
+        var journal = GameJournal.Find(alias, g.Created, g.Duration)?.WithRealPicks(me.Augs.ToList());
         var allies = g.Players.Where(p => p.Team == me.Team).ToList();
         var enemies = g.Players.Where(p => p.Team != me.Team).ToList();
         int teamKills = Math.Max(1, allies.Sum(p => p.K));

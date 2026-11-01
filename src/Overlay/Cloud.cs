@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -84,7 +84,11 @@ static class Cloud
         for (int i = 0; i < players.Count; i++)
             if (players[i]?["c"]?.GetValue<string>() == m.Champion && players[i]?["w"]?.GetValue<bool>() == m.Win) { me = i; break; }
         if (me < 0) return null;
+        var real = (players[me]?["a"] as JsonArray)?.Select(a => a?.GetValue<int>() ?? 0).ToList() ?? [];
         var journal = GameJournal.Find(m.Champion, m.Date, m.Duration);
+        // Lo que la app creyó en la partida, antes de corregirlo con el historial: el informe diario cuenta cuántas falla.
+        var guesses = journal?.Picks.Select(p => p.Chosen).ToList() ?? [];
+        journal?.WithRealPicks(real);
         return new JsonObject
         {
             ["app"] = Updater.Current.ToString(3),
@@ -97,9 +101,9 @@ static class Cloud
             // Sin las razones de compra (texto en un idioma): solo qué objeto y cuándo.
             ["journal"] = journal is null ? null : new JsonObject
             {
-                ["picks"] = new JsonArray(journal.Picks.Select(p => (JsonNode)new JsonObject
+                ["picks"] = new JsonArray(journal.Picks.Select((p, i) => (JsonNode)new JsonObject
                 {
-                    ["min"] = p.Minute, ["chosen"] = p.Chosen,
+                    ["min"] = p.Minute, ["chosen"] = p.Chosen, ["guess"] = guesses[i] != p.Chosen ? guesses[i] : null,
                     ["offered"] = new JsonArray(p.Offered.Select(c => (JsonNode)new JsonObject { ["id"] = c.Id, ["score"] = c.Score, ["grade"] = c.Grade }).ToArray()),
                 }).ToArray()),
                 ["buys"] = new JsonArray(journal.Buys.Select(b => (JsonNode)new JsonObject { ["min"] = b.Minute, ["item"] = b.ItemId }).ToArray()),

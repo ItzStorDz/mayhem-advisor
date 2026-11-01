@@ -92,7 +92,11 @@ function checkJournal(j) {
   need(Array.isArray(j.buys) && j.buys.length <= 80, 'buys');
   need(Array.isArray(j.deaths ?? []) && (j.deaths ?? []).length <= 60, 'deaths');
   return {
-    picks: j.picks.map(p => { need(Array.isArray(p?.offered) && p.offered.length <= 4 && int(p.chosen, 1, 999999), 'pick'); return { min: min(p.min), offered: p.offered.map(card), chosen: p.chosen }; }),
+    // guess (1.6.1+): la carta que la app creyó que elegiste, si al final resultó otra (se corrige con el historial).
+    picks: j.picks.map(p => {
+      need(Array.isArray(p?.offered) && p.offered.length <= 4 && int(p.chosen, 1, 999999) && (p.guess == null || int(p.guess, 1, 999999)), 'pick');
+      return { min: min(p.min), offered: p.offered.map(card), chosen: p.chosen, ...(p.guess == null ? {} : { guess: p.guess }) };
+    }),
     buys: j.buys.map(b => { need(int(b?.item, 1, 999999), 'buy'); return { min: min(b.min), item: b.item }; }),
     build: (need(ints(j.build ?? [], 8, 1, 999999), 'build'), j.build ?? []),
     deaths: (j.deaths ?? []).map(d => { need(int(d?.gold, 0, 100000), 'death'); return { min: min(d.min), gold: d.gold }; }),
@@ -249,18 +253,24 @@ async function buildReport(env, matches, reports, since) {
   if (matches.length) {
     lines.push('## Games', '');
     lines.push(`- **Champions:** ${count(matches, m => m.champion).slice(0, 15).map(([k, n]) => `${k} ${n}`).join(' · ')}`);
-    // ¿Se eligió la carta que la app puntuó más alto?
-    let picks = 0, followed = 0;
+    // ¿Se eligió la carta que la app puntuó más alto? La elección de verdad sale de los aumentos del historial (las apps de
+    // antes de 1.6.1 suben lo que creyeron ver). Y ¿cuántas apuntó mal la app en la partida? (guess, o chosen en las viejas).
+    let picks = 0, followed = 0, checked = 0, wrong = 0;
     for (const m of matches) {
-      const j = JSON.parse(m.data).journal;
-      for (const p of j?.picks ?? []) {
+      const d = JSON.parse(m.data);
+      const actual = new Set(d.p?.[d.me]?.a ?? []);
+      for (const p of d.journal?.picks ?? []) {
         if (p.offered.length < 2) continue;
+        const real = p.offered.filter(c => actual.has(c.id));
+        const chosen = actual.has(p.chosen) || real.length !== 1 ? p.chosen : real[0].id;
         picks++;
         const best = p.offered.reduce((a, b) => b.score > a.score ? b : a);
-        if (best.id === p.chosen) followed++;
+        if (best.id === chosen) followed++;
+        if (real.length === 1) { checked++; if ((p.guess ?? p.chosen) !== real[0].id) wrong++; }
       }
     }
     if (picks) lines.push(`- **Augment picks:** ${picks} · top-scored card chosen ${pct(followed, picks)}`);
+    if (checked) lines.push(`- **Picks the app got wrong in-game:** ${wrong} of ${checked} (${pct(wrong, checked)}), checked against the match history`);
     lines.push(`- **Patches:** ${count(matches, m => m.patch.split('.').slice(0, 2).join('.')).map(([k, n]) => `${k} (${n})`).join(', ')}`);
     lines.push('');
   }

@@ -48,6 +48,23 @@ public sealed class GameJournal
 
     static string Dir => Path.Combine(Paths.DataDir, "diario");
 
+    /// <summary>
+    /// Corrige las elecciones con tus aumentos de verdad (los del historial del cliente al acabar): si la carta apuntada no
+    /// está entre ellos y sí lo está exactamente una de las que había, esa es la que elegiste. En la partida la app adivina
+    /// por el clic y a veces se equivoca (Wakka, 2026-10-31: apuntó Archimaga y había cogido Crueldad).
+    /// </summary>
+    public GameJournal WithRealPicks(IReadOnlyCollection<int> augments)
+    {
+        for (int i = 0; i < Picks.Count; i++)
+        {
+            var p = Picks[i];
+            if (augments.Contains(p.Chosen)) continue;
+            var real = p.Offered.Where(c => augments.Contains(c.Id) && Picks.All(o => o.Chosen != c.Id)).ToList();
+            if (real.Count == 1) Picks[i] = p with { Chosen = real[0].Id };
+        }
+        return this;
+    }
+
     public void Save()
     {
         try
