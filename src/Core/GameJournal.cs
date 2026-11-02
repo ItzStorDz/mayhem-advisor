@@ -53,6 +53,14 @@ public sealed class GameJournal
     /// está entre ellos y sí lo está exactamente una de las que había, esa es la que elegiste. En la partida la app adivina
     /// por el clic y a veces se equivoca (Wakka, 2026-10-31: apuntó Archimaga y había cogido Crueldad).
     /// </summary>
+    /// <summary>
+    /// ¿Salieron las cartas justo al acabar la partida y no llegaste a elegir? (en el último minuto y ninguna está entre tus
+    /// aumentos). Swain de Wakka, 2026-11-02: la partida acabó a los 14:47 con las cartas en pantalla y se apuntó una; en
+    /// la nube, 3 de 274 elecciones (todas en el último minuto).
+    /// </summary>
+    public bool EndedBeforePick(JournalPick p, IReadOnlyCollection<int> augments) =>
+        p.Minute >= Minutes - 1 && !augments.Contains(p.Chosen) && p.Offered.All(c => !augments.Contains(c.Id));
+
     public GameJournal WithRealPicks(IReadOnlyCollection<int> augments)
     {
         for (int i = 0; i < Picks.Count; i++)

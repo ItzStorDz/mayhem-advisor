@@ -101,10 +101,10 @@ static class Cloud
             // Sin las razones de compra (texto en un idioma): solo qué objeto y cuándo.
             ["journal"] = journal is null ? null : new JsonObject
             {
-                ["picks"] = new JsonArray(journal.Picks.Select((p, i) => (JsonNode)new JsonObject
+                ["picks"] = new JsonArray(journal.Picks.Select((p, i) => (p, i)).Where(x => !journal.EndedBeforePick(x.p, real)).Select(x => (JsonNode)new JsonObject
                 {
-                    ["min"] = p.Minute, ["chosen"] = p.Chosen, ["guess"] = guesses[i] != p.Chosen ? guesses[i] : null,
-                    ["offered"] = new JsonArray(p.Offered.Select(c => (JsonNode)new JsonObject { ["id"] = c.Id, ["score"] = c.Score, ["grade"] = c.Grade }).ToArray()),
+                    ["min"] = x.p.Minute, ["chosen"] = x.p.Chosen, ["guess"] = guesses[x.i] != x.p.Chosen ? guesses[x.i] : null,
+                    ["offered"] = new JsonArray(x.p.Offered.Select(c => (JsonNode)new JsonObject { ["id"] = c.Id, ["score"] = c.Score, ["grade"] = c.Grade }).ToArray()),
                 }).ToArray()),
                 ["buys"] = new JsonArray(journal.Buys.Select(b => (JsonNode)new JsonObject { ["min"] = b.Minute, ["item"] = b.ItemId }).ToArray()),
                 ["build"] = new JsonArray(journal.FinalBuild.Select(i => (JsonNode)i).ToArray()),
