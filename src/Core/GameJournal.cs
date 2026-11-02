@@ -13,7 +13,7 @@ public sealed record JournalCard(
 public sealed record JournalPick(
     [property: JsonPropertyName("min")] double Minute,
     [property: JsonPropertyName("offered")] List<JournalCard> Offered,
-    [property: JsonPropertyName("chosen")] int Chosen);
+    [property: JsonPropertyName("chosen")] int Chosen); // 0 = no se vio cuál (lo dice tu historial al acabar)
 
 /// <summary>Lo que la app te recomendaba comprar a partir de ese minuto (se apunta cuando cambia).</summary>
 public sealed record JournalBuy(
@@ -49,11 +49,6 @@ public sealed class GameJournal
     static string Dir => Path.Combine(Paths.DataDir, "diario");
 
     /// <summary>
-    /// Corrige las elecciones con tus aumentos de verdad (los del historial del cliente al acabar): si la carta apuntada no
-    /// está entre ellos y sí lo está exactamente una de las que había, esa es la que elegiste. En la partida la app adivina
-    /// por el clic y a veces se equivoca (Wakka, 2026-10-31: apuntó Archimaga y había cogido Crueldad).
-    /// </summary>
-    /// <summary>
     /// ¿Salieron las cartas justo al acabar la partida y no llegaste a elegir? (en el último minuto y ninguna está entre tus
     /// aumentos). Swain de Wakka, 2026-11-02: la partida acabó a los 14:47 con las cartas en pantalla y se apuntó una; en
     /// la nube, 3 de 274 elecciones (todas en el último minuto).
@@ -61,6 +56,12 @@ public sealed class GameJournal
     public bool EndedBeforePick(JournalPick p, IReadOnlyCollection<int> augments) =>
         p.Minute >= Minutes - 1 && !augments.Contains(p.Chosen) && p.Offered.All(c => !augments.Contains(c.Id));
 
+    /// <summary>
+    /// Corrige las elecciones con tus aumentos de verdad (los del historial del cliente al acabar): si la carta apuntada no
+    /// está entre ellos y sí lo está exactamente una de las que había, esa es la que elegiste. En la partida la app adivina
+    /// por el clic y a veces se equivoca (Wakka, 2026-10-31: apuntó Archimaga y había cogido Crueldad). También completa
+    /// las que no vio (elegida 0: las cartas se fueron sin ver tu clic).
+    /// </summary>
     public GameJournal WithRealPicks(IReadOnlyCollection<int> augments)
     {
         for (int i = 0; i < Picks.Count; i++)

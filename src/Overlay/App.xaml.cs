@@ -833,7 +833,8 @@ public partial class App : System.Windows.Application
         while (_clickQueue.TryDequeue(out var click)) _clicks.Add(click);
     }
 
-    sealed record PendingPick(Augment Augment, HashSet<int> Shown, DateTime At, List<JournalCard>? Offered = null);
+    /// <param name="Augment">La carta elegida; null si las cartas se fueron sin ver tu clic (se sabrá al acabar, con tu historial).</param>
+    sealed record PendingPick(Augment? Augment, HashSet<int> Shown, DateTime At, List<JournalCard>? Offered = null);
     PendingPick? _pendingPick;
     static readonly TimeSpan PickConfirmDelay = TimeSpan.FromSeconds(6);
 
@@ -845,9 +846,11 @@ public partial class App : System.Windows.Application
     {
         if (_cards.Any(c => c.Anvil is not null)) return; // los yunques no son aumentos
         if (_cards.Count < 2) return; // una carta que nunca tuvo compañeras no era una elección de verdad
-        if (ClickedCard() is { } card)
-            _pendingPick = new PendingPick(card.Hit.Augment, _cards.Select(c => c.Hit.Augment.Id).ToHashSet(), DateTime.UtcNow,
-                _cards.Select(c => new JournalCard(c.Hit.Augment.Id, c.Score, c.Grade)).ToList());
+        // Sin clic sobre una carta también se apunta, como «no vi cuál»: al acabar, tu historial dice cuál de esas cartas
+        // tienes (GameJournal.WithRealPicks). Taric, 2026-11-02: las cartas se fueron sin ver ningún clic (seguramente se
+        // acabó el tiempo y el juego eligió por ti) y en el resumen y la nube faltaba Impacto Blindado.
+        _pendingPick = new PendingPick(ClickedCard()?.Hit.Augment, _cards.Select(c => c.Hit.Augment.Id).ToHashSet(), DateTime.UtcNow,
+            _cards.Select(c => new JournalCard(c.Hit.Augment.Id, c.Score, c.Grade)).ToList());
     }
 
     /// <summary>La carta sobre la que hiciste el último clic (null si no tocaste ninguna).</summary>
@@ -885,6 +888,12 @@ public partial class App : System.Windows.Application
     {
         if (_pendingPick is not { } p) return;
         _pendingPick = null;
+        if (p.Augment is null)
+        {
+            Log.Write("Aumento elegido: no se vio cuál (se sabrá al acabar, con tu historial)");
+            _journal?.Picks.Add(new JournalPick(Math.Round(_gameMinutes, 1), p.Offered ?? [], 0));
+            return;
+        }
         if (_myAugments.Any(a => a.Id == p.Augment.Id)) return;
         _myAugments.Add(p.Augment); // al cambiar la lista, las compras se recalculan en la siguiente vuelta
         Log.Write($"Aumento elegido: {p.Augment.Name}");

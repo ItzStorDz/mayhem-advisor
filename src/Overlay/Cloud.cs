@@ -101,9 +101,10 @@ static class Cloud
             // Sin las razones de compra (texto en un idioma): solo qué objeto y cuándo.
             ["journal"] = journal is null ? null : new JsonObject
             {
-                ["picks"] = new JsonArray(journal.Picks.Select((p, i) => (p, i)).Where(x => !journal.EndedBeforePick(x.p, real)).Select(x => (JsonNode)new JsonObject
+                ["picks"] = new JsonArray(journal.Picks.Select((p, i) => (p, i)).Where(x => x.p.Chosen > 0 && !journal.EndedBeforePick(x.p, real)).Select(x => (JsonNode)new JsonObject
                 {
-                    ["min"] = x.p.Minute, ["chosen"] = x.p.Chosen, ["guess"] = guesses[x.i] != x.p.Chosen ? guesses[x.i] : null,
+                    // (Una elección que la app no vio, 0, no es un fallo: sin «guess», que además el servidor no admite a 0.)
+                    ["min"] = x.p.Minute, ["chosen"] = x.p.Chosen, ["guess"] = guesses[x.i] > 0 && guesses[x.i] != x.p.Chosen ? guesses[x.i] : null,
                     ["offered"] = new JsonArray(x.p.Offered.Select(c => (JsonNode)new JsonObject { ["id"] = c.Id, ["score"] = c.Score, ["grade"] = c.Grade }).ToArray()),
                 }).ToArray()),
                 ["buys"] = new JsonArray(journal.Buys.Select(b => (JsonNode)new JsonObject { ["min"] = b.Minute, ["item"] = b.ItemId }).ToArray()),

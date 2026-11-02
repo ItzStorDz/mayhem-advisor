@@ -448,6 +448,15 @@ static class P
             Stray = null; Game.Invalidate(); Game.Update();
             Note(Count("Cartas en pantalla") == before2 ? "texto de otro overlay: no se toma por cartas" : "FALLO: el texto de otro overlay salió como cartas");
 
+            // Taric (2026-11-02): las cartas se van sin ningún clic (se acabó el tiempo y el juego eligió por ti). Se apunta
+            // «no se vio cuál» para completarlo al acabar con tu historial; antes no quedaba nada.
+            Cards = CardsEn ? ["Soul Eater", "Armored Impact", "Goliath"] : ["Devorador de Almas", "Impacto Blindado", "Goliat"];
+            seen = Count("Cartas en pantalla"); Game.Invalidate(); Game.Update();
+            t0.Restart(); while (Count("Cartas en pantalla") == seen && t0.ElapsedMilliseconds < 10_000) await Task.Delay(20);
+            int unseen = Count("no se vio cuál");
+            await Task.Delay(1500); Cards = null; Game.Invalidate(); Game.Update();
+            Note(await WaitCount("no se vio cuál", unseen, 25_000) ? "Taric: cartas sin clic: se apunta «no se vio cuál»" : "FALLO: Taric: las cartas sin clic no dejaron nada apuntado");
+
             Cards = null; Game.Invalidate(); Game.Update(); await Task.Delay(1000);
             // Fin de la partida: la app debe guardar la partida que falta en cuanto el cliente la tenga (antes, 90 s fijos).
             if (Environment.GetEnvironmentVariable("FG_REMOVE_ID") is { Length: > 0 } rid)

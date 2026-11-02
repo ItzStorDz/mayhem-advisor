@@ -731,8 +731,8 @@ public sealed partial class Advisor(StatsStore stats)
         string? styleNow = lockedStyle ?? (StyleFromItems(champion, myItems ?? []) is { FromItems.Length: > 0, Generic: false } byItems ? byItems.Key : null);
         var styleFx = styleNow is null ? null : stats.AramkitBuilds.StyleEffect(champion, candidate.Id, styleNow);
         if (styleFx is { } fx && fx.Weight * (fx.Delta / 100 - AugmentScale.Evidence(rec)) is var styleShift && Math.Abs(styleShift) >= 0.005)
-            Add(styleShift, L($"con tu build {StyleName(styleNow!)}, {Data.ChampionName(champion)} gana {fx.Delta:+0.0;-0.0} puntos con él (~{fx.Games:N0} partidas así)",
-                                   $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} wins {fx.Delta:+0.0;-0.0} points with it (~{fx.Games:N0} games like that)"));
+            Add(styleShift, L($"con tu build {StyleName(styleNow!)}, {Data.ChampionName(champion)} gana {fx.Delta:+0.0;-0.0;0.0} puntos con él (~{fx.Games:N0} partidas así)",
+                                   $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} wins {fx.Delta:+0.0;-0.0;0.0} points with it (~{fx.Games:N0} games like that)"));
 
         if (heuristics && !(styleFx?.Games >= AugmentBuilds.ShrinkGames) && BuildFit(candidate, champion, myItems ?? [], mine) is { } fit)
         {
