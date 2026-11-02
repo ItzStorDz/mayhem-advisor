@@ -329,13 +329,13 @@ public partial class App : System.Windows.Application
                     _reusedAtLog = reader.Reused;
                     _scanMs = 0; _scans = 0; _nextScanLog = DateTime.UtcNow.AddMinutes(3);
                 }
-                var hits = _matcher.Find(lines);
+                var hits = _matcher.Find(lines).Where(h => OnCardColumn(h.Bounds)).ToList();
                 // Se leyeron 1 o 2 cartas (suelen ser 3): leemos otra vez solo la fila de los nombres, ampliada.
                 if (hits.Count is 1 or 2 && _cards.Count < 3)
                 {
                     var row = hits[0].Bounds;
                     var more = _matcher.Find(await reader.ReadNameRowAsync(screen, row.Y + row.Height / 2, row.Height));
-                    foreach (var h in more)
+                    foreach (var h in more.Where(h => OnCardColumn(h.Bounds)))
                         if (!hits.Any(o => o.Augment.Id == h.Augment.Id || Math.Abs(Center(o.Bounds) - Center(h.Bounds)) < o.Bounds.Width))
                             hits.Add(h);
                     hits = hits.OrderBy(h => h.Bounds.X).ToList();
@@ -577,6 +577,20 @@ public partial class App : System.Windows.Application
     }
 
     static int Center(Box b) => b.X + b.Width / 2;
+
+    /// <summary>
+    /// ¿Está en una de las columnas de las cartas? El juego las pone centradas en su ventana y separadas un 34 % de su alto
+    /// (790/1280/1770 con 2560x1440). En tu registro, las de verdad se desvían como mucho un 0,6 % del alto; lo que se leía
+    /// como cartas sin serlo (otro overlay: «Vulnerabilidad + Destellante» una y otra vez con Sylas, 2026-11-02, apuntando
+    /// aumentos que no tenías; «Barrera Azul, Sonata, Locomotora») entre un 4 y un 26 %.
+    /// </summary>
+    bool OnCardColumn(Box b)
+    {
+        double center = _gameArea.X + _gameArea.Width / 2.0, gap = CardSpacing * _gameArea.Height;
+        double off = new[] { center - gap, center, center + gap }.Min(col => Math.Abs(Center(b) - col));
+        return off <= ColumnTolerance * _gameArea.Height;
+    }
+    const double CardSpacing = 0.34, ColumnTolerance = 0.03;
 
     void SetCards(List<AugmentHit> hits, GameSnapshot game, Advice? advice)
     {

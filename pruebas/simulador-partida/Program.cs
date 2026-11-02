@@ -52,6 +52,11 @@ static class P
     static string[]? Cards;
     static bool CardsEn; // nombres de las cartas en inglés (si no, en español como el juego del usuario) // nombres dibujados (null = sin cartas)
     static Image? Showcase; // FG_SHOWCASE: una captura del juego con cartas de verdad (para imágenes de promoción)
+    /// <summary>Nombres sueltos en la fila de las cartas pero fuera de sus columnas (desplazados desde el centro, en altos de pantalla),
+    /// como el texto de otro overlay que con Sylas (2026-11-02) se leía como «Vulnerabilidad + Destellante».</summary>
+    static (string Text, float DxH)[]? Loose;
+    /// <summary>Centro de la carta i (0-2): el juego las pone centradas y separadas un 34 % del alto de la pantalla.</summary>
+    static int CardX(Rectangle b, int i) => (int)(b.Width / 2.0 + (i - 1) * 0.34 * b.Height);
     static string? Stray;   // un nombre suelto más arriba que la fila de las cartas (animación al elegir, como con Rammus)
 
     static void Note(string s) { var line = $"{DateTime.Now:HH:mm:ss.fff}  {s}"; Console.WriteLine(line); Report.AppendLine(line); }
@@ -115,15 +120,23 @@ static class P
                 var sz = e.Graphics.MeasureString(Stray, f2);
                 e.Graphics.DrawString(Stray, f2, Brushes.White, screen.Width * 0.5f - sz.Width / 2, screen.Height * 0.24f);
             }
+            if (Loose is not null)
+            {
+                using var f3 = new Font("Segoe UI", screen.Height * 0.019f, FontStyle.Bold, GraphicsUnit.Pixel);
+                foreach (var (text, dx) in Loose)
+                {
+                    var sz = e.Graphics.MeasureString(text, f3);
+                    e.Graphics.DrawString(text, f3, Brushes.White, screen.Width / 2f + dx * screen.Height - sz.Width / 2, screen.Height * 0.40f);
+                }
+            }
             if (Cards is null) return;
-            // Cartas como las del juego: nombres a ~40 % del alto, centros a 29/50/71 % del ancho.
+            // Cartas como las del juego: nombres a ~40 % del alto, centradas y separadas un 34 % del alto (790/1280/1770 en 2560x1440).
             using var font = new Font("Segoe UI", screen.Height * 0.019f, FontStyle.Bold, GraphicsUnit.Pixel);
             using var card = new SolidBrush(Color.FromArgb(240, 22, 18, 40));
             using var border = new Pen(Color.FromArgb(200, 190, 150, 255), 4);
-            float[] centers = [0.29f, 0.5f, 0.71f];
             for (int i = 0; i < Cards.Length; i++)
             {
-                float cx = screen.Width * centers[i], w = screen.Height * 0.32f, top = screen.Height * 0.20f, h = screen.Height * 0.55f;
+                float cx = CardX(screen, i), w = screen.Height * 0.32f, top = screen.Height * 0.20f, h = screen.Height * 0.55f;
                 e.Graphics.FillRectangle(card, cx - w / 2, top, w, h); e.Graphics.DrawRectangle(border, cx - w / 2, top, w, h);
                 var size = e.Graphics.MeasureString(Cards[i], font);
                 e.Graphics.DrawString(Cards[i], font, Brushes.White, cx - size.Width / 2, screen.Height * 0.40f);
@@ -214,7 +227,8 @@ static class P
             Note("partida detectada");
             if (!await WaitLog("Overlay Electron conectado", 30_000)) Note("FALLO: Electron no se conectó");
             await Front();
-            if (!await WaitLog("DEBUG botones:", 20_000)) { Note("FALLO: el panel no publicó sus botones"); Shot("00-sin-panel"); return; }
+            // La primera lista de botones llega vacía (el panel aún no se dibujó): se espera a la que trae botones.
+            if (!await WaitLog("DEBUG botones: minimize", 20_000)) { Note("FALLO: el panel no publicó sus botones"); Shot("00-sin-panel"); return; }
             await Task.Delay(1500);
             if (Environment.GetEnvironmentVariable("FG_SHOWCASE") is { Length: > 0 } showcase)
             {
@@ -359,7 +373,7 @@ static class P
             int picks = Count("Aumento elegido");
             Cards = CardsEn ? ["Vulnerability"] : ["Vulnerabilidad"]; Game.Invalidate(); Game.Update();
             await Task.Delay(1500); await Front();
-            SetCursorPos((int)(b.Width * 0.29), (int)(b.Height * 0.55)); await Task.Delay(150);
+            SetCursorPos(CardX(b, 0), (int)(b.Height * 0.55)); await Task.Delay(150);
             mouse_event(0x02, 0, 0, 0, IntPtr.Zero); await Task.Delay(40); mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
             Note(await WaitLog("Carta suelta descartada", 8000) ? "carta suelta descartada" : "FALLO: la carta suelta no se descartó");
             int lone = Count("Cartas en pantalla"); await Task.Delay(9000);
@@ -372,7 +386,7 @@ static class P
             seen = Count("Cartas en pantalla"); Game.Invalidate(); Game.Update();
             t0.Restart(); while (Count("Cartas en pantalla") == seen && t0.ElapsedMilliseconds < 10_000) await Task.Delay(20);
             await Task.Delay(800); await Front();
-            SetCursorPos((int)(b.Width * 0.71), (int)(b.Height * 0.63)); await Task.Delay(150);
+            SetCursorPos(CardX(b, 2), (int)(b.Height * 0.63)); await Task.Delay(150);
             mouse_event(0x02, 0, 0, 0, IntPtr.Zero); await Task.Delay(40); mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
             await Task.Delay(150); Cards = null; Game.Invalidate(); Game.Update();
             Note(await WaitLog(CardsEn ? "clic en Pandora" : "clic en Caja de Pandora", 5000) ? "clic bajo en la carta: cuenta como elegir" : "FALLO: el clic bajo en la carta no contó");
@@ -415,7 +429,7 @@ static class P
             var tz = Stopwatch.StartNew(); while (Count("clic en Plan de Escape") == escape && tz.ElapsedMilliseconds < 6000) await Task.Delay(50);
             Note(Count("clic en Plan de Escape") > escape ? "Garen: la elección antes de HEAVY/POWER/THRASH cuenta" : "FALLO: Garen: se perdió «Plan de Escape»");
             await Task.Delay(1500);
-            SetCursorPos((int)(b.Width * 0.29), (int)(b.Height * 0.45)); await Task.Delay(150);
+            SetCursorPos(CardX(b, 0), (int)(b.Height * 0.45)); await Task.Delay(150);
             mouse_event(0x02, 0, 0, 0, IntPtr.Zero); await Task.Delay(40); mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
             await Task.Delay(150); Cards = null; Game.Invalidate(); Game.Update();
             await Task.Delay(9000);
@@ -430,7 +444,7 @@ static class P
             await Task.Delay(800); await Front();
             string left = CardsEn ? "clic en Shrink Ray" : "clic en Rayo Encogedor", middle = CardsEn ? "clic en Armored Impact" : "clic en Impacto Blindado";
             int leftBefore = Count(left), middleBefore = Count(middle);
-            SetCursorPos((int)(b.Width * 0.29), (int)(b.Height * 0.45)); await Task.Delay(150);
+            SetCursorPos(CardX(b, 0), (int)(b.Height * 0.45)); await Task.Delay(150);
             mouse_event(0x02, 0, 0, 0, IntPtr.Zero); await Task.Delay(40); mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
             await Task.Delay(150);
             SetCursorPos((int)(b.Width * 0.5), (int)(b.Height * 0.45)); await Task.Delay(60);
@@ -447,6 +461,14 @@ static class P
             Cards = null; Stray = "Barrera Azul   Sonata   Locomotora"; Game.Invalidate(); Game.Update(); await Task.Delay(3000);
             Stray = null; Game.Invalidate(); Game.Update();
             Note(Count("Cartas en pantalla") == before2 ? "texto de otro overlay: no se toma por cartas" : "FALLO: el texto de otro overlay salió como cartas");
+
+            // Sylas (2026-11-02): dos nombres de aumento en la fila de las cartas pero fuera de sus columnas (otro overlay). Se
+            // tomaban por cartas una y otra vez y se apuntaban aumentos que no tenías.
+            int before3 = Count("Cartas en pantalla");
+            Loose = CardsEn ? [("Vulnerability", -0.54f), ("Dashing", -0.17f)] : [("Vulnerabilidad", -0.54f), ("Destellante", -0.17f)];
+            Game.Invalidate(); Game.Update(); await Task.Delay(4000);
+            Loose = null; Game.Invalidate(); Game.Update(); await Task.Delay(500);
+            Note(Count("Cartas en pantalla") == before3 ? "Sylas: nombres fuera de las columnas de las cartas: no se toman por cartas" : "FALLO: Sylas: nombres fuera de las columnas salieron como cartas");
 
             // Taric (2026-11-02): las cartas se van sin ningún clic (se acabó el tiempo y el juego eligió por ti). Se apunta
             // «no se vio cuál» para completarlo al acabar con tu historial; antes no quedaba nada.
