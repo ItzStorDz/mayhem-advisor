@@ -15,5 +15,6 @@ public static class Paths
     // a la vez cuentan como fuerza adaptable (Rápido y Seguro, El Bum y el Bajo): hay que recalcular las estadísticas.
     // v11 (1.7.2): lo que vale con «ataques o habilidades» (Desgarraoro, Patada Aérea, Captura al Paso…) ya no pide ataques.
     // v12 (1.7.3): la fuerza adaptable dentro de la etiqueta de AP (Mano del Barón) ya no cuenta como AP.
-    public static string CatalogCache => Path.Combine(DataDir, "augments-v12.json");
+    // v13 (1.7.4): los aumentos de «cualquier estadística» (Arma del Destino, Campeón de Urf) no se quedan ninguna.
+    public static string CatalogCache => Path.Combine(DataDir, "augments-v13.json");
 }

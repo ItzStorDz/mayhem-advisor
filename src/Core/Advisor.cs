@@ -749,8 +749,12 @@ public sealed partial class Advisor(StatsStore stats)
         if (stats.Kits.For(champion) is { } kit)
         {
             var tags = candidate.StatList;
-            if (kit.HasOnHit && tags.Any(t => t is "OnHit" or "AS"))
+            // Solo con un efecto al impactar de verdad o con velocidad de ataque (más golpes con lo que tu kit añade a cada
+            // ataque): Mago Tirador, Rito de Ascensión o Impacto Blindado no lo son (Wakka, 2026-11-02, con Kog'Maw).
+            if (kit.HasOnHit && StatTags.IsOnHitEffect(candidate))
                 Guess(0.01, L($"tu kit aplica efectos al impactar ({ChampionKit.Keys(kit.OnHit)})", $"your kit applies on-hit effects ({ChampionKit.Keys(kit.OnHit)})"));
+            else if (kit.HasOnHit && tags.Contains("AS"))
+                Guess(0.01, L($"con más velocidad de ataque rinde más tu kit ({ChampionKit.Keys(kit.OnHit)})", $"more attack speed gets more out of your kit ({ChampionKit.Keys(kit.OnHit)})"));
             if (kit.HasCrit && tags.Contains("Crit"))
                 Guess(0.01, L($"tu kit usa el crítico ({ChampionKit.Keys(kit.Crit)})", $"your kit uses crit ({ChampionKit.Keys(kit.Crit)})"));
             if (!champData && !kit.Heals && !kit.Shields && HealShieldPower.IsMatch(candidate.Description + " " + candidate.ExtraDescription))

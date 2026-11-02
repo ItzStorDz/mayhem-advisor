@@ -355,8 +355,9 @@ public static class StatTags
             text = ApRatio.Replace(AdRatio.Replace(text, " fuerza adaptable "), " fuerza adaptable ");
         var tags = Rules.Where(r => r.Patterns.Any(text.Contains)).Select(r => r.Tag).ToList();
         // Un aumento que mejora "cualquier estadística" (Arma del Destino enumera las 15) no pide ninguna: con todas sus
-        // estadísticas salía «→ AD/AP» y «pide ataques básicos» con Vladimir (Wakka, 2026-11-01).
-        if (tags.Count(CoreStats.Contains) >= 5) tags.RemoveAll(CoreStats.Contains);
+        // estadísticas salía «→ AD/AP» y «pide ataques básicos» con Vladimir (Wakka, 2026-11-01). Tampoco las demás de su
+        // lista (robo de vida, velocidad de movimiento…): con ellas las cartas «iban con Arma del Destino» (Wakka, 2026-11-02).
+        if (tags.Count(CoreStats.Contains) >= 5) tags.Clear();
         // "Fuerza adaptable" sirve a daño de ataque o a poder de habilidad, según el campeón.
         if (text.Contains("<scaleaf") || text.Contains("fuerza adaptable")) tags.Add("Adaptive");
         return tags.Distinct().ToArray();
@@ -381,6 +382,13 @@ public static class StatTags
     /// <summary>¿Te da probabilidad de crítico? (Absorción de Alma, Es Crítico…): con el 100 % ya no suma.</summary>
     public static bool GivesCritChance(Augment a) => CritGive.IsMatch(Plain(a));
     static readonly Regex CritGive = new(@"(gain|gains|grants|obtienes)[^.]{0,30}(critical strike chance|probabilidad de golpe critico)");
+
+    /// <summary>
+    /// ¿Es un efecto «al impactar» de verdad? (lo aplican también habilidades como la Q de Ezreal). «Tus ataques infligen
+    /// daño adicional» (Mago Tirador) no lo es (Wakka, 2026-11-02).
+    /// </summary>
+    public static bool IsOnHitEffect(Augment a) => OnHitText.IsMatch(Plain(a));
+    static readonly Regex OnHitText = new(@"on-hit|on hit|al impactar|al impacto");
 
     /// <summary>¿Se activa al inmovilizar a un enemigo? (Devorador de Almas, Infranqueable, Crueldad, Vínculo Voraz…).</summary>
     public static bool TriggersOnImmobilize(Augment a) => Immobilize.IsMatch(Plain(a));

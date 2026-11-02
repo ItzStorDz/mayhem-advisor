@@ -208,3 +208,30 @@ foreach (var c in champions)
 }
 Report("Cartas cuya nota cambia 10+ puntos con los objetos de una build del campeón", moved.Count, movedTotal,
     moved.OrderByDescending(m => Math.Abs(m.Diff)).Select(m => m.Text));
+
+// 10. Aumentos de «cualquier estadística» (Arma del Destino, Campeón de Urf): ninguna carta «va con» ellos por potenciar lo
+// mismo (Wakka, 2026-11-02: cartas «fits Weapon of Destiny» con Evelynn).
+var anyStat = augments.Where(a => a.Names.GetValueOrDefault("default") is "Weapon of Destiny" or "Urf's Champion").ToList();
+var anyBad = new List<string>(); int anyTotal = 0;
+foreach (var w in anyStat)
+    foreach (var c in champions)
+        foreach (var a in augments.Where(a => a.Id != w.Id))
+        {
+            anyTotal++;
+            if (advisor.SynergyWith(a, [w], c, []) is { } syn && syn.Reason.Contains(w.DisplayName) && syn.Reason.Contains("potencian"))
+                anyBad.Add($"{a.Names["default"]} con {c}: {syn.Reason}");
+        }
+Report($"Cartas que «van con» {string.Join(" / ", anyStat.Select(a => a.Names["default"]))} por potenciar lo mismo", anyBad.Count, anyTotal, anyBad);
+
+// 11. «Tu kit aplica efectos al impactar» solo con velocidad de ataque o con un efecto al impactar de verdad: Mago Tirador
+// («tus ataques infligen daño adicional») no lo es (Wakka, 2026-11-02, con Kog'Maw).
+var onHitRx = new System.Text.RegularExpressions.Regex(@"on-hit|on hit|al impactar|al impacto");
+var kitBad = new List<(Augment Aug, string Champ)>(); int kitTotal = 0;
+foreach (var c in champions.Where(c => stats.Kits.For(c) is { HasOnHit: true }))
+    foreach (var a in augments.Where(a => !a.StatList.Contains("AS") && !onHitRx.IsMatch(Plain(a))))
+    {
+        kitTotal++;
+        if (advisor.SynergyWith(a, [], c, []) is { } syn && syn.Reason.Contains("efectos al impactar")) kitBad.Add((a, c));
+    }
+Report("Aumentos sin efecto al impactar ni velocidad de ataque a los que «tu kit aplica efectos al impactar»", kitBad.Count, kitTotal,
+    kitBad.GroupBy(x => x.Aug).OrderByDescending(g => g.Count()).Select(g => $"{g.Key.Names["default"]}: {g.Count()} campeones, p. ej. {g.First().Champ}"));
