@@ -235,3 +235,22 @@ foreach (var c in champions.Where(c => stats.Kits.For(c) is { HasOnHit: true }))
     }
 Report("Aumentos sin efecto al impactar ni velocidad de ataque a los que «tu kit aplica efectos al impactar»", kitBad.Count, kitTotal,
     kitBad.GroupBy(x => x.Aug).OrderByDescending(g => g.Count()).Select(g => $"{g.Key.Names["default"]}: {g.Count()} campeones, p. ej. {g.First().Champ}"));
+
+// 12. Fijar una build no debe cambiar las botas a otras que en esa build se compran menos (Yi letalidad: con la app,
+// Grebas del Berserker; al fijarla, Punteras de Acero, que casi nadie lleva así; tu partida del 2026-11-02).
+var bootsBad = new List<string>(); int bootsTotal = 0;
+foreach (var c in champions)
+{
+    var styles = stats.AramkitBuilds.Styles(c);
+    if (styles.Count < 2) continue;
+    var auto = advisor.Build(c, [], enemies, [], 0).Boots?.Item;
+    foreach (var s in styles.Where(s => s.Games >= 5000))
+    {
+        bootsTotal++;
+        var locked = advisor.Build(c, [], enemies, [], 0, lockedStyle: s.Key).Boots?.Item;
+        if (locked is null || auto is null || locked.Id == auto.Id) continue;
+        double lockedShare = s.Items.GetValueOrDefault(locked.Id), autoShare = s.Items.GetValueOrDefault(auto.Id);
+        if (lockedShare < autoShare) bootsBad.Add($"{c} {s.Key}: {auto.NameEn} ({autoShare:P0} en esa build) → {locked.NameEn} ({lockedShare:P0})");
+    }
+}
+Report("Builds fijadas que cambian las botas a otras menos compradas en esa build", bootsBad.Count, bootsTotal, bootsBad);

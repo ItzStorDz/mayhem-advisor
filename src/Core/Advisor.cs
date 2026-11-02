@@ -1172,8 +1172,11 @@ public sealed partial class Advisor(StatsStore stats)
     /// motivo claro (un aumento, el equipo enemigo). Antes un objeto raro con buen % en pocas partidas le ganaba.
     /// Con otro estilo de build por tus aumentos (<see cref="_style"/>), cuenta lo que se compra en ese estilo.
     /// </summary>
-    double PopularBonus(string champion, int itemId) => WinFactor(champion, itemId) * (
-        _style is { Locked: true } ? StyleItemsBonus * Math.Min(LockedShare(champion, itemId), 0.6) / 0.6
+    /// <param name="shared">Botas: se compran igual en todas las builds, así que con la build fijada cuenta lo que se
+    /// compran en ella, no lo propias que sean (Yi letalidad pasaba de Grebas del Berserker a Punteras de Acero, que casi
+    /// nadie lleva así: 76 de 340 builds fijadas cambiaban a unas botas menos compradas; tu partida del 2026-11-02).</param>
+    double PopularBonus(string champion, int itemId, bool shared = false) => WinFactor(champion, itemId) * (
+        _style is { Locked: true } && !shared ? StyleItemsBonus * Math.Min(LockedShare(champion, itemId), 0.6) / 0.6
         : _style is not null ? (_style.FromItems is null ? MaxPopularBonus : StyleItemsBonus) * Math.Min(_style.Items.GetValueOrDefault(itemId), 0.6) / 0.6
         : stats.GlobalItem(champion, itemId) is { PickRate: { } pick } ? MaxPopularBonus * Math.Min(pick, 60) / 60 : 0);
 
@@ -1460,7 +1463,7 @@ public sealed partial class Advisor(StatsStore stats)
             .Select(i =>
             {
                 var (rate, games) = dataRates.GetValueOrDefault(i.Id, (baseRate, 0));
-                double score = rate - baseRate + PopularBonus(champion, i.Id);
+                double score = rate - baseRate + PopularBonus(champion, i.Id, shared: true);
                 string? reason = null;
                 void Bonus(bool when, double amount, string why) { if (when) { score += amount; reason ??= why; } }
 
