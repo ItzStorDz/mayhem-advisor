@@ -13,6 +13,9 @@ simulador-partida\  Una "partida" falsa a pantalla completa con la API del juego
                       captura, la app lee sus cartas y guarda <idioma>-showcase.png y -overlay.png a tamaño completo)
                       & "pruebas\simulador-partida\bin\Debug\net9.0-windows\League of Legends.exe" <salida> <MayhemAdvisor.exe> es|en [encards]
                     Deja capturas, el texto del panel (*-overlay.txt) e informe.txt en <salida>.
+                    <MayhemAdvisor.exe>: el de  dotnet build src\Overlay -c Release  ->  src\Overlay\bin\Release\
+                    net9.0-windows10.0.19041.0\MayhemAdvisor.exe. ¡No el de la subcarpeta win-x64! Esa la deja el último
+                    «dotnet publish» (el instalador) y no cambia al compilar: el 2026-11-02 una prueba falló por usarla.
 
 ventana-ingles.js   Recorre la ventana principal en inglés (también cambiando de idioma con páginas abiertas) y apunta
                     el texto que parece español. Abrir la app con WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333
