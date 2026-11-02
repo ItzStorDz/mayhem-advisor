@@ -1,7 +1,7 @@
 // Explica la nota de cada carta de una partida tuya: con el diario de la app (carpeta diario), qué datos tenía cada
 // carta con tu campeón, cómo combinaba con los aumentos que ya llevabas (todos los jugadores) y la nota que sale.
-// Los objetos no se tienen en cuenta (el diario no guarda qué tenías en cada elección).
-// Uso: MAYHEM_DATA_DIR=<copia de datos> dotnet run -c Release -- <diario\AAAAMMDD-HHMMSS-Campeón.json>
+// El diario no guarda qué objetos tenías en cada elección: se pueden dar con objetos=3084,2502 (los mismos en todas).
+// Uso: MAYHEM_DATA_DIR=<copia de datos> dotnet run -c Release -- <diario\AAAAMMDD-HHMMSS-Campeón.json> [objetos=id,id…] [detalle]
 using System.Text.Json;
 using MayhemAdvisor.Core;
 
@@ -25,6 +25,9 @@ using var doc = JsonDocument.Parse(File.ReadAllText(args[0]));
 var j = doc.RootElement;
 string champion = j.GetProperty("champion").GetString()!;
 var scale = AugmentScale.For(champion, DamageMix.Mixed, stats, catalog);
+var items = args.FirstOrDefault(a => a.StartsWith("objetos="))?["objetos=".Length..].Split(',').Select(int.Parse).ToList() ?? [];
+if (items.Count > 0) Console.WriteLine($"con {string.Join(", ", items.Select(i => data.Item(i)?.DisplayName ?? i.ToString()))}"
+    + (advisor.StyleFromItems(champion, items) is { FromItems.Length: > 0 } st ? $" → build {Advisor.StyleName(st.Key)}" : ""));
 var mine = new List<Augment>();
 Console.WriteLine($"{champion}");
 foreach (var pick in j.GetProperty("picks").EnumerateArray())
@@ -35,7 +38,7 @@ foreach (var pick in j.GetProperty("picks").EnumerateArray())
     {
         if (catalog.Get(o.GetProperty("id").GetInt32()) is not { } a) continue;
         var rec = stats.Rate(champion, a.Id);
-        var syn = advisor.SynergyWith(a, mine, champion, []);
+        var syn = advisor.SynergyWith(a, mine, champion, items);
         double score = scale.Score(AugmentScale.Evidence(rec) + (syn?.Bonus ?? 0), AugmentScale.IsReliable(rec));
         var row = table.For(champion, a.Id);
         Console.WriteLine($"{(a.Id == chosen ? ">>" : "  ")} {a.DisplayName,-28} nota {score,5:0.0} (en partida {o.GetProperty("score").GetDouble(),5:0.0})" +
@@ -44,7 +47,7 @@ foreach (var pick in j.GetProperty("picks").EnumerateArray())
                           (syn is null ? "" : $" · sinergia {syn.Bonus * 100:+0.0;-0.0}: {syn.Reason}"));
         if (args.Contains("detalle"))
         {
-            var fit = advisor.BuildFit(a, champion, [], mine);
+            var fit = advisor.BuildFit(a, champion, items, mine);
             Console.WriteLine($"       etiquetas [{string.Join(", ", a.StatList)}] · encaje con la build: " + (fit is null ? "nada" : $"{fit.Bonus * 100:+0.0;-0.0} {fit.Reason}"));
         }
         foreach (var m in mine.Where(m => !m.IsAnvil))

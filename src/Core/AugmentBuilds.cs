@@ -131,6 +131,22 @@ public sealed class AugmentBuilds
         return new StylePick(best.Key, usual, best.Share, best.Raw, usualOption.Raw, best.Games, best.Lead, best.Items);
     }
 
+    /// <summary>
+    /// Cuánto gana el aumento con el campeón DENTRO de esa build (su % con el aumento en esa build menos el % de esa build
+    /// con el campeón, en puntos), con cuántas partidas y cuánto pesa frente a la media de todas las builds
+    /// (Weight = partidas / (partidas + <see cref="ShrinkGames"/>)). Null si no hay partidas de esa build con el aumento.
+    /// Medido el 2026-11-01 con las 12.357 parejas de builds de aramkit: el 11,3 % se separan más de 3 errores típicos (por
+    /// azar, el 0,3 %): Impacto Blindado con Hecarim tanque +13,5 y luchador −0,9 (Wakka: «la nota tiene que mirar tus
+    /// objetos»). Y la media engaña: Guerrero Solitario sube a Malphite +3,8 porque quien lo coge va tanque (que ya gana
+    /// 5 puntos más que el de AP), pero dentro de cada build resta (tanque −0,3, AP −1,5).
+    /// </summary>
+    public (double Delta, int Games, double Weight)? StyleEffect(string alias, int augmentId, string styleKey)
+    {
+        if (_champions.GetValueOrDefault(alias) is not { } champ || champ.Styles.FirstOrDefault(s => s.Key == styleKey) is not { } overall
+            || champ.Augments.GetValueOrDefault(augmentId)?.FirstOrDefault(r => r.Key == styleKey) is not { } mine) return null;
+        return (mine.WinRate - overall.WinRate, mine.Games, mine.Games / (mine.Games + ShrinkGames));
+    }
+
     /// <summary>Un estilo con todos los campeones juntos ("on_hit", "crit"…), o null si no hay datos.</summary>
     public BuildStyle? Generic(string key) => _generic.GetValueOrDefault(key);
 

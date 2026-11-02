@@ -176,3 +176,35 @@ foreach (var (fam, set) in families)
     Report($"Combos de {fam} sin partidas medidas ({unmeasured.Count} parejas × campeones) a los que la pareja no suma (+0,6 o más)", missed.Count, famTotal, missed);
     Console.WriteLine($"   (y {unexplained} que suman pero la carta lo explica con otra cosa)");
 }
+
+// 9. La nota con tu build (Wakka: «tiene que mirar tus objetos»): con los 3 objetos más propios de cada build del campeón,
+// ¿cuántas cartas cambian 10+ puntos de nota frente a no tener objetos? (AugmentBuilds.StyleEffect)
+var moved = new List<(double Diff, string Text)>(); int movedTotal = 0;
+// Con AUDIT_CARTAS=<archivo> apunta cada carta (campeón, build, aumento, nota sin objetos, con objetos) para comparar versiones.
+using var cardsOut = Environment.GetEnvironmentVariable("AUDIT_CARTAS") is { Length: > 0 } cardsPath ? new StreamWriter(cardsPath) : null;
+foreach (var c in champions)
+{
+    var styles = stats.AramkitBuilds.Styles(c);
+    if (styles.Count < 2) continue;
+    var scale9 = AugmentScale.For(c, DamageMix.Mixed, stats, catalog);
+    foreach (var s in styles.Where(s => s.Games >= 5000))
+    {
+        var own = s.Items.Where(kv => data.Item(kv.Key) is { IsFinal: true, IsBoots: false })
+            .OrderByDescending(kv => kv.Value - styles.Where(o => o.Key != s.Key).Select(o => o.Items.GetValueOrDefault(kv.Key)).DefaultIfEmpty(0).Max())
+            .Take(3).Select(kv => kv.Key).ToList();
+        if (advisor.StyleFromItems(c, own) is not { FromItems.Length: > 0 } got || got.Key != s.Key) continue;
+        foreach (var a in augments)
+        {
+            if (stats.AramkitBuilds.Styles(c, a.Id) is null) continue;
+            movedTotal++;
+            var rec = stats.Rate(c, a.Id);
+            double Score(IReadOnlyList<int> items) => scale9.Score(AugmentScale.Evidence(rec) + (advisor.SynergyWith(a, [], c, items)?.Bonus ?? 0), AugmentScale.IsReliable(rec));
+            double before = Score([]), after = Score(own);
+            cardsOut?.WriteLine($"{c}	{s.Key}	{a.Id}	{before:0.0}	{after:0.0}");
+            if (Math.Abs(after - before) >= 10)
+                moved.Add((after - before, $"{c} {s.Key} + {a.Names["default"]}: {before:0} → {after:0} · {advisor.SynergyWith(a, [], c, own)?.Reason}"));
+        }
+    }
+}
+Report("Cartas cuya nota cambia 10+ puntos con los objetos de una build del campeón", moved.Count, movedTotal,
+    moved.OrderByDescending(m => Math.Abs(m.Diff)).Select(m => m.Text));

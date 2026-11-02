@@ -14,5 +14,6 @@ public static class Paths
     // v10 (1.6.1): el enfriamiento propio del aumento ya no lo hace "de habilidades" y los efectos que escalan con AD y AP
     // a la vez cuentan como fuerza adaptable (Rápido y Seguro, El Bum y el Bajo): hay que recalcular las estadísticas.
     // v11 (1.7.2): lo que vale con «ataques o habilidades» (Desgarraoro, Patada Aérea, Captura al Paso…) ya no pide ataques.
-    public static string CatalogCache => Path.Combine(DataDir, "augments-v11.json");
+    // v12 (1.7.3): la fuerza adaptable dentro de la etiqueta de AP (Mano del Barón) ya no cuenta como AP.
+    public static string CatalogCache => Path.Combine(DataDir, "augments-v12.json");
 }

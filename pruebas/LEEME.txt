@@ -35,10 +35,11 @@ auditar-campeones\  Cuando un jugador avisa de un fallo con un campeón, lo mism
 evaluar-cartas\     Con las elecciones reales que llegan a la nube: ¿la carta mejor puntuada es la que eligieron los que ganaron?
                     Exporta las partidas con  npx wrangler d1 execute mayhem-advisor --remote --json --command "SELECT data FROM matches"
                     (desde cloud\) a un .json y:  dotnet run --project pruebas\evaluar-cartas -c Release -- <ese .json>
+                    Con $env:EVAL_ITEMS = "1" a cada jugador se le dan sus objetos del final (para ver la nota según su build).
 
 explicar-partida\   Explica la nota de cada carta de una partida tuya (archivo de la carpeta diario de tus datos): datos del
                     campeón con el aumento, combinaciones medidas con los que ya llevabas y la nota que sale.
-                      dotnet run --project pruebas\explicar-partida -c Release -- <diario\AAAAMMDD-HHMMSS-Campeón.json> [detalle]
+                      dotnet run --project pruebas\explicar-partida -c Release -- <diario\AAAAMMDD-HHMMSS-Campeón.json> [objetos=id,id…] [detalle]
 
 medir-dano-enemigo.py  Compara, con tus partidas guardadas, formas de calcular el % de daño mágico del equipo enemigo
                     contra el daño real.  python pruebas\medir-dano-enemigo.py "%LOCALAPPDATA%\MayhemAdvisor"

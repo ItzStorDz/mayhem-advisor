@@ -1,6 +1,7 @@
-// Mide la nota de las cartas con las elecciones reales que llegan a la nube (partidas con el diario de la app): con las
+﻿// Mide la nota de las cartas con las elecciones reales que llegan a la nube (partidas con el diario de la app): con las
 // cartas que había, ¿la mejor puntuada es la que eligieron los que ganaron? (y los que perdieron, para comparar).
-// Los aumentos que ya tenía se toman de sus elecciones anteriores; los objetos no se conocen (se dejan vacíos).
+// Los aumentos que ya tenía se toman de sus elecciones anteriores. Los objetos de cada elección no se conocen: sin nada se
+// dejan vacíos; con EVAL_ITEMS=1 se le dan sus objetos del final de la partida (dicen su build, aunque no los tuviera aún).
 // Uso: MAYHEM_DATA_DIR=<copia de datos> dotnet run -c Release -- <partidas de la nube .json (salida de wrangler d1 --json)>
 // Para comparar con una versión anterior: -p:Antiguo=<carpeta codigo de un respaldo> (desde una copia de esta carpeta).
 using System.Text.Json;
@@ -36,6 +37,8 @@ foreach (var row in doc.RootElement[0].GetProperty("results").EnumerateArray())
     string champion = me.GetProperty("c").GetString()!;
     bool win = me.GetProperty("w").GetBoolean();
     var actual = me.GetProperty("a").EnumerateArray().Select(a => a.GetInt32()).ToHashSet();
+    var items = Environment.GetEnvironmentVariable("EVAL_ITEMS") == "1" && me.TryGetProperty("i", out var it)
+        ? it.EnumerateArray().Select(x => x.GetInt32()).ToList() : [];
     var mine = new List<Augment>();
     var scale = AugmentScale.For(champion, DamageMix.Mixed, stats, catalog);
     foreach (var pick in journal.GetProperty("picks").EnumerateArray())
@@ -46,7 +49,7 @@ foreach (var row in doc.RootElement[0].GetProperty("results").EnumerateArray())
         double Card(Augment a)
         {
             var rec = stats.Rate(champion, a.Id);
-            var syn = advisor.SynergyWith(a, mine, champion, []);
+            var syn = advisor.SynergyWith(a, mine, champion, items);
             return scale.Score(AugmentScale.Evidence(rec) + (syn?.Bonus ?? 0), AugmentScale.IsReliable(rec));
         }
         var top = offered.MaxBy(Card)!;

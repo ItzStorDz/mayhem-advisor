@@ -341,6 +341,9 @@ public static class StatTags
         // «Con un ataque o una habilidad» (Desgarraoro, Patada Aérea, Captura al Paso, Alma Hextech…) vale con cualquier daño:
         // no pide ataques básicos ni habilidades. Desgarraoro salía «Pide ataques básicos» con Alistar (partida del 2026-11-01).
         text = AttackOrAbility.Replace(text, " cualquier golpe ");
+        // El juego envuelve a veces la fuerza adaptable en la etiqueta de AP («<scaleAP>25% de fuerza adaptable</scaleAP>»,
+        // Mano del Barón): no pide AP. Salía «Pide build de AP» (−10) con Olaf, Jayce, Garen, Kha'Zix…
+        text = Regex.Replace(text, @"<scale(ap|ad)>[^<]*(fuerza adaptable|adaptive force)[^<]*</scale(ap|ad)>", " fuerza adaptable ");
         // Un crítico garantizado («are critically struck»: Provocación Infernal a los que tienen poca vida) no pide crítico.
         text = Regex.Replace(text, W(@"(are|is) critically struck"), " golpe garantizado ");
         // Convertir poder de habilidad en daño de ataque (escAPADe) es de AD, no de AP (el AP solo sale para decir cuánto da).

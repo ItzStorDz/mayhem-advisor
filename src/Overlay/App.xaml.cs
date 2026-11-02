@@ -601,7 +601,7 @@ public partial class App : System.Windows.Application
             _cards = hits.Select(h => (_cards.FirstOrDefault(c => c.Hit.Augment.Id == h.Augment.Id) is { } old
                 ? old with { Hit = h }
                 : new AugmentCard(h, _stats.Rate(game.Champion, h.Augment.Id, mix), advisor.ItemsForAugment(h.Augment, game.Champion, game.MyItems)))
-                with { Synergy = advisor.SynergyWith(h.Augment, _myAugments, game.Champion, game.MyItems, game.CritChance) })
+                with { Synergy = advisor.SynergyWith(h.Augment, _myAugments, game.Champion, game.MyItems, game.CritChance, _lockedStyle) })
                 .Select(c =>
                 {
                     double score = ScaleFor(game.Champion, mix).Score(c.SortScore, AugmentScale.IsReliable(c.Rec));

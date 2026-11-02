@@ -651,8 +651,9 @@ public sealed partial class Advisor(StatsStore stats)
     static readonly System.Text.RegularExpressions.Regex HealShieldPower = new(@"curaciones y escudos|heal(ing)? and shield(ing)?",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
+    /// <param name="lockedStyle">La build que fijaste en el panel ("on_hit", "tank"…), si la fijaste.</param>
     public AugmentSynergy? SynergyWith(Augment candidate, IReadOnlyList<Augment> mine, string champion, IReadOnlyList<int>? myItems = null,
-                                       double critChance = 0)
+                                       double critChance = 0, string? lockedStyle = null)
     {
         if (candidate.IsAnvil) return null;
         // De Vuelta a lo Básico sella la definitiva: con un aumento que vive de ella (Axioma Arcano, Forma Final…) uno de
@@ -724,7 +725,16 @@ public sealed partial class Advisor(StatsStore stats)
                 Guess(tagBonus, L($"va con «{m.DisplayName}»: los dos potencian {string.Join(" y ", shared.Take(2).Select(StatTags.Label))}", $"fits “{m.DisplayName}”: both boost {string.Join(" and ", shared.Take(2).Select(StatTags.Label))}"));
         }
 
-        if (heuristics && BuildFit(candidate, champion, myItems ?? [], mine) is { } fit)
+        // La build de esta partida (la que dicen tus objetos o la que fijaste en el panel): lo que gana el aumento con el
+        // campeón EN ESA build, frente a la media de todas sus builds (aramkit, ver AugmentBuilds.StyleEffect). Con
+        // bastantes partidas así (las que pesan la mitad o más), el ajuste a ojo «pide habilidades / ataques» sobra.
+        string? styleNow = lockedStyle ?? (StyleFromItems(champion, myItems ?? []) is { FromItems.Length: > 0, Generic: false } byItems ? byItems.Key : null);
+        var styleFx = styleNow is null ? null : stats.AramkitBuilds.StyleEffect(champion, candidate.Id, styleNow);
+        if (styleFx is { } fx && fx.Weight * (fx.Delta / 100 - AugmentScale.Evidence(rec)) is var styleShift && Math.Abs(styleShift) >= 0.005)
+            Add(styleShift, L($"con tu build {StyleName(styleNow!)}, {Data.ChampionName(champion)} gana {fx.Delta:+0.0;-0.0} puntos con él (~{fx.Games:N0} partidas así)",
+                                   $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} wins {fx.Delta:+0.0;-0.0} points with it (~{fx.Games:N0} games like that)"));
+
+        if (heuristics && !(styleFx?.Games >= AugmentBuilds.ShrinkGames) && BuildFit(candidate, champion, myItems ?? [], mine) is { } fit)
         {
             if (fit.Bonus > 0) Guess(fit.Bonus, fit.Reason); else Add(fit.Bonus, fit.Reason);
         }
