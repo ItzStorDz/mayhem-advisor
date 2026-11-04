@@ -10,6 +10,7 @@ public partial class App
         {
             Cloud.QueueNewMatches();
             await Cloud.FlushAsync(ct);
+            await Cloud.FlushFeedbackAsync(ct); // las sugerencias van aunque no se compartan datos
             if (await Cloud.DownloadCommunityAsync(ct)) ReloadStats();
             await Delay(3 * 3600 * 1000, ct);
         }

@@ -19,14 +19,17 @@ public sealed class DashboardWindow : Window
     readonly WebView2 _web = new() { DefaultBackgroundColor = System.Drawing.Color.FromArgb(255, 11, 15, 20) };
     readonly Func<JsonElement, Task<object?>> _onMessage;
     readonly string? _startPage;
+    readonly string _file;
     bool _ready;
 
     /// <param name="onMessage">Responde a lo que pide la página (devuelve el mensaje de respuesta o null).</param>
     /// <param name="startPage">Pestaña con la que se abre (p. ej. "acerca"); null = la primera.</param>
-    public DashboardWindow(Func<JsonElement, Task<object?>> onMessage, string? startPage = null)
+    /// <param name="file">La página de wwwroot (la ventanita de sugerencias usa sugerencias.html).</param>
+    public DashboardWindow(Func<JsonElement, Task<object?>> onMessage, string? startPage = null, string file = "index.html")
     {
         _onMessage = onMessage;
         _startPage = startPage;
+        _file = file;
         Title = "Mayhem Advisor";
         Icon = AppIcon.ForWindow();
         Width = 1120;
@@ -67,7 +70,7 @@ public sealed class DashboardWindow : Window
             if (doc.RootElement.TryGetProperty("type", out var t) && t.GetString() == "ready") _ready = true;
             if (await _onMessage(doc.RootElement) is { } reply) Push(reply);
         };
-        core.Navigate("https://mayhem.local/index.html" + (_startPage is null ? "" : "#" + _startPage));
+        core.Navigate($"https://mayhem.local/{_file}" + (_startPage is null ? "" : "#" + _startPage));
         // MAYHEM_TEST_CAPTURE: solo para las pruebas (pulsa «Copiar imagen» del resumen de partida al cargar).
         if (Environment.GetEnvironmentVariable("MAYHEM_TEST_CAPTURE") is not null)
             core.NavigationCompleted += async (_, _) =>

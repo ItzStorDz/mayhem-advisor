@@ -20,7 +20,7 @@
     <Authors>ItzStorDz</Authors>
     <Copyright>© 2026 ItzStorDz</Copyright>
     <!-- La versión se cambia SOLO aquí: el instalador y "Acerca de" la leen de este archivo. -->
-    <Version>1.8.1</Version>
+    <Version>1.8.2</Version>
     <!-- Menos RAM: el recolector de memoria de .NET prioriza ocupar poco sobre ir rápido. -->
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <TieredPGO>false</TieredPGO>

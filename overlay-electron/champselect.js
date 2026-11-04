@@ -31,6 +31,7 @@ window.mayhem.onData(message => {
   const ranked = options.filter(o => rate(o) != null);
   const best = ranked.length ? ranked.reduce((a, b) => (rate(b) > rate(a) ? b : a)) : null;
   const sorted = [...options].sort((a, b) => (rate(b) ?? -1) - (rate(a) ?? -1));
+  const dmg = o => o.damage === 'magic' ? 'AP' : o.damage === 'physical' ? 'AD' : o.damage === 'mixed' ? tr('mixedDmg') : null;
 
   const notes = [];
   for (const t of cs.trades ?? []) notes.push(`<div class="cs-note trade">${icon(t.icon, 'cs-ti')}<div class="cs-nt">${tr('tradeAsk', `<b>${esc(t.name)}</b>`)}
@@ -40,8 +41,11 @@ window.mayhem.onData(message => {
       <div class="cs-btns"><button class="cs-btn ok" data-act="borderless">${tr('toBorderless')}</button></div></div>`);
   if (cs.notice) notes.push(`<div class="cs-note info"><div class="cs-nt">${esc(cs.notice)}</div></div>`);
 
+  // De qué hacen daño tus aliados: ayuda a ver si al equipo le falta AP o AD al coger del banco.
+  const team = cs.team;
+  const teamLine = team ? `<div class="cs-team">${tr('allies', team.physical, team.magic, team.mixed)}</div>` : '';
   const html = `<div class="cs-head"><div class="pn-logo">M</div><b>MAYHEM ADVISOR</b><span>${tr('selectTitle')}</span></div>
-    ${notes.join('')}
+    ${notes.join('')}${teamLine}
     <div class="sec cs-sec">${tr('whoFits')}</div>
     <div class="cs-list">${sorted.map(o => {
       const wr = rate(o);
@@ -51,6 +55,7 @@ window.mayhem.onData(message => {
         <img src="${esc(o.icon)}" alt="">
         <div class="t">
           <div class="n">${o.tier ? `<span class="chip ${gradeClass(o.tier)}">${esc(o.tier)}</span>` : ''}<span class="cs-name">${esc(o.name)}</span>
+            ${dmg(o) ? `<span class="cs-dmg ${o.damage}">${esc(dmg(o))}</span>` : ''}
             ${o === best ? `<span class="pill">${tr('bestShort')}</span>` : o.isCurrent ? `<span class="cs-you">${tr('you')}</span>` : ''}</div>
           <div class="r">${esc(source)}${o.mayhemWinRate != null && o.games > 0 ? ` · ${tr('youShort', Math.round(o.winRate * o.games), o.games)}` : ''}</div>
           ${o.spells ? `<div class="spells">${o.spells.icons.map(i => i ? `<img src="${esc(i)}" alt="">` : '').join('')}

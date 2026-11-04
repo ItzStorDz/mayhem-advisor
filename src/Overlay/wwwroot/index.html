@@ -170,6 +170,7 @@
     .match { grid-template-columns: 5px 42px 110px 80px minmax(0, 1fr) 80px; } .match .icons:not(.ai) { display: none; } }
 </style>
 <link rel="stylesheet" href="partidas.css">
+<link rel="stylesheet" href="sugerencias.css">
 </head>
 <body>
 <div class="app">
@@ -181,6 +182,7 @@
     <button data-tab="augs"><i></i><span data-t="nav.augs"></span></button>
     <button data-tab="settings"><i></i><span data-t="nav.settings"></span></button>
     <button data-tab="about"><i></i><span data-t="nav.about"></span></button>
+    <button data-tab="feedback"><i></i><span data-t="nav.feedback"></span></button>
     <div class="nav-foot"><span data-t="nav.auto"></span>: <b id="footAuto">–</b><br><span id="footGames"></span></div>
   </nav>
 
@@ -273,10 +275,20 @@
           <p class="muted" style="font-size:12px;margin-top:12px" data-t="about.legal"></p></div>
       </div>
     </section>
+
+    <!-- SUGERENCIAS (el formulario: sugerencias.js, el mismo de la ventanita de después de la partida) -->
+    <section id="feedback" class="hidden">
+      <div class="top"><h1><b data-t="nav.feedback"></b><span data-t="fb.sub"></span></h1><div class="lang" data-lang></div></div>
+      <div class="fb-page">
+        <div class="card"><div class="lbl" data-t="fb.form"></div><div id="fbForm"></div></div>
+        <div class="card fb-side"><div class="lbl" data-t="fb.whatTitle"></div><p data-t="fb.what"></p><p data-t="fb.bugTip"></p></div>
+      </div>
+    </section>
   </main>
 </div>
 
 <script src="partidas.js"></script>
+<script src="sugerencias.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -333,6 +345,10 @@ const T = {
     "about.yours": "Tus partidas", "about.c3": "Se leen del cliente de LoL de tu PC y se guardan solo en tu PC.",
     "about.legal": "Mayhem Advisor es una app independiente creada por ItzStorDz. No está afiliada a Riot Games ni avalada por Riot Games ni por los sitios citados. League of Legends y todos sus recursos son marcas o propiedad de Riot Games, Inc.",
     version: v => `Versión ${v} · Consejero de aumentos, objetos y hechizos para ARAM: Caos`, on: "ON", off: "OFF", madeBy: "Creado por ItzStorDz · © 2026",
+    "nav.feedback": "Sugerencias", "fb.sub": "Ideas, fallos u opiniones", "fb.form": "CUÉNTAME",
+    "fb.whatTitle": "¿QUÉ PASA CON LO QUE ENVÍAS?",
+    "fb.what": "Lo lee el creador de la app (ItzStorDz) y sirve para decidir qué arreglar y qué añadir primero. Se envía sin tu nombre ni tu cuenta de LoL.",
+    "fb.bugTip": "Para un fallo, di con qué campeón, aumento u objeto pasó y qué esperabas. Si adjuntas tu última partida van el campeón, los aumentos, los objetos y la build que te recomendó la app.",
   },
   en: {
     mode: "ARAM: Mayhem", "nav.home": "Home", "nav.games": "Games", "nav.champs": "Champions", "nav.augs": "Augments", "nav.settings": "Settings", "nav.about": "About",
@@ -382,6 +398,10 @@ const T = {
     "about.yours": "Your games", "about.c3": "Read from the League client on your PC and saved only on your PC.",
     "about.legal": "Mayhem Advisor is an independent app made by ItzStorDz. It is not affiliated with or endorsed by Riot Games or the sites above. League of Legends and all related assets are trademarks or property of Riot Games, Inc.",
     version: v => `Version ${v} · Augment, item and spell advisor for ARAM: Mayhem`, on: "ON", off: "OFF", madeBy: "Made by ItzStorDz · © 2026",
+    "nav.feedback": "Suggestions", "fb.sub": "Ideas, bugs or opinions", "fb.form": "TELL ME",
+    "fb.whatTitle": "WHAT HAPPENS TO WHAT YOU SEND?",
+    "fb.what": "The app's creator (ItzStorDz) reads it and uses it to decide what to fix and add first. It's sent without your name or your League account.",
+    "fb.bugTip": "For a bug, say which champion, augment or item it happened with and what you expected. If you attach your last game, it includes the champion, augments, items and the build the app recommended.",
   },
 };
 let lang = "es";
@@ -407,18 +427,21 @@ function applyStatic() {
   $('[data-cf="all"]').textContent = t("cfAll"); $('[data-cf="mine"]').textContent = t("cfMine"); $('[data-cf="top"]').textContent = t("cfTop");
   $('[data-rf="all"]').textContent = t("rfAll"); $('[data-rf="prismatic"]').textContent = t("rfP"); $('[data-rf="gold"]').textContent = t("rfG"); $('[data-rf="silver"]').textContent = t("rfS");
 }
-function renderAll() { applyStatic(); renderHome(); renderLive(); renderChamps(); renderChampDetail(); renderAugs(); renderSettings(); renderAbout(); renderGames(); renderUpdate(); }
+function renderAll() { applyStatic(); renderHome(); renderLive(); renderChamps(); renderChampDetail(); renderAugs(); renderSettings(); renderAbout(); renderGames(); renderUpdate(); fbForm?.render(); }
 
 // Pestañas
 $$("nav button[data-tab]").forEach(b => b.onclick = () => showTab(b.dataset.tab));
 function showTab(id) {
   $$("nav button[data-tab]").forEach(x => x.classList.toggle("on", x.dataset.tab === id));
-  ["home", "games", "champs", "augs", "settings", "about"].forEach(s => $("#" + s).classList.toggle("hidden", s !== id));
+  ["home", "games", "champs", "augs", "settings", "about", "feedback"].forEach(s => $("#" + s).classList.toggle("hidden", s !== id));
   renderUpdate(); // en «Acerca de» el aviso va dentro de la página, no arriba
   if (id === "home") send({ type: "home" });
   if (id === "games") { gameOpen = null; gameDetail = null; renderGames(); send({ type: "games" }); }
+  if (id === "feedback") send({ type: "feedbackInfo" }); // tu última partida, para «Adjuntar mi última partida»
 }
-const PAGES = { actualizar: "about", inicio: "home", partidas: "games", acerca: "about", campeones: "champs", aumentos: "augs", ajustes: "settings", vivo: "home" };
+const PAGES = { actualizar: "about", inicio: "home", partidas: "games", acerca: "about", campeones: "champs", aumentos: "augs", ajustes: "settings", vivo: "home", sugerencias: "feedback" };
+// Pestaña «Sugerencias»: el mismo formulario que la ventanita de después de la partida (sugerencias.js).
+const fbForm = FeedbackForm($("#fbForm"), "app", () => lang);
 const goto = page => page?.startsWith("partida:") ? openGame(decodeURIComponent(page.slice(8))) : PAGES[page] && showTab(PAGES[page]);
 // Cambiar idioma: lo guarda el programa y nos devuelve todo traducido (también los nombres de objetos y aumentos).
 document.addEventListener("click", e => { const b = e.target.closest("[data-setlang]"); if (b && b.dataset.setlang !== lang) send({ type: "setLanguage", value: b.dataset.setlang }); });
@@ -432,7 +455,7 @@ window.chrome.webview.addEventListener("message", e => {
     if (champDetail) send({ type: "champion", champion: champDetail.want });
   }
   if (m.type === "home") { home = m; renderHome(); }
-  if (m.type === "settings") { $("#dataBar").classList.toggle("hidden", !m.dataNotice); settings = m; if (m.language && m.language !== lang) { lang = m.language; renderAll(); } else renderSettings(); }
+  if (m.type === "settings") { $("#dataBar").classList.toggle("hidden", !m.dataNotice); settings = m; if (m.language && m.language !== lang) { lang = m.language; renderAll(); send({ type: "feedbackInfo" }); } else renderSettings(); }
   if (m.type === "live") { live = m; renderLive(); }
   if (m.type === "champion") {
     if (m.alias === champDetail?.want) { champDetail = { ...m, want: m.alias }; renderChampDetail(); }
@@ -440,6 +463,7 @@ window.chrome.webview.addEventListener("message", e => {
   }
   if (m.type === "goto") goto(m.page);
   if (m.type === "update") { update = m; renderUpdate(); }
+  if (m.type === "feedbackInfo" || m.type === "feedbackResult") fbForm.onMessage(m);
 });
 
 // ── Versión nueva ──

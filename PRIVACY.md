@@ -27,6 +27,17 @@ so it can't be used to look the game up.
   time, crashes;
 - the app version, language and Windows build number.
 
+**Only if you write it and press "Send"** (the "What do you think of Mayhem Advisor?" window after a game, or the
+**Suggestions** tab). This is sent even with data sharing off, because you chose to send it:
+
+- your rating (1–5 stars, optional), the kind (idea, bug or something else) and the text you wrote;
+- if you leave "Attach my last game" ticked: that game's champion, augments, items, length, win/loss and the build the
+  app recommended — no names;
+- the app version, language and Windows build number.
+
+The window after a game shows up at most once a day, and never again once you've sent feedback or pressed
+"Don't ask again".
+
 ## What is never sent
 
 Your name, Riot ID, account, e-mail, chat, friends, screenshots, other programs, or anything from outside
@@ -40,6 +51,7 @@ used, encrypted with a key that changes every day, to limit how many uploads one
 - Games are shared back with all users (in the same anonymous form) so everyone's recommendations learn from
   everyone's games.
 - Error summaries are only seen by the author, in a daily private report. They are deleted after 90 days.
+- Feedback is only seen by the author, in the same daily private report. It is deleted after a year.
 - Nothing is sold or shared with anyone else. The app never shows augment win rates (Riot's policy for third-party apps).
 
 ## Turning it off

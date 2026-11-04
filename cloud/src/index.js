@@ -4,6 +4,8 @@
 //   POST /v1/match   una partida de ARAM: Caos al acabar (campeones, aumentos, objetos y daño de los 10, sin nombres;
 //                    las cartas que le ofrecieron a ese jugador con su nota y lo que recomendó la app).
 //   POST /v1/report  un resumen de errores y de salud de la app (cada pocas horas, ya sin rutas ni nombres).
+// Y de cualquiera que la escriba y pulse «Enviar» (aunque no comparta datos):
+//   POST /v1/feedback una opinión, idea o fallo (nota de 1 a 5, texto y, si quiere, su última partida sin nombres).
 // Y sirve, para quien no llega a api.github.com (un jugador con «No such host is known»: se quedó en la 1.5.1):
 //   GET /v1/latest                       la última Release de GitHub (solo lo que usa la app; caché de 10 min).
 //   GET /v1/download/vX.Y.Z/<instalador> el instalador de esa Release, tal cual (la app comprueba su huella SHA-256).
@@ -15,6 +17,8 @@
 const MAX_BODY = 48 * 1024;
 const LIMIT_MATCHES = 80; // por IP y día (nadie juega 80 partidas en un día)
 const LIMIT_REPORTS = 40;
+const LIMIT_FEEDBACK = 12; // opiniones por IP y día
+const MAX_FEEDBACK_TEXT = 2000;
 
 export default {
   async fetch(request, env, ctx) {
@@ -27,6 +31,7 @@ export default {
       if (request.method !== 'POST') return json({ error: 'not found' }, 404);
       if (url.pathname === '/v1/match') return await postMatch(request, env);
       if (url.pathname === '/v1/report') return await postReport(request, env);
+      if (url.pathname === '/v1/feedback') return await postFeedback(request, env);
       return json({ error: 'not found' }, 404);
     } catch (e) {
       if (e instanceof Bad) return json({ error: e.message }, 400);
@@ -155,6 +160,35 @@ async function postReport(request, env) {
   return json({ ok: true });
 }
 
+/**
+ * Una opinión, idea o fallo escrito en la app. Se guarda tal cual (sin caracteres de control) y sale en el informe
+ * diario. La última partida, si la adjuntó: campeón, aumentos y objetos (ids), victoria y minutos; sin nombres.
+ */
+async function postFeedback(request, env) {
+  const b = await readBody(request);
+  need(str(b.app, APP) && str(b.lang, LANG), 'app');
+  need(str(b.os ?? '', /^[\w .()-]{0,40}$/), 'os');
+  need(str(b.kind, /^(idea|bug|other)$/), 'kind');
+  need(str(b.source, /^(postgame|app)$/), 'source');
+  need(b.rating == null || int(b.rating, 1, 5), 'rating');
+  need(typeof b.text === 'string' && b.text.length <= MAX_FEEDBACK_TEXT, 'text');
+  const text = b.text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
+  need(text.length > 0 || b.rating != null, 'empty');
+  let context = null;
+  if (b.context != null) {
+    const c = b.context;
+    need(typeof c === 'object' && str(c.c, /^[A-Za-z]{2,20}$/) && ints(c.a ?? [], 8, 1, 999999) && ints(c.i ?? [], 8, 1, 999999)
+      && ints(c.r ?? [], 8, 1, 999999) && (c.w == null || typeof c.w === 'boolean')
+      && (c.min == null || (typeof c.min === 'number' && c.min >= 0 && c.min <= 90)), 'context');
+    // r: la build que le recomendaba la app (para entender un «me recomendó algo raro»).
+    context = { c: c.c, a: c.a ?? [], i: c.i ?? [], r: c.r ?? [], ...(c.w == null ? {} : { w: c.w }), ...(c.min == null ? {} : { min: Math.round(c.min) }) };
+  }
+  if (!(await allow(request, env, 'f', LIMIT_FEEDBACK))) return json({ error: 'limit' }, 429);
+  await env.DB.prepare('INSERT INTO feedback (received, app, lang, os, kind, rating, source, text, context) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)')
+    .bind(new Date().toISOString(), b.app, b.lang, b.os ?? '', b.kind, b.rating ?? null, b.source, text, context && JSON.stringify(context)).run();
+  return json({ ok: true });
+}
+
 // ───────── Partidas de la comunidad ─────────
 
 /**
@@ -226,17 +260,22 @@ async function dailyReport(env) {
     .bind(since, until).all()).results;
   const reports = (await env.DB.prepare('SELECT app, lang, os, data FROM reports WHERE received > ?1 AND received <= ?2')
     .bind(since, until).all()).results;
+  const feedback = (await env.DB.prepare(
+    'SELECT received, app, lang, os, kind, rating, source, text, context FROM feedback WHERE received > ?1 AND received <= ?2 ORDER BY received')
+    .bind(since, until).all()).results;
 
-  // Limpieza: contadores de días pasados y datos de errores de hace más de 90 días.
+  // Limpieza: contadores de días pasados, datos de errores de hace más de 90 días y opiniones de hace más de un año.
   await env.DB.prepare('DELETE FROM limits WHERE day < ?1').bind(today()).run();
   await env.DB.prepare('DELETE FROM reports WHERE received < ?1').bind(new Date(Date.now() - 90 * 86400_000).toISOString()).run();
+  await env.DB.prepare('DELETE FROM feedback WHERE received < ?1').bind(new Date(Date.now() - 365 * 86400_000).toISOString()).run();
 
-  if (matches.length === 0 && reports.length === 0) {
+  if (matches.length === 0 && reports.length === 0 && feedback.length === 0) {
     await env.DB.prepare(`INSERT OR REPLACE INTO state (key, value) VALUES ('lastReport', ?1)`).bind(until).run();
     return;
   }
-  const body = await buildReport(env, matches, reports, since);
-  const title = `Daily report ${until.slice(0, 10)} · ${matches.length} games · ${reports.length} error reports`;
+  const body = await buildReport(env, matches, reports, feedback, since);
+  const title = `Daily report ${until.slice(0, 10)} · ${matches.length} games · ${reports.length} error reports`
+    + (feedback.length ? ` · ${feedback.length} feedback` : '');
   if (env.GITHUB_TOKEN && env.REPORT_REPO) {
     const r = await fetch(`https://api.github.com/repos/${env.REPORT_REPO}/issues`, {
       method: 'POST',
@@ -248,12 +287,33 @@ async function dailyReport(env) {
   await env.DB.prepare(`INSERT OR REPLACE INTO state (key, value) VALUES ('lastReport', ?1)`).bind(until).run();
 }
 
+/**
+ * Lo que escribió la gente, primero en el informe. El texto va citado, sin HTML y sin menciones (una @cuenta en la Issue
+ * avisaría a esa persona de GitHub).
+ */
+function feedbackLines(list) {
+  const kinds = { idea: '💡 Idea', bug: '🐞 Bug', other: '💬 Other' };
+  const rated = list.filter(f => f.rating);
+  const lines = [`## Feedback (${list.length})${rated.length ? ` · average ${(rated.reduce((s, f) => s + f.rating, 0) / rated.length).toFixed(1)} ★ from ${rated.length}` : ''}`, ''];
+  for (const f of list) {
+    const stars = f.rating ? '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating) : 'no rating';
+    lines.push(`**${kinds[f.kind] ?? f.kind}** · ${stars} · ${f.app} · ${f.lang} · ${f.os || '?'} · ${f.source === 'postgame' ? 'after a game' : 'Suggestions tab'} · ${f.received.slice(0, 16).replace('T', ' ')} UTC`);
+    const c = f.context ? JSON.parse(f.context) : null;
+    if (c) lines.push(`Last game: ${c.c}${c.w == null ? '' : c.w ? ' (win)' : ' (loss)'}${c.min ? ` · ${c.min} min` : ''} · augments ${c.a.join(', ') || '–'}`
+      + ` · items ${c.i.join(', ') || '–'}${c.r?.length ? ` · app's build ${c.r.join(', ')}` : ''}`, '');
+    const text = f.text ? f.text.replace(/@/g, '@​').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '(no text)';
+    lines.push(...text.split('\n').map(l => '> ' + l), '');
+  }
+  return lines;
+}
+
 const count = (list, f) => { const m = new Map(); for (const x of list) { const k = f(x); m.set(k, (m.get(k) ?? 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
 const pct = (a, b) => b ? `${Math.round(a / b * 100)}%` : '–';
 
-async function buildReport(env, matches, reports, since) {
+async function buildReport(env, matches, reports, feedback, since) {
   const lines = [];
   lines.push(`Since ${since.slice(0, 16).replace('T', ' ')} UTC.`, '');
+  if (feedback.length) lines.push(...feedbackLines(feedback));
 
   // Errores agrupados por mensaje (ya normalizado en la app), con las versiones donde salen.
   const errors = new Map();

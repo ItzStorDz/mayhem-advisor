@@ -24,6 +24,12 @@ public sealed class Settings
     public bool ShareData { get; set; } = true;
     /// <summary>Ya se enseñó el aviso de los datos anónimos (hasta entonces no se envía nada).</summary>
     public bool DataNoticeShown { get; set; }
+    /// <summary>Día (aaaa-mm-dd) en que salió «¿Qué te parece la app?» al acabar una partida: como mucho una vez al día.</summary>
+    public string? FeedbackAskedOn { get; set; }
+    /// <summary>Ya envió su opinión o una sugerencia: no se le vuelve a preguntar (le queda la pestaña «Sugerencias»).</summary>
+    public bool FeedbackSent { get; set; }
+    /// <summary>Pulsó «No volver a preguntar» en la ventana de después de la partida.</summary>
+    public bool FeedbackNeverAsk { get; set; }
 
     static string FilePath => Path.Combine(Paths.DataDir, "settings.json");
     static readonly JsonSerializerOptions Json = new() { WriteIndented = true };

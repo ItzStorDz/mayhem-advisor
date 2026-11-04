@@ -168,6 +168,8 @@ const iconRow = slots => `<div class="pn-build">${slots.map(b =>
 function buyTab(game) {
   const parts = [];
   if (game.dead) parts.push(`<div class="pn-dead">${tr('dead', game.respawn)}</div>`);
+  // Primero lo que compras (al morir hay pocos segundos de tienda: antes salía debajo del selector de build), luego el contexto.
+  buyNowBlock(game, parts);
   // Momento de la partida y el dato del equipo enemigo que más condiciona la build.
   const facts = [game.gamePhase, game.enemyFact].filter(Boolean);
   if (facts.length) parts.push(`<div class="pn-facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>`);
@@ -188,26 +190,6 @@ function buyTab(game) {
     ${d.reason ? `<div class="pn-text">${esc(d.reason)}</div>` : ''}
     <div class="pn-three">${d.items.map(i => `<div title="${esc(i.name)}">${icon(i.icon, 'icon')}<small>${i.winRate != null ? Math.round(i.winRate * 100) + (LANG === 'en' ? '%' : ' %') : '–'}</small></div>`).join('')}</div>
     ${d.warning ? `<div class="pn-warn">⚠ ${esc(d.warning)}</div>` : ''}</div>`);
-  const options = game.nextOptions?.length ? game.nextOptions : game.next ? [game.next] : [];
-  if (options[0]?.id !== nextFirstId) { nextFirstId = options[0]?.id; nextIndex = 0; } // cambió la recomendación
-  if (nextIndex >= options.length) nextIndex = 0;
-  const next = options[nextIndex];
-  if (next) {
-    const ok = !next.missing;
-    const why = next.reason ?? [...(game.items ?? []), game.boots].find(i => i?.id === next.id)?.reason;
-    parts.push(`<div class="pn-lbl">${nextIndex === 0 ? tr('buyNow') : tr('other', nextIndex + 1, options.length)}</div>
-      <div class="pn-big">${icon(next.icon, 'icon xl')}<div><div class="pn-name">${esc(next.name)}</div>
-        <div class="${ok ? 'pn-ok' : 'pn-gold'}">${ok ? tr('affordable') : tr('missing', num(next.missing))}</div>
-        ${next.badges?.length ? `<div class="pn-badges">${next.badges.map(b => `<span>${esc(b)}</span>`).join('')}</div>` : ''}</div></div>
-      ${why ? `<div class="pn-why">${esc(why)}</div>` : ''}
-      ${options.length > 1 ? `<button class="pn-link" data-act="next">${nextIndex + 1 < options.length ? tr('otherOpt') : tr('backFirst')}</button>` : ''}`);
-  }
-  for (const b of (game.building ?? []).filter(b => !(game.kept ?? []).includes(b.id) && !keptHere.has(b.id)))
-    parts.push(`<button class="pn-keep" data-act="keep" data-id="${b.id}">${tr('keep', esc(b.name))}</button>`);
-  if (game.swap && !keptHere.has(game.swap.sell.id)) parts.push(`<div class="pn-alert">${tr('full', esc(game.swap.sell.name), esc(game.swap.buy.name))}
-      <button class="pn-keep" data-act="keep" data-id="${game.swap.sell.id}">${tr('keepMine')}</button></div>`);
-  const build = game.plan?.recommended ?? (game.fullBuild ?? []).map(b => ({ ...b.item, owned: b.owned }));
-  if (build.length) parts.push(`<div class="pn-lbl">${tr('yourBuild')}</div>${iconRow(build)}`);
 
   parts.push(moreBtn(tr('hideDetails'), tr('showDetails')));
   if (details) {
@@ -219,6 +201,31 @@ function buyTab(game) {
     if (game.skills) parts.push(`<div class="pn-lbl">${tr('skills')}</div><div class="pn-text">${tr('maxOrder', esc(game.skills.order.split('').join(' › ')))}</div>`);
   }
   return parts.join('');
+}
+
+/** Lo que compras ahora (con la pieza que ya puedes comprar si no te llega), qué conservar y la build completa. */
+function buyNowBlock(game, parts) {
+  const options = game.nextOptions?.length ? game.nextOptions : game.next ? [game.next] : [];
+  if (options[0]?.id !== nextFirstId) { nextFirstId = options[0]?.id; nextIndex = 0; } // cambió la recomendación
+  if (nextIndex >= options.length) nextIndex = 0;
+  const next = options[nextIndex];
+  if (next) {
+    const ok = !next.missing;
+    const why = next.reason ?? [...(game.items ?? []), game.boots].find(i => i?.id === next.id)?.reason;
+    parts.push(`<div class="pn-lbl">${nextIndex === 0 ? tr('buyNow') : tr('other', nextIndex + 1, options.length)}</div>
+      <div class="pn-big">${icon(next.icon, 'icon xl')}<div><div class="pn-name">${esc(next.name)}</div>
+        <div class="${ok ? 'pn-ok' : 'pn-gold'}">${ok ? tr('affordable') : tr('missing', num(next.missing))}</div>
+        ${next.badges?.length ? `<div class="pn-badges">${next.badges.map(b => `<span>${esc(b)}</span>`).join('')}</div>` : ''}</div></div>
+      ${next.part ? `<div class="pn-part">${icon(next.part.icon, 'icon sm')}<span>${tr('canBuyPart', esc(next.part.name), num(next.part.cost))}</span></div>` : ''}
+      ${why ? `<div class="pn-why">${esc(why)}</div>` : ''}
+      ${options.length > 1 ? `<button class="pn-link" data-act="next">${nextIndex + 1 < options.length ? tr('otherOpt') : tr('backFirst')}</button>` : ''}`);
+  }
+  for (const b of (game.building ?? []).filter(b => !(game.kept ?? []).includes(b.id) && !keptHere.has(b.id)))
+    parts.push(`<button class="pn-keep" data-act="keep" data-id="${b.id}">${tr('keep', esc(b.name))}</button>`);
+  if (game.swap && !keptHere.has(game.swap.sell.id)) parts.push(`<div class="pn-alert">${tr('full', esc(game.swap.sell.name), esc(game.swap.buy.name))}
+      <button class="pn-keep" data-act="keep" data-id="${game.swap.sell.id}">${tr('keepMine')}</button></div>`);
+  const build = game.plan?.recommended ?? (game.fullBuild ?? []).map(b => ({ ...b.item, owned: b.owned }));
+  if (build.length) parts.push(`<div class="pn-lbl">${tr('yourBuild')}</div>${iconRow(build)}`);
 }
 
 function adaptTab(game) {

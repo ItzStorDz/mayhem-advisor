@@ -232,8 +232,10 @@ public partial class App : System.Windows.Application
                     }
                 }
 
+                _inChampSelect = select is { QueueId: MatchSync.MayhemQueueId } && lcu is not null;
                 if (select is { QueueId: MatchSync.MayhemQueueId } && lcu is not null)
                 {
+                    LowerFeedbackPrompt(); // la ventanita de sugerencias ya no va por encima del cliente
                     await ChampSelectExtrasAsync(lcu, select, ct);
                     ReloadStats(); // también recarga los datos de mayhemmeta.com si cambiaron
                     var options = ChampSelect.Rank(select, _stats, _mayhem);
@@ -256,9 +258,12 @@ public partial class App : System.Windows.Application
             }
 
             // ── En partida ──
+            _inGame = true;
+            _inChampSelect = false;
             if (game.Champion != lastChampion)
             {
                 Log.Write($"Partida de Mayhem detectada: {game.Champion}");
+                CloseFeedbackPrompt(); // nunca por encima del juego
                 if (game.UnknownChampion is { } rawNames)
                     Log.Write($"No reconozco el campeón (no se recomiendan objetos): {rawNames}");
                 lastChampion = game.Champion;
@@ -296,6 +301,7 @@ public partial class App : System.Windows.Application
                 _journal?.Deaths.Add(new JournalDeath(Math.Round(game.GameTime / 60, 1), (int)game.Gold));
             }
             _gameMinutes = game.GameTime / 60;
+            _lastMyItems = game.MyItems;
             _lastPhase = gamePhase;
             _wasDead = game.IsDead;
             if (_forceAdvice) { _forceAdvice = false; lastContext = null; nextAdvice = DateTime.MinValue; }
@@ -716,6 +722,10 @@ public partial class App : System.Windows.Application
     {
         Log.Write($"Partida terminada · aumentos que vio la app: {(_myAugments.Count > 0 ? string.Join(", ", _myAugments.Select(a => a.Name)) : "ninguno")}");
         ConfirmPick(); // una elección aún sin confirmar (6 s) también cuenta
+        // Para «Adjuntar mi última partida» en la ventanita de sugerencias (tu historial tarda unos segundos en tenerla).
+        if (_journal is { } seen)
+            _lastGameSeen = new FeedbackGame(seen.Champion, null, _myAugments.Select(a => a.Id).ToList(), _lastMyItems, _gameMinutes, seen.FinalBuild.ToList(), seen.StartedUtc);
+        double minutes = _gameMinutes;
         if (_journal is { } journal) { journal.Minutes = Math.Round(_gameMinutes, 1); journal.Save(); }
         _journal = null;
         _lastAdviceLog = null;
@@ -727,6 +737,9 @@ public partial class App : System.Windows.Application
         _trackClicks = false;
         // La partida acabó: en cuanto aparezca en tu historial, la guardamos.
         _ = Dispatcher.InvokeAsync(() => SyncAfterGameAsync(DateTime.UtcNow, ct));
+        _inGame = false;
+        // «¿Qué te parece la app?», una vez al día como mucho y hasta que opines (App.Feedback.cs). En el hilo de la ventana.
+        _ = Dispatcher.InvokeAsync(() => AskFeedbackAfterGameAsync(minutes, ct));
     }
 
     /// <summary>
@@ -996,6 +1009,10 @@ public partial class App : System.Windows.Application
             case "openData":
                 System.Diagnostics.Process.Start("explorer.exe", Paths.DataDir);
                 return null;
+            case "feedbackInfo": // pestaña «Sugerencias» (App.Feedback.cs)
+                return FeedbackInfo("app");
+            case "feedback":
+                return await SubmitFeedbackAsync(msg);
             case "ready":
                 _dashboard?.Push(SettingsMessage());
                 _dashboard?.Push(HomeMessage());
@@ -1151,11 +1168,14 @@ public partial class App : System.Windows.Application
         foreach (var item in order)
         {
             int cost = _data.RemainingCost(item, game.MyItems);
+            // Sin oro para el objeto entero: la pieza más cara de su receta que ya puedes comprar.
+            var part = cost > game.Gold ? _data.AffordablePart(item, game.MyItems, (int)game.Gold) : null;
             yield return new
             {
                 id = item.Id, name = item.DisplayName, icon = item.Icon, badges = ItemBadges.For(item),
                 reason = all.FirstOrDefault(a => a.Item.Id == item.Id)?.Reason,
                 missing = Math.Max(0, cost - (int)game.Gold),
+                part = part is null ? null : new { name = part.DisplayName, icon = part.Icon, cost = _data.RemainingCost(part, game.MyItems) },
                 progress = Math.Min(1, game.Gold / Math.Max(1, cost)),
             };
         }
@@ -1228,6 +1248,7 @@ public partial class App : System.Windows.Application
         {
             type = "live", phase, status, matchCount = _stats.MatchCount, lang = Lang.Code,
             champSelect = (champSelect ?? []).Select(o => new { championId = o.Champion.Id, alias = o.Champion.Alias, name = o.Champion.DisplayName, icon = o.Champion.Icon, winRate = o.WinRate, games = o.Games, isCurrent = o.IsCurrent,
+                damage = _kits.For(o.Champion.Alias)?.DamageType, // "physical" / "magic" / "mixed": para ver qué le falta a tu equipo
                 tier = o.Mayhem?.Tier, mayhemWinRate = o.Mayhem?.WinRate / 100, mayhemGames = o.Mayhem?.Games,
                 spells = o.Spells is { } sp
                     ? new { names = sp.Names, icons = sp.Icons, winRate = sp.WinRate, pickRate = sp.PickRate, games = sp.Games, reason = sp.Reason } : null }),
@@ -1424,6 +1445,7 @@ public partial class App : System.Windows.Application
                 null, (_, _) => OpenDashboard("actualizar")) { Font = new System.Drawing.Font(menu.Font, System.Drawing.FontStyle.Bold) });
         menu.Items.Add(L("Abrir Mayhem Advisor", "Open Mayhem Advisor"), null, (_, _) => OpenDashboard());
         menu.Items.Add(L("Ajustes", "Settings"), null, (_, _) => OpenDashboard("ajustes"));
+        menu.Items.Add(L("Sugerencias y fallos", "Suggestions & bugs"), null, (_, _) => OpenDashboard("sugerencias"));
         menu.Items.Add(new Forms.ToolStripSeparator());
         _trayPanel = new Forms.ToolStripMenuItem(L("Mostrar panel en la partida", "Show in-game panel")) { CheckOnClick = true };
         _trayPanel.Click += (_, _) => SetSetting("showPanel", _trayPanel.Checked);

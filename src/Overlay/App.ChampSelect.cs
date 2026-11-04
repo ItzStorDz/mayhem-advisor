@@ -22,6 +22,7 @@ public partial class App
     int? _windowMode;
     DateTime _nextWindowModeCheck;
     IReadOnlyList<TradeOffer> _trades = [];
+    IReadOnlyList<int> _allies = [];
     string? _csNotice;
     DateTime _csNoticeUntil;
 
@@ -29,6 +30,7 @@ public partial class App
     {
         _leagueDir = lcu.InstallDir;
         _trades = select.Trades ?? [];
+        _allies = select.Allies;
         while (_lcuActions.TryDequeue(out var action))
         {
             try { await action(lcu, ct); }
@@ -82,7 +84,16 @@ public partial class App
         itemSet = _settings.ShopItemSet ? _itemSetName : null,
         notice = DateTime.UtcNow < _csNoticeUntil ? _csNotice : null,
         client = ClientWindowRect() is { } r ? new { x = r.Left, y = r.Top, w = r.Right - r.Left, h = r.Bottom - r.Top } : null,
+        team = AlliesDamage(),
     };
+
+    /// <summary>De qué hacen daño tus aliados (sin ti): cuántos físico, mágico y mixto (campeones-kit.json). Null sin aliados.</summary>
+    object? AlliesDamage()
+    {
+        var types = _allies.Select(id => _data.ChampionsById.GetValueOrDefault(id) is { } c ? _kits.For(c.Alias)?.DamageType : null).OfType<string>().ToList();
+        return types.Count == 0 ? null
+            : new { physical = types.Count(t => t == "physical"), magic = types.Count(t => t == "magic"), mixed = types.Count(t => t == "mixed") };
+    }
 
     /// <summary>Un botón del panel de selección de campeón (Coger, Aceptar/Rechazar, Pasar a sin bordes).</summary>
     void OnChampSelectButton(string type, JsonElement msg)

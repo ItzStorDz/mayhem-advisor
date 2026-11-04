@@ -63,6 +63,32 @@ public sealed class GameData
         return Math.Max(0, item.PriceTotal - Owned(item));
     }
 
+    /// <summary>
+    /// La pieza más cara de la receta de <paramref name="item"/> que ya puedes comprar con <paramref name="gold"/> (sin las
+    /// que llevas), o null si te llega para el objeto entero o para ninguna. Al morir con 1.158 de oro y «te faltan 1.007»
+    /// no se sabía qué comprar ya; ahora: «Con tu oro ya puedes: Capa de Negatrón (900)» (2026-11-04).
+    /// </summary>
+    public ItemInfo? AffordablePart(ItemInfo item, IReadOnlyList<int> inventory, int gold)
+    {
+        if (RemainingCost(item, inventory) <= gold) return null;
+        var bag = inventory.ToList();
+        ItemInfo? best = null;
+        int bestCost = 0;
+        void Walk(ItemInfo it)
+        {
+            foreach (var id in it.From ?? [])
+            {
+                if (Item(id) is not { } part) continue;
+                if (bag.Remove(id)) continue; // ya la llevas (con todo lo de debajo)
+                int cost = RemainingCost(part, bag);
+                if (cost > 0 && cost <= gold && cost > bestCost) { best = part; bestCost = cost; }
+                Walk(part);
+            }
+        }
+        Walk(item);
+        return best;
+    }
+
     sealed record Cache(List<ItemInfo> Items, List<ChampionInfo> Champions);
 
     public static async Task<GameData> LoadAsync(HttpClient http)

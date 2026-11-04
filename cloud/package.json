@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "wrangler dev --local --test-scheduled",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "sugerencias": "wrangler d1 execute mayhem-advisor --remote --command \"SELECT id, received, app, lang, kind, rating, source, text, context FROM feedback ORDER BY id DESC LIMIT 30\""
   },
   "devDependencies": {
     "wrangler": "4.151.0"

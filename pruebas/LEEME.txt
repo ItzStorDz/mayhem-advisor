@@ -16,6 +16,22 @@ simulador-partida\  Una "partida" falsa a pantalla completa con la API del juego
                     <MayhemAdvisor.exe>: el de  dotnet build src\Overlay -c Release  ->  src\Overlay\bin\Release\
                     net9.0-windows10.0.19041.0\MayhemAdvisor.exe. ¡No el de la subcarpeta win-x64! Esa la deja el último
                     «dotnet publish» (el instalador) y no cambia al compilar: el 2026-11-02 una prueba falló por usarla.
+                    Al final mira también que salga «¿Qué te parece la app?» (15 s después de acabar: el simulador empieza
+                    con unos ajustes sin opinión dada). El único FALLO esperado es «la partida no se guardó» (no hay
+                    cliente de LoL con historial). Para probar la ventanita por dentro, ver sugerencias\.
+
+sugerencias\        La ventanita «¿Qué te parece la app?», la pestaña «Sugerencias» y el buzón del servidor, sin tocar el
+                    servidor de verdad. En cloud\:  npx wrangler d1 execute mayhem-advisor --local --file schema.sql
+                    y  npx wrangler dev --local --test-scheduled --port 8787   (servidor en tu PC). Después:
+                      node pruebas\sugerencias\probar-servidor.mjs        (buenas y malas; el informe sale en la consola de wrangler)
+                    Con la app abierta con  MAYHEM_CLOUD_URL=http://127.0.0.1:8787  y
+                    WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333 :
+                      node pruebas\sugerencias\probar-ventanita.mjs <salida>   (durante el simulador: la captura, la rellena y la envía)
+                      node pruebas\sugerencias\probar-pestana.mjs <salida>     (con MAYHEM_OPEN=sugerencias: español, inglés y enviar)
+
+seleccion-campeon\  Dibuja el panel de la selección de campeón del overlay con datos de ejemplo (AD/AP, tus aliados) en
+                    español e inglés y guarda champselect-es/en.png y .txt:
+                      overlay-electron\node_modules\electron\dist\electron.exe pruebas\seleccion-campeon overlay-electron <salida>
 
 ventana-ingles.js   Recorre la ventana principal en inglés (también cambiando de idioma con páginas abiertas) y apunta
                     el texto que parece español. Abrir la app con WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333

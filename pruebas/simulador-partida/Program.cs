@@ -493,6 +493,8 @@ static class P
             Note(await WaitLog("Partida terminada", 30_000) ? "fin de partida detectado" : "FALLO: no vio el fin de la partida");
             var ts = Stopwatch.StartNew();
             Note(await WaitLog("Partida guardada", 120_000) ? $"partida guardada {ts.Elapsed.TotalSeconds:0} s después de detectar el fin" : "FALLO: la partida no se guardó en 2 min");
+            // 1.8.2: «¿Qué te parece la app?» a los 15 s de acabar (el simulador empieza con unos ajustes sin opinión dada).
+            Note(await WaitLog("Sugerencias: sale", 30_000) ? "ventanita «¿Qué te parece la app?» al acabar la partida" : "FALLO: no salió la ventanita de sugerencias al acabar");
             foreach (var l in LogText().Split('\n').Where(l => l.Contains("Cartas") || l.Contains("Aumento elegido") || l.Contains("Lectura de pantalla") || l.Contains("Partida") || l.Contains("historial") || l.Contains("Error") || l.Contains("Fallo")))
                 Note("  log> " + l.Trim());
         }

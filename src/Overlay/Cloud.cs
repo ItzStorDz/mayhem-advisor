@@ -291,6 +291,57 @@ static class Cloud
         }
     }
 
+    // ───────── Sugerencias ─────────
+
+    static string FeedbackDir => Path.Combine(Dir, "sugerencias");
+    static readonly SemaphoreSlim FeedbackBusy = new(1, 1);
+
+    /// <summary>
+    /// Una opinión, idea o fallo que escribiste en la app: se guarda en <c>nube\sugerencias</c> y se envía ya. Va aunque
+    /// «Compartir datos anónimos» esté apagado, porque la escribiste tú y pulsaste «Enviar». Sin conexión se queda guardada y
+    /// se reintenta (al abrir la app y cada 3 horas). True si ya llegó al servidor.
+    /// </summary>
+    public static async Task<bool> SendFeedbackAsync(JsonObject feedback, CancellationToken ct)
+    {
+        feedback["app"] = Updater.Current.ToString(3);
+        feedback["lang"] = Lang.Code;
+        feedback["os"] = $"Windows {Environment.OSVersion.Version.Build}";
+        var json = feedback.ToJsonString();
+        string file;
+        try
+        {
+            Directory.CreateDirectory(FeedbackDir);
+            file = Path.Combine(FeedbackDir, $"{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}.json");
+            await File.WriteAllTextAsync(file, json, ct);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Write($"No pude guardar la sugerencia: {ex.Message}");
+            return (await PostAsync("/v1/feedback", json, ct)).Status == 200;
+        }
+        await FlushFeedbackAsync(ct);
+        return !File.Exists(file);
+    }
+
+    /// <summary>Envía las sugerencias que se quedaron sin enviar (sin conexión, o el servidor aún no las admitía).</summary>
+    public static async Task FlushFeedbackAsync(CancellationToken ct)
+    {
+        if (Url.Length == 0 || !Directory.Exists(FeedbackDir)) return;
+        try { await FeedbackBusy.WaitAsync(ct); } catch (OperationCanceledException) { return; }
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(FeedbackDir, "*.json").Order().Take(20).ToList())
+            {
+                var (status, error) = await PostAsync("/v1/feedback", await File.ReadAllTextAsync(file, ct), ct);
+                if (status is null or 404 or 429 or >= 500) break; // sin conexión, o el servidor no puede ahora: luego
+                Log.Write(status == 200 ? "Sugerencia enviada" : $"Sugerencia rechazada ({status}): {error}");
+                File.Delete(file);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OperationCanceledException) { }
+        finally { FeedbackBusy.Release(); }
+    }
+
     /// <returns>El código HTTP (null sin conexión) y el error que da el servidor.</returns>
     static async Task<(int? Status, string? Error)> PostAsync(string path, string json, CancellationToken ct)
     {

@@ -1,0 +1,50 @@
+/* Formulario de sugerencias (sugerencias.js): en la ventanita de después de la partida y en la pestaña «Sugerencias». */
+.fb { display: flex; flex-direction: column; gap: 10px; }
+.fb-title { font-size: 19px; font-weight: 800; line-height: 1.25; color: #fff; }
+.fb-sub { color: var(--muted, #8b93a1); font-size: 13px; margin-top: -6px; }
+.fb-lbl { font-size: 11px; font-weight: 800; letter-spacing: .12em; color: var(--muted, #8b93a1); margin-top: 4px; }
+
+.fb-stars { display: flex; align-items: center; gap: 2px; margin-top: -4px; }
+.fb-stars button { all: unset; cursor: pointer; font-size: 30px; line-height: 1; padding: 0 2px; color: #3a4352; transition: transform .08s, color .08s; }
+.fb-stars button.on { color: var(--gold2, #f0d080); }
+.fb-stars button.hl { color: #ffe7a3; transform: scale(1.12); }
+.fb-starname { margin-left: 10px; color: var(--gold2, #f0d080); font-weight: 700; font-size: 13px; }
+
+.fb-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -2px; }
+.fb-kinds button { all: unset; cursor: pointer; padding: 7px 12px; border-radius: 99px; font-size: 12.5px; font-weight: 700; color: #c9d1da; background: rgba(255, 255, 255, .06); }
+.fb-kinds button:hover { background: rgba(255, 255, 255, .1); }
+.fb-kinds button.on { color: #1a1206; background: linear-gradient(180deg, #ffe7a3, #d9a64a); }
+
+.fb-text { width: 100%; min-height: 104px; resize: vertical; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(0, 0, 0, .25); color: var(--text, #eef1f5); font: inherit; font-size: 13.5px; line-height: 1.45; outline: none; user-select: text; }
+.fb-text:focus { border-color: var(--gold, #c8aa6e); }
+.fb-text::placeholder { color: #6b7380; }
+.fb-count { min-height: 0; margin-top: -6px; text-align: right; font-size: 11.5px; color: var(--muted, #8b93a1); }
+.fb-count:empty { display: none; }
+
+.fb-attach { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 12.5px; color: #c9d1da; }
+.fb-attach input { margin: 2px 0 0; accent-color: #d9a64a; width: 15px; height: 15px; flex: none; cursor: pointer; }
+.fb-note { font-size: 11.5px; color: var(--muted, #8b93a1); }
+.fb-error { font-size: 12.5px; font-weight: 700; color: var(--red, #ff6b6b); }
+.fb-error:empty { display: none; }
+
+.fb-actions { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.fb-grow { flex: 1; }
+.fb-btn { all: unset; cursor: pointer; padding: 9px 18px; border-radius: 99px; font-weight: 800; font-size: 13px; color: #1a1206;
+  background: linear-gradient(180deg, #ffe7a3, #d9a64a); white-space: nowrap; }
+.fb-btn.ghost { color: var(--text, #eef1f5); background: rgba(255, 255, 255, .08); }
+.fb-btn:hover { filter: brightness(1.08); }
+.fb-btn:disabled { cursor: default; filter: grayscale(.7) brightness(.7); }
+.fb-never { all: unset; cursor: pointer; font-size: 12px; color: var(--muted, #8b93a1); text-decoration: underline; text-underline-offset: 3px; }
+.fb-never:hover { color: var(--text, #eef1f5); }
+
+.fb-done { align-items: center; text-align: center; padding: 26px 10px; gap: 12px; }
+.fb-done p { font-size: 15px; font-weight: 600; max-width: 360px; }
+.fb-check { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; font-weight: 900; color: #0a0d13;
+  background: linear-gradient(180deg, #7ff0a4, #3cbf6a); }
+
+/* Pestaña «Sugerencias» de la ventana principal */
+.fb-page { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; max-width: 980px; }
+.fb-side p { color: #c9d1da; font-size: 13px; margin-top: 8px; }
+.fb-side p + p { color: var(--muted, #8b93a1); font-size: 12.5px; }
+@media (max-width: 1150px) { .fb-page { grid-template-columns: 1fr; } }

@@ -22,6 +22,21 @@ CREATE TABLE IF NOT EXISTS reports (
 );
 CREATE INDEX IF NOT EXISTS reports_received ON reports (received);
 
+-- Opiniones, ideas y fallos que la gente escribe en la app (ventana de después de la partida o pestaña «Sugerencias»).
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  received TEXT NOT NULL,       -- ISO, UTC
+  app TEXT NOT NULL,
+  lang TEXT NOT NULL,
+  os TEXT NOT NULL,
+  kind TEXT NOT NULL,           -- idea / bug / other
+  rating INTEGER,               -- 1-5 estrellas (opcional)
+  source TEXT NOT NULL,         -- postgame (ventana tras la partida) / app (pestaña «Sugerencias»)
+  text TEXT NOT NULL,
+  context TEXT                  -- JSON, si la adjuntó: su última partida (campeón, aumentos, objetos, minutos)
+);
+CREATE INDEX IF NOT EXISTS feedback_received ON feedback (received);
+
 CREATE TABLE IF NOT EXISTS seen_errors (m TEXT PRIMARY KEY, first TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS limits (key TEXT PRIMARY KEY, day TEXT NOT NULL, n INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS state (key TEXT PRIMARY KEY, value TEXT NOT NULL);

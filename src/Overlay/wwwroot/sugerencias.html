@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mayhem Advisor</title>
+<!-- Ventanita «¿Qué te parece Mayhem Advisor?» de después de la partida (App.Feedback.cs). El formulario: sugerencias.js. -->
+<style>
+  :root { --bg: #0a0d13; --text: #eef1f5; --muted: #8b93a1; --gold: #c8aa6e; --gold2: #f0d080; --green: #4cd97b; --red: #ff6b6b; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; color: var(--text); user-select: none;
+    font: 14px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+    background: radial-gradient(500px 300px at 90% -10%, rgba(120, 90, 255, .16), transparent 60%),
+                radial-gradient(500px 320px at 0% 110%, rgba(240, 190, 90, .1), transparent 60%), var(--bg); }
+  .wrap { height: 100%; overflow-y: auto; padding: 18px 20px; }
+  .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+  .hex { width: 22px; height: 22px; display: grid; place-items: center; font-size: 12px; font-weight: 900; color: #1a1206;
+    background: linear-gradient(145deg, #ffe7a3, #c8902e); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+</style>
+<link rel="stylesheet" href="sugerencias.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="hex">M</span>MAYHEM ADVISOR</div>
+  <div id="form"></div>
+</div>
+<script src="sugerencias.js"></script>
+<script>
+let lang = "es";
+const form = FeedbackForm(document.getElementById("form"), "postgame", () => lang);
+window.chrome.webview.addEventListener("message", e => {
+  const m = e.data;
+  if (m.type === "feedbackInfo" && m.lang && m.lang !== lang) { lang = m.lang; document.documentElement.lang = lang; form.render(); }
+  form.onMessage(m);
+});
+window.chrome.webview.postMessage({ type: "ready" });
+</script>
+</body>
+</html>
