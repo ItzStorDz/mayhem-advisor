@@ -22,7 +22,7 @@ public sealed class AugmentScale
     /// Fiabilidad de la nota en 1-3 rayitas, por las partidas que la respaldan (como el medidor de Hexsight):
     /// 3 con 1.500+ partidas, 2 con 300+, 1 con menos o si es una estimación (media del aumento o pocas partidas tuyas).
     /// </summary>
-    public static int Confidence(Recommendation r) => Confidence(r.Global && !r.FromAverage ? r.Games : r.Games >= ReliableGames ? Math.Min(r.Games, 299) : 0);
+    public static int Confidence(Recommendation r) => Confidence(r.Global && !r.FromAverage ? r.EvidenceGames : r.Games >= ReliableGames ? Math.Min(r.Games, 299) : 0);
 
     public static int Confidence(int games) => games >= 1500 ? 3 : games >= 300 ? 2 : 1;
 

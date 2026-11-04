@@ -33,7 +33,16 @@ public enum DamageMix { Physical, Mixed, Magic }
 
 /// <param name="Global">True si la cifra es de todos los jugadores de Mayhem (mayhemmeta.com); false si es de tus partidas.</param>
 /// <param name="FromAverage">Sin datos de este campeón con el aumento: estimado con lo que hace el aumento con todos los campeones.</param>
-public sealed record Recommendation(int AugmentId, double WinRate, int Games, double Delta, string Tier, bool Global = false, bool FromAverage = false);
+/// <param name="ExternalGames">Partidas del campeón con el aumento en AramHex o aramkit (el punto de partida de la nota).</param>
+public sealed record Recommendation(int AugmentId, double WinRate, int Games, double Delta, string Tier, bool Global = false, bool FromAverage = false,
+                                    int ExternalGames = 0)
+{
+    /// <summary>
+    /// Todas las partidas que respaldan la nota: las de mayhemmeta y las de AramHex o aramkit. La carta de Veigar con Poder
+    /// Maligno Fenomenal (su propia pasiva: le va peor) decía «~4.492 partidas» y había 365.760 más en AramHex (2026-11-03).
+    /// </summary>
+    public int EvidenceGames => Games + ExternalGames;
+}
 
 /// <summary>
 /// Estadísticas calculadas a partir de matches.jsonl. Con pocas partidas, cada cifra se "suaviza"
@@ -255,14 +264,14 @@ public sealed class StatsStore
         if (AugmentTable.For(champion, augmentId) is { Games: >= MinGlobalGames } row)
         {
             double rowDelta = Blend((row.WinRate - row.ChampionWinRate) / 100, row.Games);
-            return new Recommendation(augmentId, row.WinRate / 100, row.Games, rowDelta, TierOf(rowDelta), Global: true);
+            return new Recommendation(augmentId, row.WinRate / 100, row.Games, rowDelta, TierOf(rowDelta), Global: true, ExternalGames: external?.Games ?? 0);
         }
         // La lista de "mejores aumentos" del campeón saca los de más % aunque tengan pocas partidas: se mezcla igual
         // (Kha'Zix + Mejora: Hidra Voraz salía S con ~40 partidas; con más partidas gana mucho menos que el campeón).
         if (Global.For(champion) is { } build && build.Augment(augmentId) is { WinRate: { } globalRate } g && build.GamesWith(g) is var listGames and >= MinGlobalGames)
         {
             double globalDelta = Blend((g.Delta ?? globalRate - (build.WinRate ?? globalRate)) / 100, listGames);
-            return new Recommendation(augmentId, globalRate / 100, listGames, globalDelta, TierOf(globalDelta), Global: true);
+            return new Recommendation(augmentId, globalRate / 100, listGames, globalDelta, TierOf(globalDelta), Global: true, ExternalGames: external?.Games ?? 0);
         }
         // mayhemmeta no la tiene (o con menos de 30 partidas) pero la otra web sí: lo de esa web, más esas pocas partidas.
         if (external is not null)

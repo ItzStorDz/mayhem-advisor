@@ -1089,7 +1089,7 @@ public partial class App : System.Windows.Application
         box = box is { } bx ? new { x = bx.X, y = bx.Y, w = bx.Width, h = bx.Height } : null,
         // Sin % de victorias del aumento: Riot no deja enseñarlo en apps ni overlays («Products cannot display win rates for
         // Augments»). Van la nota 0-100, el rango, las partidas y la fiabilidad (1-3).
-        name = a.DisplayName, icon = a.Icon, tier = r.Tier, games = r.Games, global = r.Global, average = r.FromAverage,
+        name = a.DisplayName, icon = a.Icon, tier = r.Tier, games = r.Global ? r.EvidenceGames : r.Games, global = r.Global, average = r.FromAverage,
         confidence = note is null ? AugmentScale.Confidence(r) : (int?)null, desc = a.DisplayDescription,
         stats = a.StatList.Select(Anvil.Label), best, note,
         synergy = synergy is null ? null : new { good = synergy.Bonus >= 0, reason = synergy.Reason },

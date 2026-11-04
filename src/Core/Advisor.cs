@@ -666,7 +666,7 @@ public sealed partial class Advisor(StatsStore stats)
                 : L($"Necesita tu definitiva, y «{clash.DisplayName}» la sella", $"Needs your ultimate, which “{clash.DisplayName}” seals"));
         bool magic = PlaysMagic(champion, myItems ?? [], mine);
         var rec = stats.Rate(champion, candidate.Id);
-        bool champData = rec.Global && rec.Games >= ChampionDataGames;
+        bool champData = rec.Global && rec.EvidenceGames >= ChampionDataGames;
         bool heuristics = !champData || BuildDiffersFromUsual(champion, myItems ?? [], mine);
         var needs = stats.Links.RequiredBy(candidate.Id);
 
@@ -704,8 +704,12 @@ public sealed partial class Advisor(StatsStore stats)
         string? styleNow = lockedStyle ?? (StyleFromItems(champion, myItems ?? []) is { FromItems.Length: > 0, Generic: false } byItems ? byItems.Key : null);
         var styleFx = styleNow is null ? null : stats.AramkitBuilds.StyleEffect(champion, candidate.Id, styleNow);
         if (styleFx is { } fx && fx.Weight * (fx.Delta / 100 - AugmentScale.Evidence(rec)) is var styleShift && Math.Abs(styleShift) >= 0.005)
-            Add(styleShift, L($"con tu build {StyleName(styleNow!)}, {Data.ChampionName(champion)} gana {fx.Delta:+0.0;-0.0;0.0} puntos con él (~{fx.Games:N0} partidas así)",
-                                   $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} wins {fx.Delta:+0.0;-0.0;0.0} points with it (~{fx.Games:N0} games like that)"));
+            // Sin números de victorias (Riot no deja enseñar el % de los aumentos): solo si le va mejor o peor así.
+            Add(styleShift, styleShift > 0
+                ? L($"con tu build {StyleName(styleNow!)}, a {Data.ChampionName(champion)} le va mejor con él (~{fx.Games:N0} partidas así)",
+                    $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} does better with it (~{fx.Games:N0} games like that)")
+                : L($"con tu build {StyleName(styleNow!)}, a {Data.ChampionName(champion)} le va peor con él (~{fx.Games:N0} partidas así)",
+                    $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} does worse with it (~{fx.Games:N0} games like that)"));
 
         // Con el 100 % de crítico, el crítico que da el aumento se pierde (Absorción de Alma salía con nota alta: Wakka, Jhin).
         if (critChance >= CritCap && StatTags.GivesCritChance(candidate))
