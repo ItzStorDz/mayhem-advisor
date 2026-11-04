@@ -53,6 +53,9 @@ foreach (var row in doc.RootElement[0].GetProperty("results").EnumerateArray())
             return scale.Score(AugmentScale.Evidence(rec) + (syn?.Bonus ?? 0), AugmentScale.IsReliable(rec));
         }
         var top = offered.MaxBy(Card)!;
+        // EVAL_LISTA=1: cada elección con la carta mejor puntuada y por qué (para comparar dos versiones de los datos).
+        if (Environment.GetEnvironmentVariable("EVAL_LISTA") == "1")
+            Console.WriteLine($"{champion}|{string.Join(",", offered.Select(o => o.Id))}|{real[0].Id}|{(win ? "G" : "P")}|{top.Id}|{advisor.SynergyWith(top, mine, champion, items)?.Reason}");
         foreach (var key in new[] { "todos", win ? "ganadores" : "perdedores" })
         {
             var t = tally.GetValueOrDefault(key);

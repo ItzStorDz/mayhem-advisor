@@ -9,7 +9,8 @@
  * Sus objetos NO se usan: probado el 2026-10-27, devolvían objetos raros (Arco Axiomático a Aatrox) sin predecir mejor.
  *
  * Sus condiciones (aramkit.com/en-US/terms) permiten uso personal y no comercial, sin descargas masivas ni frecuentes:
- * por eso va despacio y se ejecuta solo una vez por parche. No se presentan como datos oficiales (ver CREDITOS.txt).
+ * por eso va despacio y se ejecuta solo cuando ellos publican datos nuevos (su web lo dice: «Data updated»), como mucho
+ * una vez por semana. No se presentan como datos oficiales (ver CREDITOS.txt).
  */
 import fs from "node:fs";
 import path from "node:path";
