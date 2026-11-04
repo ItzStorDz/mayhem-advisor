@@ -25,7 +25,10 @@ evaluar-objetos\    Mide lo bien que la app adivina los objetos con tus partidas
                     le da sus primeros objetos terminados y mira cuántos de los que compró después recomienda. No carga tus
                     estadísticas (serían las mismas partidas). Copia en una carpeta aparte tus datos y los de datos\ y:
                       $env:MAYHEM_DATA_DIR = "<esa carpeta>"; $env:EVAL_OWNED = "2"   (objetos que se dan: 0-3)
-                      dotnet run --project pruebas\evaluar-objetos -c Release [-- detalle]
+                      dotnet run --project pruebas\evaluar-objetos -c Release [-- detalle] [objetos]
+                    Mide por tipo de jugador (crítico, on-hit, AP, soporte AP/tanque/encantador, luchador…). Con nube.jsonl en la
+                    carpeta (las partidas de la nube exportadas), también las usa. «objetos»: los que se recomiendan sin que se
+                    compren. EVAL_TIPO="soporte AP" + detalle: sus fallos; EVAL_OBJETO=<id>: con quién y por qué sale.
                     Para comparar con una versión anterior: -p:Antiguo=<carpeta codigo de un respaldo> (desde una copia
                     de la carpeta evaluar-objetos, para no mezclar lo compilado).
 
@@ -43,6 +46,13 @@ evaluar-cartas\     Con las elecciones reales que llegan a la nube: ¿la carta m
 explicar-partida\   Explica la nota de cada carta de una partida tuya (archivo de la carpeta diario de tus datos): datos del
                     campeón con el aumento, combinaciones medidas con los que ya llevabas y la nota que sale.
                       dotnet run --project pruebas\explicar-partida -c Release -- <diario\AAAAMMDD-HHMMSS-Campeón.json> [objetos=id,id…] [detalle]
+
+top-aumentos\       Las mejores cartas que daría la app a cada campeón (sin objetos) y, con «build», la build que recomienda:
+                      dotnet run --project pruebas\top-aumentos -c Release -- Seraphine Leona Vayne [n=10] [build]
+
+validar-ajustes\    ¿Los ajustes de la nota de las cartas aciertan? Compara cada ajuste con la verdad (parejas campeón + aumento con
+                    800+ partidas en mayhemmeta) frente a lo que la app estimaría sin ellas (2026-11-03: ninguno acertaba).
+                      dotnet run --project pruebas\validar-ajustes -c Release
 
 medir-dano-enemigo.py  Compara, con tus partidas guardadas, formas de calcular el % de daño mágico del equipo enemigo
                     contra el daño real.  python pruebas\medir-dano-enemigo.py "%LOCALAPPDATA%\MayhemAdvisor"

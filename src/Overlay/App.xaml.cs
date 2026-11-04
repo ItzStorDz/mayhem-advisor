@@ -103,6 +103,17 @@ public partial class App : System.Windows.Application
             _catalog = await AugmentCatalog.LoadAsync(http);
             _matcher = new AugmentMatcher(_catalog);
             _data = await GameData.LoadAsync(http);
+            // Para reconocer tu campeón aunque el juego dé un nombre raro (Seraphine salió como «Name», 2026-11-02): alias o
+            // nombre visible, en español o en inglés, también sin espacios ni apóstrofos («Kog'Maw», «Lee Sin»).
+            var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            string Compact(string n) => new(n.Where(char.IsLetterOrDigit).ToArray());
+            foreach (var c in _data.Champions.Values)
+                foreach (var n in new[] { c.Alias, c.Name, c.NameEn }.OfType<string>().Where(n => n.Length > 1))
+                {
+                    byName.TryAdd(n, c.Alias);
+                    byName.TryAdd(Compact(n), c.Alias);
+                }
+            LiveClient.Resolve = n => byName.GetValueOrDefault(n) ?? byName.GetValueOrDefault(Compact(n));
             await SyncHistoryAsync();
             ReloadStats();
             _tray.Text = "Mayhem Advisor";
@@ -248,6 +259,8 @@ public partial class App : System.Windows.Application
             if (game.Champion != lastChampion)
             {
                 Log.Write($"Partida de Mayhem detectada: {game.Champion}");
+                if (game.UnknownChampion is { } rawNames)
+                    Log.Write($"No reconozco el campeón (no se recomiendan objetos): {rawNames}");
                 lastChampion = game.Champion;
                 _journal = new GameJournal { StartedUtc = DateTime.UtcNow, Lang = Lang.Code, Champion = _data.Champion(game.Champion)?.Alias ?? game.Champion };
                 lastContext = null;
@@ -286,7 +299,8 @@ public partial class App : System.Windows.Application
             _lastPhase = gamePhase;
             _wasDead = game.IsDead;
             if (_forceAdvice) { _forceAdvice = false; lastContext = null; nextAdvice = DateTime.MinValue; }
-            if (context != lastContext && (DateTime.UtcNow >= nextAdvice || _keepChanged))
+            // Con un campeón que no reconocemos no se recomienda nada: antes salía una build genérica de AD (Seraphine).
+            if (game.UnknownChampion is null && context != lastContext && (DateTime.UtcNow >= nextAdvice || _keepChanged))
             {
                 _keepChanged = false;
                 lastContext = context;

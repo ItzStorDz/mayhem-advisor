@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -13,12 +13,18 @@ namespace MayhemAdvisor.Overlay;
 /// (MayhemAdvisor-Instalador-X.Y.Z.exe) y GitHub da su huella SHA-256 («digest»): el instalador bajado se comprueba con
 /// ella antes de abrirlo, así que uno cambiado por el camino no se instala nunca. Solo se pide la última Release
 /// (una petición; GitHub deja 60 por hora sin cuenta).
+/// Si no se llega a api.github.com (un jugador se quedó en la 1.5.1 con «No such host is known» y sus partidas sí llegaban
+/// al servidor de la app), se pregunta al servidor de la app, que copia lo mismo de GitHub (/v1/latest) y, si tampoco se
+/// llega a github.com, da el instalador tal cual (/v1/download). La huella SHA-256 se comprueba igual.
 /// </summary>
 static class Updater
 {
     const string Repo = "ItzStorDz/mayhem-advisor";
+    const string Mirror = "https://mayhem-advisor.itzstordz.workers.dev/v1";
 
-    public sealed record Release(Version Version, string PageUrl, string AssetUrl, string AssetName, long Size, string Sha256, string Notes);
+    /// <param name="MirrorUrl">El mismo instalador desde el servidor de la app (si no se llega a github.com).</param>
+    public sealed record Release(Version Version, string PageUrl, string AssetUrl, string AssetName, long Size, string Sha256, string Notes,
+                                 string? MirrorUrl = null);
 
     /// <summary>Esta versión (la del .csproj), con tres números: 1.4.0.</summary>
     public static Version Current { get; } = Three(typeof(Updater).Assembly.GetName().Version ?? new Version(0, 0, 0));
@@ -43,7 +49,19 @@ static class Updater
     {
         // MAYHEM_UPDATE_URL: solo para las pruebas (una Release falsa servida en este PC).
         var test = Environment.GetEnvironmentVariable("MAYHEM_UPDATE_URL") is { Length: > 0 } t ? t : null;
-        using var req = new HttpRequestMessage(HttpMethod.Get, test ?? $"https://api.github.com/repos/{Repo}/releases/latest");
+        if (test is not null) return await CheckAtAsync(test, test, ct);
+        try { return await CheckAtAsync($"https://api.github.com/repos/{Repo}/releases/latest", null, ct); }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
+        {
+            // Sin acceso a GitHub: lo mismo desde el servidor de la app.
+            try { return await CheckAtAsync($"{Mirror}/latest", null, ct); }
+            catch (Exception) when (!ct.IsCancellationRequested) { throw ex; } // el error que importa es el de GitHub
+        }
+    }
+
+    static async Task<Release?> CheckAtAsync(string address, string? test, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, address);
         req.Headers.Accept.ParseAdd("application/vnd.github+json");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(30));
@@ -68,7 +86,8 @@ static class Updater
                 throw new InvalidDataException(L("La versión nueva no trae su huella SHA-256.", "The new version has no SHA-256 fingerprint."));
             return new Release(version, root.GetProperty("html_url").GetString() ?? "", url, Path.GetFileName(name),
                 asset.GetProperty("size").GetInt64(), digest[7..].ToLowerInvariant(),
-                root.TryGetProperty("body", out var body) ? body.GetString() ?? "" : "");
+                root.TryGetProperty("body", out var body) ? body.GetString() ?? "" : "",
+                test is null ? $"{Mirror}/download/v{version.ToString(3)}/{Path.GetFileName(name)}" : null);
         }
         return null; // Release sin instalador todavía (se está subiendo)
     }
@@ -81,7 +100,14 @@ static class Updater
         var file = Path.Combine(Folder, release.AssetName);
         if (File.Exists(file) && await HashAsync(file, ct) == release.Sha256) return file; // ya bajado antes
         var part = file + ".part";
-        using (var resp = await Http.GetAsync(release.AssetUrl, HttpCompletionOption.ResponseHeadersRead, ct))
+        HttpResponseMessage resp;
+        try { resp = await Http.GetAsync(release.AssetUrl, HttpCompletionOption.ResponseHeadersRead, ct); }
+        catch (HttpRequestException) when (release.MirrorUrl is not null)
+        {
+            // Sin acceso a github.com: el mismo instalador desde el servidor de la app (la huella se comprueba abajo).
+            resp = await Http.GetAsync(release.MirrorUrl, HttpCompletionOption.ResponseHeadersRead, ct);
+        }
+        using (resp)
         {
             resp.EnsureSuccessStatusCode();
             long total = resp.Content.Headers.ContentLength ?? release.Size, done = 0;

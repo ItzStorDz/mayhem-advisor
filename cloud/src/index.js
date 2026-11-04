@@ -4,6 +4,9 @@
 //   POST /v1/match   una partida de ARAM: Caos al acabar (campeones, aumentos, objetos y daño de los 10, sin nombres;
 //                    las cartas que le ofrecieron a ese jugador con su nota y lo que recomendó la app).
 //   POST /v1/report  un resumen de errores y de salud de la app (cada pocas horas, ya sin rutas ni nombres).
+// Y sirve, para quien no llega a api.github.com (un jugador con «No such host is known»: se quedó en la 1.5.1):
+//   GET /v1/latest                       la última Release de GitHub (solo lo que usa la app; caché de 10 min).
+//   GET /v1/download/vX.Y.Z/<instalador> el instalador de esa Release, tal cual (la app comprueba su huella SHA-256).
 // Y cada mañana (cron) junta lo que llegó desde el último informe y crea una Issue en un repositorio privado.
 //
 // Privacidad: no se guarda la IP (solo un contador por día con la IP cifrada con una clave que cambia cada día) y el
@@ -19,6 +22,8 @@ export default {
     try {
       if (request.method === 'GET' && url.pathname === '/v1/health') return json({ ok: true });
       if (request.method === 'GET' && url.pathname === '/v1/community') return await getCommunity(request, env, ctx);
+      if (request.method === 'GET' && url.pathname === '/v1/latest') return await getLatest(request, env, ctx);
+      if (request.method === 'GET' && url.pathname.startsWith('/v1/download/')) return await getDownload(url);
       if (request.method !== 'POST') return json({ error: 'not found' }, 404);
       if (url.pathname === '/v1/match') return await postMatch(request, env);
       if (url.pathname === '/v1/report') return await postReport(request, env);
@@ -170,6 +175,45 @@ async function getCommunity(request, env, ctx) {
   const resp = new Response(body, { headers: { 'content-type': 'application/x-ndjson', 'cache-control': 'public, max-age=3600' } });
   ctx.waitUntil(cache.put(request, resp.clone()));
   return resp;
+}
+
+// ───────── Actualizaciones (copia de GitHub) ─────────
+
+const REPO = 'ItzStorDz/mayhem-advisor';
+const INSTALLER = /^MayhemAdvisor-Instalador-\d+\.\d+\.\d+\.exe$/;
+const TAG = /^v\d+\.\d+\.\d+$/;
+
+/** La última Release, con lo mismo que lee la app de la API de GitHub (versión, notas, instaladores y su huella). */
+async function getLatest(request, env, ctx) {
+  const cache = caches.default;
+  const key = new Request(new URL('/v1/latest', request.url).toString());
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  const headers = { 'user-agent': 'mayhem-advisor-worker', accept: 'application/vnd.github+json' };
+  if (env.GITHUB_TOKEN) headers.authorization = `Bearer ${env.GITHUB_TOKEN}`;
+  const gh = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers });
+  if (gh.status === 404) return json({ error: 'no release' }, 404);
+  if (!gh.ok) return json({ error: `github ${gh.status}` }, 502);
+  const r = await gh.json();
+  const body = {
+    tag_name: r.tag_name, html_url: r.html_url, body: r.body ?? '',
+    assets: (r.assets ?? []).filter(a => INSTALLER.test(a.name ?? ''))
+      .map(a => ({ name: a.name, size: a.size, digest: a.digest, browser_download_url: a.browser_download_url })),
+  };
+  const resp = new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=600' } });
+  ctx.waitUntil(cache.put(key, resp.clone()));
+  return resp;
+}
+
+/** El instalador de una Release de este repositorio, sin tocarlo (solo nombres de instalador y etiquetas vX.Y.Z). */
+async function getDownload(url) {
+  const [tag, name] = url.pathname.slice('/v1/download/'.length).split('/');
+  if (!TAG.test(tag ?? '') || !INSTALLER.test(name ?? '') || !name.includes(`-${tag.slice(1)}.exe`)) return json({ error: 'not found' }, 404);
+  const gh = await fetch(`https://github.com/${REPO}/releases/download/${tag}/${name}`, { headers: { 'user-agent': 'mayhem-advisor-worker' } });
+  if (!gh.ok) return json({ error: `github ${gh.status}` }, gh.status === 404 ? 404 : 502);
+  const headers = { 'content-type': 'application/octet-stream', 'content-disposition': `attachment; filename="${name}"` };
+  if (gh.headers.get('content-length')) headers['content-length'] = gh.headers.get('content-length');
+  return new Response(gh.body, { headers });
 }
 
 // ───────── Informe diario ─────────

@@ -15,7 +15,8 @@ public sealed record GameSnapshot(
     bool IsDead = false,
     double RespawnTimer = 0,
     IReadOnlyDictionary<string, (int Kills, int Deaths)>? EnemyScores = null,
-    double CritChance = 0);
+    double CritChance = 0,
+    string? UnknownChampion = null);
 
 /// <summary>
 /// Habla con la API oficial de Riot que el juego abre en tu PC durante la partida (127.0.0.1:2999).
@@ -81,7 +82,10 @@ public sealed class LiveClient : IDisposable
             double crit = active.TryGetProperty("championStats", out var cs) && cs.TryGetProperty("critChance", out var cc) && cc.ValueKind == JsonValueKind.Number
                 ? cc.GetDouble() : 0;
             if (crit > 1.5) crit /= 100; // por si viniera en % y no en tanto por uno
-            return new GameSnapshot(Champion(mine), gold, Items(mine), enemies, myAugs, enemyAugs, gameTime, dead, respawn, enemyScores, crit);
+            var champion = Champion(mine);
+            // Campeón que no reconocemos: los nombres que dio el juego, para el registro (y no se recomienda a ciegas).
+            string? unknown = Resolve is { } check && check(champion) is null ? RawNames(mine) : null;
+            return new GameSnapshot(champion, gold, Items(mine), enemies, myAugs, enemyAugs, gameTime, dead, respawn, enemyScores, crit, unknown);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException)
         {
@@ -127,12 +131,29 @@ public sealed class LiveClient : IDisposable
     static string? Str(JsonElement e, string name) =>
         e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
-    // "game_character_displayname_MonkeyKing" -> "MonkeyKing" (mismo nombre que usa la API de partidas)
+    /// <summary>
+    /// Reconoce un nombre de campeón (alias como «MonkeyKing» o nombre visible como «Wukong», «Lee Sin») y devuelve su
+    /// alias; null si no es un campeón. Lo pone la app al cargar los datos del juego.
+    /// </summary>
+    public static Func<string, string?>? Resolve { get; set; }
+
+    // "game_character_displayname_MonkeyKing" -> "MonkeyKing" (mismo nombre que usa la API de partidas). Con alguna skin el
+    // juego da otra cosa: Seraphine salió como «Name» (2026-11-02) y se le recomendaron objetos de AD. Entonces vale el
+    // nombre de la skin («game_character_skin_displayname_Seraphine_1») o el que se ve en pantalla («Seraphine»).
     static string Champion(JsonElement p)
     {
         var raw = Str(p, "rawChampionName") ?? "";
-        return raw[(raw.LastIndexOf('_') + 1)..];
+        var fromRaw = raw[(raw.LastIndexOf('_') + 1)..];
+        if (Resolve is not { } resolve) return fromRaw;
+        var candidates = raw.Split('_').Reverse()
+            .Concat((Str(p, "rawSkinName") ?? "").Split('_').Reverse())
+            .Append(Str(p, "championName") ?? "");
+        return candidates.Select(c => c.Length > 1 ? resolve(c) : null).FirstOrDefault(a => a is not null) ?? fromRaw;
     }
+
+    /// <summary>Los nombres que dio el juego para tu campeón, para el registro si no se reconoce.</summary>
+    public static string RawNames(JsonElement p) =>
+        $"rawChampionName «{Str(p, "rawChampionName")}», rawSkinName «{Str(p, "rawSkinName")}», championName «{Str(p, "championName")}»";
 
     static List<int> Items(JsonElement p) =>
         p.TryGetProperty("items", out var items)

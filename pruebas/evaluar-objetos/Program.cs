@@ -1,4 +1,4 @@
-// Mide lo bien que la app adivina los objetos con partidas reales guardadas (matches.jsonl + comunidad.jsonl).
+﻿// Mide lo bien que la app adivina los objetos con partidas reales guardadas (matches.jsonl + comunidad.jsonl).
 // A cada jugador se le dan sus 2 primeros objetos terminados (el inventario se llena por orden de compra) y se mira
 // cuántos de los que compró después salen en la build completa que recomienda la app y entre las 3 siguientes compras.
 // Las estadísticas propias NO se cargan (serían las mismas partidas): solo los datos de todos los jugadores.
@@ -27,7 +27,8 @@ stats.Kits = ChampionKits.Load(DataFiles.Resolve("campeones-kit.json"));
 #endif
 
 var matches = new Dictionary<string, MatchRecord>();
-foreach (var file in new[] { "matches.jsonl", "comunidad.jsonl" })
+// nube.jsonl: las partidas que llegan a la nube (los 10 jugadores), exportadas a mano de la base de datos.
+foreach (var file in new[] { "matches.jsonl", "comunidad.jsonl", "nube.jsonl" })
 {
     var path = Path.Combine(Paths.DataDir, file);
     if (!File.Exists(path)) continue;
@@ -38,6 +39,18 @@ foreach (var file in new[] { "matches.jsonl", "comunidad.jsonl" })
 
 int[] onHitItems = [3153, 6672, 3302, 3124, 3091, 3115];
 int[] critItems = [3031, 6676, 3036, 3033, 3072, 6675, 3046, 3094, 3508];
+// Tipo de jugador por su build final y su campeón (para ver dónde acierta menos la app).
+string Archetype(string champion, List<int> finals)
+{
+    bool support = data.Champion(champion)?.Roles.FirstOrDefault() == "support";
+    string style = stats.AramkitBuilds.StyleFromItems(champion, finals) is { Probability: >= 0.75 } f ? f.Style.Key
+        : stats.AramkitBuilds.Styles(champion).FirstOrDefault()?.Key ?? "?";
+    int ap = finals.Count(id => data.Item(id)?.Has("SpellDamage") == true), crit = finals.Count(id => data.Item(id)?.Has("CriticalStrike") == true);
+    if (ap >= 2 && crit >= 1 && style is "ap" or "hybrid") return "AP crítico";
+    if (support) return style switch { "utility" => "soporte encantador", "ap" => "soporte AP", "tank" => "soporte tanque", _ => "soporte " + style };
+    return style switch { "crit" => "crítico", "on_hit" => "on-hit", "ap" => "AP", "lethality" => "letalidad", "ad" => "AD", "bruiser" => "luchador",
+        "tank" => "tanque", "utility" => "encantador", _ => style };
+}
 string StyleOf(IEnumerable<int> items) =>
     items.Count(onHitItems.Contains) >= 2 ? "on-hit" : items.Count(critItems.Contains) >= 2 ? "crítico" : "otros";
 
@@ -49,6 +62,10 @@ void Add(string key, int buildHits, int predicted, int actual, int nextHits)
 }
 
 var advisor = new Advisor(stats);
+// Por objeto: cuántas veces sale en la build recomendada (sin tenerlo) y cuántas de esas lo compró el jugador; y cuántas
+// veces lo compró sin que se recomendara. Los que salen mucho y casi nadie compra son los que «sobran».
+var perItem = new Dictionary<int, (int Shown, int Bought, int Missed)>();
+var whyItem = new List<string>();
 var detection = new Dictionary<string, (int Players, int Right, int Changed, int Usual)>();
 var misses = new List<string>();
 foreach (var m in matches.Values)
@@ -66,6 +83,11 @@ foreach (var m in matches.Values)
         var predicted = (advice.FullBuild ?? []).Where(s => !s.Owned && !s.Item.Item.IsBoots).Select(s => s.Item.Item.Id).ToList();
         var next = advice.Items.Select(a => a.Item.Id).ToList();
         int buildHits = predicted.Count(actual.Contains), nextHits = next.Count(actual.Contains);
+        foreach (var id in predicted) { var pi = perItem.GetValueOrDefault(id); perItem[id] = (pi.Shown + 1, pi.Bought + (actual.Contains(id) ? 1 : 0), pi.Missed); }
+        // EVAL_OBJETO=<id>: con quién y por qué se recomienda ese objeto (para ver de dónde sale).
+        if (int.TryParse(Environment.GetEnvironmentVariable("EVAL_OBJETO"), out var watch) && predicted.Contains(watch))
+            whyItem.Add($"{p.Champion} ({Archetype(p.Champion, finals)}, {(actual.Contains(watch) ? "lo compró" : "no lo compró")}): {(advice.FullBuild ?? []).First(sl => sl.Item.Item.Id == watch).Item.Reason}");
+        foreach (var id in actual.Where(a => !predicted.Contains(a))) { var pi = perItem.GetValueOrDefault(id); perItem[id] = (pi.Shown, pi.Bought, pi.Missed + 1); }
         string style = StyleOf(finals);
 #if !ANTIGUO
         // ¿Acierta el estilo con 2 objetos? Se compara con el que sale con todos sus objetos.
@@ -76,9 +98,9 @@ foreach (var m in matches.Values)
         var dt = detection.GetValueOrDefault(full);
         detection[full] = (dt.Players + 1, dt.Right + (early == full ? 1 : 0), dt.Changed + (early != usual ? 1 : 0), dt.Usual + (full == usual ? 1 : 0));
 #endif
-        foreach (var key in new[] { "todos", $"estilo {style}", p.Win ? "ganadores" : "perdedores" })
+        foreach (var key in new[] { "todos", $"tipo {Archetype(p.Champion, finals)}", p.Win ? "ganadores" : "perdedores" })
             Add(key, buildHits, predicted.Count, actual.Count, nextHits);
-        if (detail && style == "on-hit" && buildHits * 2 < actual.Count)
+        if (detail && Environment.GetEnvironmentVariable("EVAL_TIPO") is { } only && Archetype(p.Champion, finals) == only && buildHits * 2 < actual.Count)
             misses.Add($"{p.Champion,-12} tiene {Names(owned)}{StyleText(p.Champion, owned)}\n   recomienda {Names(predicted)}\n   compró     {Names(actual)}");
     }
 
@@ -101,3 +123,15 @@ Console.WriteLine("Estilo con todos sus objetos → ¿lo adivina con 2? (cambiad
 foreach (var (key, d) in detection.OrderByDescending(kv => kv.Value.Players))
     Console.WriteLine($"{key,-10} {d.Players,5} jugadores  acierto {(double)d.Right / d.Players,6:P0}  es el habitual {(double)d.Usual / d.Players,6:P0}  cambiado {d.Changed,4}");
 foreach (var miss in misses.Take(30)) Console.WriteLine(miss);
+foreach (var w in whyItem.GroupBy(x => x).OrderByDescending(g => g.Count()).Take(25)) Console.WriteLine($"   {g_count(w)} × {w.Key}");
+static int g_count(IGrouping<string, string> g) => g.Count();
+if (args.Contains("objetos"))
+{
+    Console.WriteLine();
+    Console.WriteLine("Objetos que más se recomiendan sin que se compren (recomendado · comprado de esos · comprado sin recomendar):");
+    foreach (var (id, pi) in perItem.Where(kv => kv.Value.Shown >= 30).OrderByDescending(kv => kv.Value.Shown - kv.Value.Bought).Take(20))
+        Console.WriteLine($"   {data.Item(id)?.NameEn,-28} {pi.Shown,5} · {(double)pi.Bought / pi.Shown,6:P0} · {pi.Missed,5}");
+    Console.WriteLine("Objetos que se compran mucho sin que la app los recomiende:");
+    foreach (var (id, pi) in perItem.OrderByDescending(kv => kv.Value.Missed).Take(15))
+        Console.WriteLine($"   {data.Item(id)?.NameEn,-28} recomendado {pi.Shown,5} (comprado {(double)pi.Bought / Math.Max(1, pi.Shown),4:P0}) · comprado sin recomendar {pi.Missed,5}");
+}
