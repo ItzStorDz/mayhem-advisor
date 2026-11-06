@@ -9,6 +9,9 @@ namespace MayhemAdvisor.Core;
 /// </summary>
 public sealed record BuildStyle(string Key, int Games, double WinRate, IReadOnlyDictionary<int, double> Items);
 
+/// <summary>Un orden de maximizar habilidades ("QWE": Q primero) con sus partidas y su % de victorias (0-100), de aramkit.</summary>
+public sealed record SkillOrder(string Order, int Games, double WinRate);
+
 /// <summary>
 /// El estilo de build que conviene con tus aumentos. <paramref name="Usual"/> es el más jugado con el campeón;
 /// <paramref name="Share"/>, la parte de las partidas con tus aumentos que lo juegan; <paramref name="WinRate"/> y
@@ -40,11 +43,11 @@ public sealed class AugmentBuilds
     /// </summary>
     public const double ShrinkGames = 1200;
     /// <summary>Un estilo que no es el habitual solo se recomienda si lo juega al menos esta parte de la gente con tus aumentos.</summary>
-    public const double MinShare = 0.15;
+    public static double MinShare { get; set; } = 0.15; // (se puede cambiar solo en las pruebas: pruebas/evaluar-objetos)
     /// <summary>Si al menos esta parte de la gente con tus aumentos juega otro estilo (y no gana menos), se sigue a la mayoría.</summary>
     public const double MajorityShare = 0.5;
     /// <summary>Partidas mínimas del estilo con tus aumentos para cambiar de estilo.</summary>
-    public const int MinGames = 800;
+    public static int MinGames { get; set; } = 800;
 
     sealed class FileShape
     {
@@ -54,9 +57,12 @@ public sealed class AugmentBuilds
 
     sealed class Champion
     {
+        [JsonPropertyName("games")] public int Games { get; set; }
         [JsonPropertyName("winRate")] public double WinRate { get; set; }
         [JsonPropertyName("styles")] public List<JsonElement[]>? Styles { get; set; }
         [JsonPropertyName("augments")] public Dictionary<string, AugmentRow>? Augments { get; set; }
+        /// <summary>Filas [orden "Q>W>E", partidas, % de victorias] (desde los datos del 16.22).</summary>
+        [JsonPropertyName("skills")] public List<JsonElement[]>? Skills { get; set; }
     }
 
     sealed class AugmentRow
@@ -65,7 +71,17 @@ public sealed class AugmentBuilds
         [JsonPropertyName("styles")] public List<JsonElement[]>? Styles { get; set; }
     }
 
-    sealed record ChampionStyles(double WinRate, IReadOnlyList<BuildStyle> Styles, Dictionary<int, IReadOnlyList<BuildStyle>> Augments);
+    sealed record ChampionStyles(double WinRate, IReadOnlyList<BuildStyle> Styles, Dictionary<int, IReadOnlyList<BuildStyle>> Augments,
+        IReadOnlyList<SkillOrder> Skills, int Games);
+
+    /// <summary>
+    /// Órdenes de maximizar habilidades del campeón (aramkit), el más jugado primero: "QWE" = Q primero, luego W y E.
+    /// Vacío sin datos.
+    /// </summary>
+    public IReadOnlyList<SkillOrder> Skills(string alias) => _champions.GetValueOrDefault(alias)?.Skills ?? [];
+
+    /// <summary>Partidas del campeón en aramkit (todas sus builds), o 0 sin datos.</summary>
+    public int Games(string alias) => _champions.GetValueOrDefault(alias)?.Games ?? 0;
 
     readonly Dictionary<string, ChampionStyles> _champions = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Cada estilo con todos los campeones juntos (por partidas): para el que no tiene ese estilo en sus datos.</summary>
@@ -221,7 +237,13 @@ public sealed class AugmentBuilds
             foreach (var (id, row) in champ.Augments ?? [])
                 if (int.TryParse(id, out var augmentId) && !ExternalAugments.Biased.Contains(augmentId) && ReadStyles(row.Styles) is { Count: > 0 } styles)
                     augments[augmentId] = styles;
-            result._champions[alias] = new ChampionStyles(champ.WinRate, ReadStyles(champ.Styles), augments);
+            var skills = new List<SkillOrder>();
+            foreach (var row in champ.Skills ?? [])
+                if (row.Length >= 3 && row[0].ValueKind == JsonValueKind.String && row[0].GetString()!.Replace(">", "") is { Length: 3 } order
+                    && row[1].TryGetInt32(out var games) && games > 0 && row[2].TryGetDouble(out var wr))
+                    skills.Add(new SkillOrder(order, games, wr));
+            result._champions[alias] = new ChampionStyles(champ.WinRate, ReadStyles(champ.Styles), augments,
+                skills.OrderByDescending(s => s.Games).ToList(), champ.Games);
         }
         foreach (var key in GenericStyles)
         {

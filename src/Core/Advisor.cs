@@ -134,7 +134,8 @@ public sealed record AugmentSynergy(double Bonus, string Reason);
 public sealed record ItemAdvice(ItemInfo Item, double Score, int Games, string Reason, bool InProgress = false);
 /// <summary>Una casilla de la build completa recomendada; <paramref name="Owned"/> si ya lo tienes.</summary>
 public sealed record BuildSlot(ItemAdvice Item, bool Owned);
-public sealed record SkillAdvice(string MaxOrder, string Start, double WinRate, int Games);
+/// <param name="Share">Qué parte de las partidas del campeón lo juega (0-1; 0 = de tus partidas, sin ese dato).</param>
+public sealed record SkillAdvice(string MaxOrder, string Start, double WinRate, int Games, double Share = 0);
 /// <param name="Cost">Lo que te cuesta ya descontando los componentes que llevas.</param>
 public sealed record NextBuy(ItemInfo Item, int Cost, int GoldMissing);
 /// <param name="SellGold">Lo que te devuelve la tienda al venderlo (~70 % del precio).</param>
@@ -396,12 +397,28 @@ public sealed partial class Advisor(StatsStore stats)
             : swap is not null ? new NextBuy(swap.Buy.Item, swap.Cost - swap.SellGold, swap.GoldMissing) : null;
 
         var fullBuild = FullBuild(myChampion, myItems, ranked, boots, profile, myAugments, iAmMagic, swap?.Sell);
-        var skills = stats.BestSkills(myChampion) is { } s ? new SkillAdvice(s.MaxOrder, s.Start, s.Rate, s.Games) : null;
+        // El orden de maximizar habilidades: el que más se juega con el campeón en Caos (aramkit); sin eso, el de tus partidas.
+        var skills = CommonSkills(myChampion) ?? (stats.BestSkills(myChampion) is { } s ? new SkillAdvice(s.MaxOrder, s.Start, s.Rate, s.Games) : null);
         // Objetos empezados que no son la siguiente compra: el overlay ofrece "me quedo con este".
         var building = ranked.Where(a => a.InProgress && a.Item.Id != next?.Item.Id).Take(2).ToList();
         var plan = Plan(myChampion, myItems, enemies, profile, myAugments, iAmMagic, ranked, fullBuild);
         return new Advice(profile, items, boots, next, skills, myAugments, swap, full, fullBuild, building, plan,
             Direction(myChampion, myItems, myAugments), phase, StyleOptions(myChampion, myItems), StyleSource(myChampion, myAugments));
+    }
+
+    /// <summary>
+    /// El orden de maximizar habilidades más jugado con el campeón en Caos (aramkit: los 5 más comunes, con millones de
+    /// partidas) y qué parte de sus partidas lo juega. Lo pidió un jugador el 2026-11-06 («show common skill progression»).
+    /// Null sin datos.
+    /// </summary>
+    public SkillAdvice? CommonSkills(string champion)
+    {
+        var alias = Data.Champion(champion)?.Alias ?? champion;
+        var orders = stats.AramkitBuilds.Skills(alias);
+        if (orders.Count == 0) return null;
+        int total = Math.Max(stats.AramkitBuilds.Games(alias), orders.Sum(o => o.Games));
+        var top = orders[0];
+        return new SkillAdvice(top.Order, "", top.WinRate / 100, top.Games, (double)top.Games / total);
     }
 
     /// <summary>Precio desde el que un objeto terminado cuenta como «tu primer objeto» (después van las botas).</summary>
@@ -520,7 +537,7 @@ public sealed partial class Advisor(StatsStore stats)
             bool armorOnly = item.Has("Armor") && !item.Has("SpellBlock"), mrOnly = item.Has("SpellBlock") && !item.Has("Armor");
             bool apItem = ApItem.Any(item.Has) && !AdItem.Any(item.Has), adItem = AdItem.Any(item.Has) && !ApItem.Any(item.Has);
             bool attackItem = AttackItem.Any(item.Has) && !AbilityItem.Any(item.Has);
-            if (_critCapped && item.Has("CriticalStrike") && item.Id != InfinityEdge) why = L("da crítico y ya tienes el 100 %", "it gives crit and you are already at 100%");
+            if (_critCapped && item.Has("CriticalStrike") && item.Id != InfinityEdge) why = L("da crítico y ya tienes el 100 % (el de más solo se convierte en un poco de daño)", "it gives crit and you are already at 100% (extra crit only turns into a little damage)");
             else if (item.IsBoots && armorOnly && lean > 0.05) why = L($"botas de armadura y el {profile.MagicShare:P0} del daño enemigo es mágico: mejor Botas de Mercurio", $"armor boots but {profile.MagicShare:P0} of enemy damage is magic: get Mercury's Treads");
             else if (armorOnly && lean > 0.07) why = L($"da armadura y el {profile.MagicShare:P0} del daño enemigo es mágico", $"gives armor but {profile.MagicShare:P0} of enemy damage is magic");
             else if (mrOnly && lean < -0.07) why = L($"da resist. mágica y el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"gives magic resist but {1 - profile.MagicShare:P0} of enemy damage is physical");
@@ -723,7 +740,9 @@ public sealed partial class Advisor(StatsStore stats)
 
         // Con el 100 % de crítico, el crítico que da el aumento se pierde (Absorción de Alma salía con nota alta: Wakka, Jhin).
         if (critChance >= CritCap && StatTags.GivesCritChance(candidate))
-            Add(-0.05, L("ya tienes el 100 % de crítico: el que da se pierde", "you are already at 100% crit: its crit is wasted"));
+            // En Caos el crítico de más no se pierde del todo: cada 1 % da 0,45 de AD o 0,75 de AP (wiki de LoL, ARAM: Mayhem).
+            Add(-0.05, L("ya tienes el 100 % de crítico: el que da de más solo se convierte en un poco de daño",
+                         "you are already at 100% crit: the extra crit only turns into a little damage"));
 
         // Aumentos que mejoran o piden un objeto («Mejorar Filo del Infinito», «Descarga Tormentosa Mejorada»…): si ese
         // objeto no es para tu build, o no se puede llevar con lo que ya tienes, el aumento casi no te sirve.

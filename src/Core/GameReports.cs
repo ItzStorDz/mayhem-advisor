@@ -7,7 +7,7 @@ namespace MayhemAdvisor.Core;
 /// jugadores) junto con el diario de la app (<see cref="GameJournal"/>: cartas con su nota, compras recomendadas, muertes).
 /// Todo sale de tu PC: no se pide nada a ningún servidor.
 /// </summary>
-public sealed class GameReports(GameData data, AugmentCatalog catalog, StatsStore stats)
+public sealed partial class GameReports(GameData data, AugmentCatalog catalog, StatsStore stats)
 {
     /// <summary>Un jugador de la partida con lo que hace falta para el resumen.</summary>
     sealed record P(int Id, int Team, string Alias, string Player, bool Win, int K, int D, int A, int Dmg, int Taken, int Mitigated,
@@ -173,7 +173,9 @@ public sealed class GameReports(GameData data, AugmentCatalog catalog, StatsStor
         var buys = (journal?.Buys ?? []).Select(b => new { min = b.Minute, item = ItemDto(b.ItemId), why = journal!.Lang == Lang.Code ? b.Reason : "", bought = finalItems.Contains(b.ItemId) }).ToList();
 
         var deaths = journal?.Deaths ?? [];
-        var tips = Tips(me, myRanks, myScore, place, augs.Select(x => (x.name, x.score, x.grade, x.offered?.Select(o => (o.name, o.score, o.grade)).ToList(), (double?)x.minute)).ToList(), deaths);
+        var tips = Tips(me, myRanks, myScore, place, augs.Select(x => (x.name, x.score, x.grade, x.offered?.Select(o => (o.name, o.score, o.grade)).ToList(), (double?)x.minute)).ToList(), deaths)
+            // Y lo que dicen los 10 jugadores de esa partida: curación rival, tipo de daño, hechizos, participación (GameTips.cs).
+            .Concat(GameRuleTips(g, me).OrderByDescending(t => t.Weight).Select(t => t.Text)).Distinct().Take(5).ToList();
 
         object Player(P p)
         {
@@ -243,10 +245,11 @@ public sealed class GameReports(GameData data, AugmentCatalog catalog, StatsStor
     {
         var tips = new List<string>();
         if (place == 1) tips.Add(L("Fuiste el mejor de los 10 jugadores en esta partida. ¡Así se juega!", "You were the best of all 10 players this game. Well played!"));
-        var spent = deaths.Where(x => x.Gold >= 1300).ToList();
+        // Con el oro que te quedó al reaparecer (desde la 1.8.3): el de al morir no vale, muerto se compra.
+        var spent = deaths.Where(x => x.Left is >= 1300).ToList();
         if (spent.Count >= 2)
-            tips.Add(L($"Moriste {spent.Count} veces con más de 1.300 de oro sin gastar (de media {(int)spent.Average(x => x.Gold):N0}). Al morir estás en la tienda: compra antes de volver.",
-                       $"You died {spent.Count} times with 1,300+ unspent gold (avg {(int)spent.Average(x => x.Gold):N0}). When dead you're in the shop: buy before going back."));
+            tips.Add(L($"Volviste a la partida {spent.Count} veces con más de 1.300 de oro sin gastar (de media {(int)spent.Average(x => x.Left!.Value):N0}). Muerto estás en la tienda: compra antes de reaparecer.",
+                       $"You respawned {spent.Count} times with 1,300+ unspent gold (avg {(int)spent.Average(x => x.Left!.Value):N0}). When dead you're in the shop: buy before you respawn."));
         foreach (var a in augs)
             if (a.Offered is { Count: > 0 } off && off.MaxBy(o => o.Score) is var top && top.Score >= a.Score + 20)
             {

@@ -4,7 +4,9 @@ namespace MayhemAdvisor.Core;
 /// <summary>Hechizos de invocador recomendados para un campeón, con datos de todos los jugadores (mayhemmeta.com).</summary>
 /// <param name="WinRate">% de victorias con esa pareja (0-1).</param>
 /// <param name="PickRate">% de jugadores de ese campeón que la llevan (0-1).</param>
-public sealed record SpellAdvice(IReadOnlyList<string> Names, IReadOnlyList<string> Icons, double WinRate, double PickRate, int Games, string Reason);
+/// <param name="Keys">Los dos hechizos con su nombre en inglés de los datos ("Flash", "Mark"), para compararlos.</param>
+public sealed record SpellAdvice(IReadOnlyList<string> Names, IReadOnlyList<string> Icons, double WinRate, double PickRate, int Games, string Reason,
+    IReadOnlyList<string>? Keys = null);
 
 public static class SummonerSpells
 {
@@ -53,10 +55,13 @@ public static class SummonerSpells
         return new SpellAdvice(
             best.Combo.Spells.Select(SpellName).ToList(),
             best.Combo.Spells.Select(s => Known.TryGetValue(s, out var k) ? GameData.IconUrl(k.Icon) : "").ToList(),
-            best.Rate, best.Combo.PickRate!.Value / 100, (int)best.Games, reason);
+            best.Rate, best.Combo.PickRate!.Value / 100, (int)best.Games, reason, best.Combo.Spells);
     }
 
     static string Pair(MayhemSpellCombo c) => string.Join(" + ", c.Spells.Select(SpellName));
+
+    /// <summary>"Destello + Marca" en el idioma elegido, a partir de los nombres en inglés de los datos ("Flash", "Mark").</summary>
+    public static string PairName(IEnumerable<string> spells) => string.Join(" + ", spells.Select(SpellName));
     /// <summary>Los datos traen el nombre en inglés ("Flash"); en español, el del juego ("Destello").</summary>
     static string SpellName(string s) => English ? s : Known.GetValueOrDefault(s).Name ?? s;
 }

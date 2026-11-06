@@ -43,7 +43,6 @@ public partial class App
                 last10 = recent.Take(10).Reverse().Select(m => new { win = m.Win, kda = Math.Round(m.Kda, 1) }),
                 streak = new { win = recent[0].Win, count = streak },
                 top = mostPlayed.Take(4).Select(c => new { c.Name, c.Icon, c.Games, c.WinRate, kda = c.Kda }),
-                tips = Tips(all, mostPlayed),
             };
         }
 
@@ -53,6 +52,8 @@ public partial class App
             profile = profile is null ? null : new { name = profile.Name, tag = profile.Tag, level = profile.Level,
                 icon = profile.Icon > 0 ? $"https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/{profile.Icon}.jpg" : null },
             stats,
+            // Consejos: los de tus partidas (GameTips.cs) y los generales del modo y de la app (ModeTips.cs), también sin partidas.
+            tips = new { personal = PersonalTips(all), general = ModeTips.All(SpellsFact()).Select(g => new { kind = g.Kind, text = g.Text }) },
             history = all.Take(30).Select(m => new
             {
                 champion = _data.ChampionName(m.Champion), icon = _data.Champion(m.Champion)?.Icon, win = m.Win,
@@ -70,34 +71,102 @@ public partial class App
         new(alias, _data.ChampionName(alias), _data.Champion(alias)?.Icon, games.Count, games.Count(m => m.Win) / (double)games.Count,
             Math.Round(games.Sum(m => m.Kills + m.Assists) / (double)Math.Max(1, games.Sum(m => m.Deaths)), 1));
 
-    /// <summary>Consejos sacados de tus partidas (solo si hay datos suficientes para que digan algo).</summary>
-    List<string> Tips(List<MyMatch> all, List<ChampStat> champs)
+    /// <summary>
+    /// Consejos de tus partidas (ver GameReports.HomeTips). Antes eran 4 reglas y como mucho 2; una decía «en N de tus
+    /// derrotas no compraste botas», y en Caos el 26-38 % no las compra nunca (aramkit): fuera.
+    /// </summary>
+    List<string> PersonalTips(List<MyMatch> all)
+    {
+        if (all.Count < 5)
+            return [L("Juega unas cuantas partidas de ARAM: Caos más y aquí verás consejos sacados de tus propias partidas.",
+                      "Play a few more ARAM: Mayhem games and you'll see tips based on your own games here.")];
+        try
+        {
+            var tips = Reports().HomeTips(all);
+            return tips.Count > 0 ? tips : [L("Vas bien: sigue usando la nota de los aumentos y la pestaña «Adaptar» cuando el equipo enemigo vaya muy cargado a un tipo de daño.",
+                                               "Looking good: keep using the augment scores and the “Adapt” tab when the enemy team leans hard into one damage type.")];
+        }
+        catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException or InvalidOperationException or KeyNotFoundException)
+        {
+            Log.Write($"No pude sacar los consejos: {ex.GetType().Name}: {ex.Message}");
+            return [];
+        }
+    }
+
+    /// <summary>La pareja de hechizos más usada en Caos (mayhemmeta, por partidas de cada campeón), para los consejos.</summary>
+    string? SpellsFact()
+    {
+        var pairs = new Dictionary<string, (double Games, string[] Keys)>();
+        double total = 0;
+        foreach (var c in _builds.Champions)
+        {
+            if (c.Games is not { } games) continue;
+            foreach (var combo in c.Spells)
+            {
+                if (combo.Spells.Count != 2 || combo.PickRate is not { } pick) continue;
+                var keys = combo.Spells.Order(StringComparer.OrdinalIgnoreCase).ToArray();
+                var key = string.Join("+", keys);
+                double n = games * pick / 100;
+                pairs[key] = (pairs.GetValueOrDefault(key).Games + n, keys);
+                total += n;
+            }
+        }
+        if (total <= 0) return null;
+        var top = pairs.Values.MaxBy(p => p.Games);
+        return L($"La pareja de hechizos más usada en Caos es {SummonerSpells.PairName(top.Keys)}: la lleva el {top.Games / total:P0} de los jugadores (mayhemmeta). En la selección de campeón, el panel te dice cuál gana más con tu campeón.",
+                 $"The most used summoner spell pair in Mayhem is {SummonerSpells.PairName(top.Keys)}: {top.Games / total:P0} of players take it (mayhemmeta). In champion select, the panel tells you which wins more on your champion.");
+    }
+
+    /// <summary>Los órdenes de subir habilidades del campeón (aramkit), con qué parte lo juega y su % de victorias; null sin datos.</summary>
+    object? SkillRows(string alias)
+    {
+        var orders = _aramkitBuilds.Skills(alias);
+        if (orders.Count == 0) return null;
+        int total = Math.Max(_aramkitBuilds.Games(alias), orders.Sum(o => o.Games));
+        return orders.Select(o => new { order = string.Join(" › ", o.Order.ToCharArray()), share = (double)o.Games / total, winRate = o.WinRate / 100, games = o.Games });
+    }
+
+    /// <summary>
+    /// Consejos de la página de un campeón, de datos de todos los jugadores (como mucho 6): su puesto en Caos, la build que
+    /// lleva la mayoría (o la que gana más), hechizos, cómo se suben sus habilidades, el objeto que más sube su %, su escalado
+    /// y las botas más usadas. Sin % de victorias de aumentos (Riot no lo permite).
+    /// </summary>
+    List<string> ChampionTips(string alias, MayhemChampion? meta, MayhemChampionBuild? build, IReadOnlyList<BuildStyle> styles, ChampionKit? kit)
     {
         var tips = new List<string>();
-        if (all.Count < 5)
+        string name = _data.ChampionName(alias);
+        if (meta is { WinRate: { } wr } && _mayhem.RankOf(alias) is var rank and > 0)
+            tips.Add(L($"Es el n.º {rank} de {_mayhem.Champions.Count} campeones en Caos: gana el {wr:0.#} % de sus partidas (tier {meta.Tier}).",
+                       $"It's #{rank} of {_mayhem.Champions.Count} champions in Mayhem: it wins {wr:0.#}% of its games ({meta.Tier} tier)."));
+        int styleGames = styles.Sum(st => st.Games);
+        if (styles.Count > 0 && styleGames > 0)
         {
-            tips.Add(L("Juega unas cuantas partidas de ARAM: Caos más y aquí verás consejos sacados de tus propias partidas.",
-                       "Play a few more ARAM: Mayhem games and you'll see tips based on your own games here."));
-            return tips;
+            var first = styles[0];
+            var better = styles.Skip(1).FirstOrDefault(st => st.Games >= styleGames * 0.1 && st.WinRate - first.WinRate >= 1);
+            tips.Add(better is null
+                ? L($"La mayoría va de {Advisor.StyleName(first.Key)}: el {(double)first.Games / styleGames:P0} de las partidas (aramkit).",
+                    $"Most players go {Advisor.StyleName(first.Key)}: {(double)first.Games / styleGames:P0} of games (aramkit).")
+                : L($"La mayoría va de {Advisor.StyleName(first.Key)} ({(double)first.Games / styleGames:P0}), pero la build de {Advisor.StyleName(better.Key)} ({(double)better.Games / styleGames:P0}) gana más: {better.WinRate:0.#} % frente a {first.WinRate:0.#} %. En la partida puedes fijarla en «TIPO DE BUILD».",
+                    $"Most players go {Advisor.StyleName(first.Key)} ({(double)first.Games / styleGames:P0}), but the {Advisor.StyleName(better.Key)} build ({(double)better.Games / styleGames:P0}) wins more: {better.WinRate:0.#}% vs {first.WinRate:0.#}%. In game you can lock it in “BUILD TYPE”."));
         }
-        if (champs.Where(c => c.Games >= 3).OrderByDescending(c => c.WinRate).FirstOrDefault() is { WinRate: >= 0.6 } good)
-            tips.Add(L($"Con {good.Name} ganas el {good.WinRate:P0} ({good.Games} partidas): si te sale en el banco, cógelo.",
-                       $"You win {good.WinRate:P0} with {good.Name} ({good.Games} games): grab it if it shows up on the bench."));
-        if (champs.Where(c => c.Games >= 3).OrderBy(c => c.WinRate).FirstOrDefault() is { WinRate: <= 0.34 } bad)
-            tips.Add(L($"Con {bad.Name} solo ganas el {bad.WinRate:P0} ({bad.Games} partidas): mira su pestaña en Campeones para ver qué compra la gente que gana.",
-                       $"You only win {bad.WinRate:P0} with {bad.Name} ({bad.Games} games): check its Champions page to see what winners build."));
-        var recent = all.Take(20).ToList();
-        double deaths = recent.Average(m => m.Deaths);
-        if (deaths >= 9)
-            tips.Add(L($"Mueres de media {deaths:0.#} veces por partida: un objeto defensivo antes (la pestaña «Adaptar» del panel te dice cuál) puede ayudarte.",
-                       $"You die {deaths:0.#} times per game on average: an earlier defensive item (the in-game “Adapt” tab tells you which) can help."));
-        var lossesWithoutBoots = recent.Where(m => !m.Win).Count(m => !m.Items.Select(_data.Item).Any(i => i?.IsBoots == true));
-        if (lossesWithoutBoots >= 3)
-            tips.Add(L($"En {lossesWithoutBoots} de tus derrotas recientes no compraste botas.", $"In {lossesWithoutBoots} of your recent losses you didn't buy boots."));
-        if (tips.Count == 0)
-            tips.Add(L("Vas bien: sigue usando la nota de los aumentos y la pestaña «Adaptar» cuando el equipo enemigo vaya muy cargado a un tipo de daño.",
-                       "Looking good: keep using the augment scores and the “Adapt” tab when the enemy team leans hard into one damage type."));
-        return tips.Take(2).ToList();
+        if (SummonerSpells.Recommend(build) is { } spells)
+            tips.Add(L($"Hechizos: {string.Join(" + ", spells.Names)} ({spells.Reason}).", $"Spells: {string.Join(" + ", spells.Names)} ({spells.Reason})."));
+        if (new Advisor(_stats).CommonSkills(alias) is { } skills)
+            tips.Add(L($"Habilidades: el {skills.Share:P0} maximiza {string.Join(" › ", skills.MaxOrder.ToCharArray())} (aramkit).",
+                       $"Skills: {skills.Share:P0} max {string.Join(" › ", skills.MaxOrder.ToCharArray())} (aramkit)."));
+        if (build is { WinRate: { } champWr } && build.ItemsBest.Concat(build.ItemsCommon)
+                .Where(i => i.WinRate.HasValue && i.PickRate >= 5 && build.GamesWith(i) >= 300 && _data.Item(i.Id) is { IsBoots: false, InStore: true })
+                .MaxBy(i => i.WinRate) is { } bestItem && bestItem.WinRate > champWr + 1)
+            tips.Add(L($"De lo que se compra con {name}, lo que más gana es {_data.Item(bestItem.Id)!.DisplayName}: {bestItem.WinRate:0.#} % en ~{build.GamesWith(bestItem):N0} partidas (lo compra el {bestItem.PickRate:0} %).",
+                       $"Of what {name} players buy, {_data.Item(bestItem.Id)!.DisplayName} wins the most: {bestItem.WinRate:0.#}% in ~{build.GamesWith(bestItem):N0} games ({bestItem.PickRate:0}% buy it)."));
+        if (kit?.Late >= 2)
+            tips.Add(kit.Late >= 3
+                ? L("Escala sin límite (cargas que no paran de crecer): cuanto más dure la partida, más fuerte es.", "Scales without limit (stacks that keep growing): the longer the game, the stronger it gets.")
+                : L("Es fuerte en partida larga: no te desesperes si el principio va lento.", "Strong in long games: don't despair if the start is slow."));
+        if (build?.Boots.Where(b => b.PickRate.HasValue).MaxBy(b => b.PickRate) is { } boots && _data.Item(boots.Id) is { } bootsItem)
+            tips.Add(L($"Botas más usadas: {bootsItem.DisplayName} (el {boots.PickRate:0} %), después del primer objeto.",
+                       $"Most used boots: {bootsItem.DisplayName} ({boots.PickRate:0}%), after the first item."));
+        return tips.Take(6).ToList();
     }
 
     /// <summary>Página de un campeón: cabecera, build más popular con su % y los aumentos con mejor nota de cada rareza.</summary>
@@ -158,6 +227,9 @@ public partial class App
                 stacks = ChampionKit.Keys(kit.Stacks), late = kit.Late,
             },
             styles = styleRows,
+            tips = ChampionTips(info?.Alias ?? alias, meta, build, styles, kit),
+            // Órdenes de subir habilidades (aramkit): parte de las partidas y % de victorias (de campeones, que sí se puede).
+            skills = SkillRows(info?.Alias ?? alias),
         };
     }
 

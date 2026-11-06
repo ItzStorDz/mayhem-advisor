@@ -16,6 +16,25 @@ var stats = StatsStore.Load(Path.Combine(Paths.DataDir, "no-existe.jsonl"), data
 var builds = MayhemBuilds.Load(DataFiles.Resolve("mayhem-champion-builds.json"));
 var table = MayhemAugments.Load(DataFiles.Resolve("mayhem-augments.json"));
 catalog = catalog.WithExtraDescriptions(table.Descriptions);
+// EVAL_EXTRA_DESC=<json {id: {text}}>: otras descripciones en inglés (p. ej. las de la wiki de LoL) además de las de
+// mayhemmeta, para medir si leer mejor los aumentos acierta más objetos. Se suman sus estadísticas, no se pierden las de antes.
+if (Environment.GetEnvironmentVariable("EVAL_EXTRA_DESC") is { Length: > 0 } extraFile)
+{
+    using var extraDoc = JsonDocument.Parse(File.ReadAllText(extraFile));
+    var extra = extraDoc.RootElement.EnumerateObject()
+        .Where(p => int.TryParse(p.Name, out _) && p.Value.TryGetProperty("text", out _))
+        .ToDictionary(p => int.Parse(p.Name), p => p.Value.GetProperty("text").GetString() ?? "");
+    var before = catalog.Augments.ToDictionary(a => a.Id, a => a.StatList.Length);
+    var merged = catalog.Augments.Select(a => extra.TryGetValue(a.Id, out var t) && t != ""
+        ? a with { Stats = a.StatList.Union(StatTags.FromDescription(t)).ToArray(), ExtraDescription = (a.ExtraDescription + " " + t).Trim() } : a).ToList();
+    catalog = AugmentCatalog.FromList(merged);
+    Console.WriteLine($"Descripciones extra: {extra.Count}; aumentos con más estadísticas: {catalog.Augments.Count(a => a.StatList.Length > before.GetValueOrDefault(a.Id))}" +
+                      $"; sin ninguna: {before.Count(kv => kv.Value == 0)} → {catalog.Augments.Count(a => !a.IsAnvil && a.StatList.Length == 0)}");
+}
+// EVAL_STYLE_MINSHARE / EVAL_STYLE_MINGAMES: desde qué parte de la gente (y cuántas partidas) con tus aumentos se cambia
+// a otro estilo de build (AugmentBuilds.Pick). Para medir si conviene cambiar antes (p. ej. a on-hit con aumentos on-hit).
+if (double.TryParse(Environment.GetEnvironmentVariable("EVAL_STYLE_MINSHARE"), System.Globalization.CultureInfo.InvariantCulture, out var ms)) AugmentBuilds.MinShare = ms;
+if (int.TryParse(Environment.GetEnvironmentVariable("EVAL_STYLE_MINGAMES"), out var mg)) AugmentBuilds.MinGames = mg;
 stats.Global = builds;
 stats.AugmentTable = table;
 stats.Aramhex = ExternalAugments.Load(DataFiles.Resolve("aramhex-augments.json"));

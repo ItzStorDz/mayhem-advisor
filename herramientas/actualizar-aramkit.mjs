@@ -89,7 +89,11 @@ for (const [i, id] of ids.entries()) {
     const augments = {};
     for (const b of single.builds ?? [])
       if (b.sampleCount >= MIN_BUILD_GAMES) augments[b.augmentId] = { games: b.sampleCount, styles: styles(b.archetypes) };
-    builds[alias] = { games: st.sampleCount, winRate: +(st.winRate * 100).toFixed(2), styles: styles(d.builds?.filtered?.archetypes), augments };
+    // Orden de subir habilidades ("Q>W>E": la que se maximiza primero, la segunda y la tercera), con partidas y % de victorias
+    // (2026-11-06: un jugador pidió «show common skill progression»).
+    const skills = (d.skills ?? []).filter((s) => /^[QWE]>[QWE]>[QWE]$/.test(s.order ?? "") && s.sampleCount > 0)
+      .map((s) => [s.order, s.sampleCount, +(s.winRate * 100).toFixed(2)]);
+    builds[alias] = { games: st.sampleCount, winRate: +(st.winRate * 100).toFixed(2), styles: styles(d.builds?.filtered?.archetypes), augments, skills };
   } catch (e) {
     failed++;
     console.error(`  ! ${alias}: ${e.message}`);

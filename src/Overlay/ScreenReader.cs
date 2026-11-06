@@ -122,6 +122,9 @@ public sealed class ScreenReader
 
     async Task<List<OcrLine>> ReadRegionAsync(Rectangle area, int scale)
     {
+        // Con la ventana del juego diminuta (minimizándose o cargando) la zona sale de 0 px de alto y el Bitmap lanzaba
+        // «Parameter is not valid» (2 veces en los resúmenes del 05/06-11): ahí no puede haber cartas.
+        if (area.Width < 40 || area.Height < 16) return [];
         using var bmp = new Bitmap(area.Width, area.Height, PixelFormat.Format32bppPArgb);
         using (var g = Graphics.FromImage(bmp))
             g.CopyFromScreen(area.Location, System.Drawing.Point.Empty, area.Size, CopyPixelOperation.SourceCopy);

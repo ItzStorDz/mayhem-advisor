@@ -61,6 +61,7 @@ window.mayhem.onData(message => {
           ${o.spells ? `<div class="spells">${o.spells.icons.map(i => i ? `<img src="${esc(i)}" alt="">` : '').join('')}
             <b>${esc(o.spells.names.join(' + '))}</b></div>
             ${o.isCurrent || o === best ? `<div class="r why">${esc(o.spells.reason)}</div>` : ''}` : ''}
+          ${o.skills && (o.isCurrent || o === best) ? `<div class="r">${tr('skillsShort', esc(o.skills.order.split('').join(' › ')))}</div>` : ''}
         </div>
         <div class="cs-side"><div class="wr" style="color:${color}">${pct(wr)}</div><small>${tr('wins')}</small>
           ${!o.isCurrent && o.championId ? `<button class="cs-btn ok sm" data-act="swap" data-id="${o.championId}">${tr('take')}</button>` : ''}</div>

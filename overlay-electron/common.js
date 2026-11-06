@@ -27,6 +27,9 @@ const OT = {
     canBuyPart: (n, g) => `Con tu oro ya puedes: <b>${n}</b> (${g})`,
     allies: (ad, ap, mx) => `Tus aliados: <b>${ad}</b> de AD · <b>${ap}</b> de AP${mx ? ` · ${mx} mixto${mx > 1 ? 's' : ''}` : ''}`, mixedDmg: 'mixto',
     compactView: 'Panel pequeño: solo qué comprar', fullView: 'Panel completo', nothingToBuy: 'Nada que comprar ahora.',
+    skillLine: (o, sh) => `🎯 Habilidades: maximiza <b>${o}</b>${sh ? ` (el ${Math.round(sh * 100)} % de los jugadores)` : ''}`,
+    skillsShort: o => `Habilidades: <b>${o}</b>`,
+    onHitHint: n => `Tienes aumentos de ataques (${n}): si quieres ir a por ellos, pulsa <b>on-hit</b> aquí arriba y todas las compras la seguirán.`,
     panelHint: 'Muévelo arrastrando esta barra · cambia su tamaño con la esquina de abajo a la izquierda · <b>⊟</b> = panel pequeño · <b>–</b> = minimizar',
   },
   en: {
@@ -52,6 +55,9 @@ const OT = {
     canBuyPart: (n, g) => `You can buy now: <b>${n}</b> (${g})`,
     allies: (ad, ap, mx) => `Your allies: <b>${ad}</b> AD · <b>${ap}</b> AP${mx ? ` · ${mx} mixed` : ''}`, mixedDmg: 'mixed',
     compactView: 'Small panel: just what to buy', fullView: 'Full panel', nothingToBuy: 'Nothing to buy right now.',
+    skillLine: (o, sh) => `🎯 Skills: max <b>${o}</b>${sh ? ` (${Math.round(sh * 100)}% of players)` : ''}`,
+    skillsShort: o => `Skills: <b>${o}</b>`,
+    onHitHint: n => `You have attack augments (${n}): if you want to lean into them, tap <b>on-hit</b> above and every purchase will follow it.`,
     panelHint: 'Drag this bar to move it · resize it from the bottom-left corner · <b>⊟</b> = small panel · <b>–</b> = minimize',
   },
 };

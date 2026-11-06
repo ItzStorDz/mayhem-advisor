@@ -97,7 +97,7 @@ public static class Anvil
                 Add(t == "Lethality" && !magic, tanky || enemies.ArmorItems >= 3 ? 3 : 2, tanky ? L("penetración contra tanques", "penetration vs tanks") : L("más daño físico", "more physical damage"));
                 Add(t == "Crit" && marksman && !magic && !critCapped, 2.5, L("eres tirador", "you are a marksman"));
                 Add(t == "Crit" && critUse && !critCapped, 2.5, L("tu aumento usa el crítico", "your augment uses crit"));
-                Add(t == "Crit" && critCapped && !critDamage, -4, L("ya tienes el 100 % de crítico", "you are already at 100% crit"));
+                Add(t == "Crit" && critCapped && !critDamage, -4, L("ya tienes el 100 % de crítico (el de más da poco daño)", "you are already at 100% crit (extra crit gives little damage)"));
                 Add(t == "Crit" && critCapped && critDamage && (critUse || marksman && !magic), 3, L("con el 100 % de crítico, más daño crítico", "at 100% crit, more crit damage"));
                 Add(t == "AS" && marksman, 2.5, L("eres tirador", "you are a marksman"));
                 Add(t == "Haste" && !marksman, 1.5, L("más habilidades", "more abilities"));

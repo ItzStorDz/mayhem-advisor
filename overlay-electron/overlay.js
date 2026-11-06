@@ -202,6 +202,8 @@ function buyTab(game) {
   // Momento de la partida y el dato del equipo enemigo que más condiciona la build.
   const facts = [game.gamePhase, game.enemyFact].filter(Boolean);
   if (facts.length) parts.push(`<div class="pn-facts">${facts.map(f => `<span>${esc(f)}</span>`).join('')}</div>`);
+  // El orden de subir habilidades más jugado con tu campeón en Caos (un jugador lo pidió el 06-11).
+  if (game.skills) parts.push(`<div class="pn-skill">${tr('skillLine', esc(game.skills.order.split('').join(' › ')), game.skills.share)}</div>`);
   // Selector de build (1.7.0): las builds que se juegan con tu campeón, la que sigue la app marcada (AUTO) y, con un clic,
   // la tuya fijada para el resto de la partida: todas las compras la siguen. Sin datos de builds, la dirección de antes.
   const styles = game.styles ?? [];
@@ -214,6 +216,7 @@ function buyTab(game) {
       <div class="pn-chips">${styles.map(s => `<button class="pn-chip${s.active ? ' on' : ''}${s.locked ? ' lock' : ''}" data-act="style" data-id="${esc(s.key)}"
           title="${esc(s.locked ? tr('unlockHint') : tr('lockHint', s.name))}"><b>${esc(s.name)}</b><small>${s.share > 0 ? pc(s.share) : tr('anyChamp')} · ${tr('chipWr', pc(s.winRate))}</small></button>`).join('')}</div>
       ${game.styleSource ? `<div class="pn-src">${esc(game.styleSource)}</div>` : ''}
+      ${game.onHitHint ? `<div class="pn-hint">⚡ ${tr('onHitHint', esc(game.onHitHint.names.join(', ')))}</div>` : ''}
       ${active.items?.length ? `<div class="pn-three">${active.items.map(i => `<div title="${esc(i.name)}">${icon(i.icon, 'icon')}</div>`).join('')}</div>` : ''}</div>`);
   } else if (d) parts.push(`<div class="pn-dir"><div class="pn-dir-h">🧭 ${tr('dirTitle')} <b>${esc(d.label)}</b></div>
     ${d.reason ? `<div class="pn-text">${esc(d.reason)}</div>` : ''}
@@ -227,7 +230,6 @@ function buyTab(game) {
     if (game.boots) parts.push(`<div class="pn-lbl">${tr('boots')}</div>${itemRow(game.boots, false)}`);
     if (game.augments?.length) parts.push(`<div class="pn-lbl">${tr('yourAugs')}</div><div class="augchips">${game.augments
       .map(a => `<span class="augchip">${icon(a.icon, '')}${esc(a.name)}</span>`).join('')}</div>`);
-    if (game.skills) parts.push(`<div class="pn-lbl">${tr('skills')}</div><div class="pn-text">${tr('maxOrder', esc(game.skills.order.split('').join(' › ')))}</div>`);
   }
   return parts.join('');
 }

@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "version": "16.21.8342754+branch.releases-16-21.content.release",
- "generatedAt": "2026-10-31T21:22:13.590Z",
+ "version": "16.22.8348910+branch.releases-16-22.content.release",
+ "generatedAt": "2026-11-06T23:03:19.578Z",
  "champions": {
   "Aatrox": {
    "name": "Aatrox",
@@ -200,7 +200,7 @@
     "mage"
    ],
    "ratios": {
-    "ap": 1.42
+    "ap": 1.46
    },
    "stacks": [
     "P"
@@ -460,7 +460,7 @@
     "mage"
    ],
    "ratios": {
-    "bonusAd": 6.5,
+    "bonusAd": 6.55,
     "ap": 2.5
    },
    "late": 1
@@ -1566,7 +1566,7 @@
     "support"
    ],
    "ratios": {
-    "ap": 1.59
+    "ap": 1.39
    },
    "shield": [
     "W"
@@ -2178,7 +2178,7 @@
     "mage"
    ],
    "ratios": {
-    "ap": 2.15
+    "ap": 2.2
    },
    "attackSpeed": [
     "P"
@@ -2968,7 +2968,7 @@
     "mage"
    ],
    "ratios": {
-    "ap": 1.8,
+    "ap": 1.9,
     "ad": 1
    },
    "shield": [
@@ -3115,7 +3115,7 @@
     "assassin"
    ],
    "ratios": {
-    "ad": 1.05,
+    "ad": 1,
     "bonusAd": 1.7,
     "ap": 0.6,
     "crit": 1

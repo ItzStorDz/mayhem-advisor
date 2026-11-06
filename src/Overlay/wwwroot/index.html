@@ -98,6 +98,8 @@
   .chart { display: flex; align-items: flex-end; gap: 6px; height: 56px; } .chart i { flex: 1; border-radius: 4px 4px 2px 2px; min-height: 8px; }
   .tip { background: linear-gradient(135deg, rgba(240, 200, 110, .14), rgba(120, 90, 255, .09)); border-color: rgba(240, 200, 110, .3); }
   .tip p { font-size: 13.5px; line-height: 1.45; } .tip p + p { margin-top: 8px; }
+  .daytip { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(10, 13, 19, .35); border: 1px solid rgba(240, 200, 110, .25); }
+  .daytip b { font-size: 12px; color: var(--gold2); } .daytip p { margin-top: 4px; }
   .livecard { display: flex; align-items: center; gap: 14px; }
 
   /* Campeones */
@@ -304,7 +306,10 @@ const T = {
     win: "Victoria", loss: "Derrota", winrate: "victorias", kdaAvg: "KDA medio", dmg: "daño por partida", bestChamp: "tu mejor campeón", starAug: "tu aumento estrella",
     vsWeek: d => `${d >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(d * 100))} % vs. la semana pasada`, gamesWr: (g, w) => `${g} partidas · ${w}`, timesPicked: g => `elegido ${g} veces`,
     last10: "TUS ÚLTIMAS 10", record: (w, l) => `${w} victorias · ${l} derrotas`, streak: (w, n) => ` · racha: <b class="${w ? "up" : "down"}">${n} ${w ? (n === 1 ? "victoria" : "victorias") : (n === 1 ? "derrota" : "derrotas")}</b>`,
-    topChamps: "CAMPEONES QUE MÁS JUEGAS", tip: "CONSEJO", min: m => `${m} min`,
+    topChamps: "CAMPEONES QUE MÁS JUEGAS", tip: "CONSEJOS", min: m => `${m} min`,
+    dayTip: "Consejo del día", moreTips: n => `Ver todos los consejos (${n}) ▾`, lessTips: "Ver menos ▴", tipsYou: "DE TUS PARTIDAS",
+    tipsMode: "CÓMO FUNCIONA CAOS", tipsApp: "SACA MÁS PARTIDO A LA APP", champTips: c => `CONSEJOS PARA ${c}`,
+    skillsTitle: "CÓMO SE SUBEN SUS HABILIDADES", skillsSub: "se maximiza primero · % de partidas · % de victorias",
     noHistory: "Aún no hay partidas tuyas guardadas. Abre el cliente de LoL: la app copia tu historial de ARAM: Caos sola (o pulsa «Copiar ahora» en Ajustes).",
     liveIn: c => `En partida con <b>${c}</b>`, liveNext: n => `compra ahora: <b class="gold">${n}</b>`, liveSelect: "Selección de campeón", liveBest: n => `Mejor opción del banco: <b class="gold">${n}</b>`,
     champSearch: "Buscar campeón…", cfAll: "Todos", cfMine: "Los que juego", cfTop: "Mejor tier", champCount: n => `${n} campeones`, patch: p => ` · parche ${p}`,
@@ -357,7 +362,10 @@ const T = {
     win: "Victory", loss: "Defeat", winrate: "win rate", kdaAvg: "average KDA", dmg: "damage per game", bestChamp: "your best champion", starAug: "your star augment",
     vsWeek: d => `${d >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(d * 100))}% vs. last week`, gamesWr: (g, w) => `${g} games · ${w}`, timesPicked: g => `picked ${g} times`,
     last10: "YOUR LAST 10", record: (w, l) => `${w} wins · ${l} losses`, streak: (w, n) => ` · streak: <b class="${w ? "up" : "down"}">${n} ${w ? (n === 1 ? "win" : "wins") : (n === 1 ? "loss" : "losses")}</b>`,
-    topChamps: "MOST PLAYED CHAMPIONS", tip: "TIP", min: m => `${m} min`,
+    topChamps: "MOST PLAYED CHAMPIONS", tip: "TIPS", min: m => `${m} min`,
+    dayTip: "Tip of the day", moreTips: n => `See all tips (${n}) ▾`, lessTips: "Show less ▴", tipsYou: "FROM YOUR GAMES",
+    tipsMode: "HOW MAYHEM WORKS", tipsApp: "GET MORE OUT OF THE APP", champTips: c => `TIPS FOR ${c}`,
+    skillsTitle: "HOW ITS SKILLS ARE LEVELED", skillsSub: "maxed first · % of games · win rate",
     noHistory: "No games of yours saved yet. Open the League client: the app copies your ARAM: Mayhem history on its own (or press “Copy now” in Settings).",
     liveIn: c => `In game with <b>${c}</b>`, liveNext: n => `buy now: <b class="gold">${n}</b>`, liveSelect: "Champion select", liveBest: n => `Best bench pick: <b class="gold">${n}</b>`,
     champSearch: "Search champion…", cfAll: "All", cfMine: "I play", cfTop: "Best tier", champCount: n => `${n} champions`, patch: p => ` · patch ${p}`,
@@ -528,12 +536,29 @@ function renderHome() {
       <div class="icons ai">${g.augments.map(a => `<img src="${esc(a.icon)}" title="${esc(a.name)}">`).join("")}</div>
       <div class="icons">${g.items.map(i => `<img src="${esc(i.icon)}" title="${esc(i.name)}">`).join("")}</div>
       <div class="when">${when(g.date)}</div></div>`).join("") : `<div class="empty">${t("noHistory")}</div>`;
-  $("#homeSide").innerHTML = s ? `
+  $("#homeSide").innerHTML = (s ? `
     <div class="card"><div class="lbl">${t("last10")}</div><div class="chart">${s.last10.map(g => `<i style="height:${Math.min(100, 25 + g.kda * 12)}%;background:${g.win ? "var(--green)" : "var(--red)"}" title="KDA ${g.kda}"></i>`).join("")}</div>
       <div class="muted" style="margin-top:8px;font-size:12px">${t("record", s.last10.filter(g => g.win).length, s.last10.filter(g => !g.win).length)}${t("streak", s.streak.win, s.streak.count)}</div></div>
     <div class="card"><div class="lbl">${t("topChamps")}</div>${s.top.map(c => `<div class="row"><img class="ico" src="${esc(c.icon)}"><div class="t"><b>${esc(c.name)}</b><span>${t("nGames", c.games)} · KDA ${dec(c.kda)}</span></div><span class="pill ${c.winRate >= .5 ? "g" : "r"}">${pct(c.winRate)}</span></div>`).join("")}</div>
-    <div class="card tip"><div class="lbl gold">${t("tip")}</div>${s.tips.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : "";
+` : "") + tipsCard(home?.tips);
 }
+
+// Consejos (1.8.3): 3 de tus partidas + el «Consejo del día» (cambia cada día) y, al abrir, todos: los tuyos, cómo funciona
+// Caos y lo que se usa poco de la app.
+let tipsOpen = false;
+function tipsCard(tp) {
+  if (!tp) return "";
+  const mine = tp.personal ?? [], general = tp.general ?? [];
+  const day = general.length ? general[Math.floor(Date.now() / 86400000) % general.length] : null;
+  const p = x => `<p>${esc(x)}</p>`;
+  const section = (key, list) => list.length ? `<div class="lbl gold" style="margin-top:16px">${t(key)}</div>${list.map(p).join("")}` : "";
+  const more = !tipsOpen ? "" : section("tipsYou", mine.slice(3)) + section("tipsMode", general.filter(g => g.kind === "mode").map(g => g.text))
+    + section("tipsApp", general.filter(g => g.kind === "app").map(g => g.text));
+  return `<div class="card tip"><div class="lbl gold">${t("tip")}</div>${mine.slice(0, 3).map(p).join("")}
+    ${day ? `<div class="daytip"><b>💡 ${t("dayTip")}</b><p>${esc(day.text)}</p></div>` : ""}${more}
+    <button class="back" data-tips style="margin-top:12px">${tipsOpen ? t("lessTips") : t("moreTips", mine.length + general.length)}</button></div>`;
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-tips]")) { tipsOpen = !tipsOpen; renderHome(); } });
 
 function renderLive() {
   const st = $("#status");
@@ -588,11 +613,19 @@ function renderChampDetail() {
           ${c.winRate != null ? `<span class="pill ${c.winRate >= .5 ? "g" : "r"}">${t("wrPill", pct(c.winRate, 1))}</span>` : ""}
           ${c.games ? `<span class="pill n">${t("gamesPill", num(c.games))}</span>` : ""}
           ${c.mine ? `<span class="pill" style="background:rgba(240,200,110,.15);color:var(--gold2)">${t("you", c.mine.wins, c.mine.games)} · KDA ${dec(c.mine.kda)}</span>` : ""}</div></div></div></div>
+    ${c.tips?.length ? `<div class="card tip" style="margin-top:16px"><div class="lbl gold">${t("champTips", esc(c.name.toUpperCase()))}</div>${c.tips.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}
     <div class="three" style="margin-top:16px">
       <div class="card"><div class="lbl"><span>${t("build")}</span><em>${t("wr")}</em></div>${c.items.length ? c.items.map(i => `<div class="row"><img class="ico" src="${esc(i.icon)}"><div class="t"><b>${esc(i.name)}</b><span>${t("nGames", num(i.games))}</span></div><span class="pill ${i.winRate >= (c.winRate ?? .5) ? "g" : "r"}">${pct(i.winRate, 1)}</span></div>`).join("") : `<div class="muted">${t("noData")}</div>`}</div>
       <div class="card"><div class="lbl"><span>${t("bestAugs")}</span><em>${t("prismatic")}</em></div>${augList(c.augments.prismatic, "#c29bff")}<div class="lbl" style="margin-top:14px">${t("gold")}</div>${augList(c.augments.gold, "#f0d080")}</div>
       <div class="card"><div class="lbl">${t("silver")}</div>${augList(c.augments.silver, "#c9d1da")}</div>
-    </div>${kitCards(c)}`;
+    </div>${kitCards(c)}${skillsCard(c)}`;
+}
+// Cómo sube la gente sus habilidades (aramkit): lo pidió un jugador («show common skill progression»).
+function skillsCard(c) {
+  if (!c.skills?.length) return "";
+  return `<div class="card" style="margin-top:16px"><div class="lbl"><span>${t("skillsTitle")}</span><em>${t("skillsSub")}</em></div>
+    ${c.skills.map(s => `<div class="row"><div class="t"><b style="letter-spacing:.06em">${esc(s.order)}</b><span>${t("nGames", num(s.games))}</span></div>
+      <span class="pill n">${pct(s.share, 0)}</span><span class="pill ${s.winRate >= (c.winRate ?? .5) ? "g" : "r"}">${pct(s.winRate, 1)}</span></div>`).join("")}</div>`;
 }
 // Para qué sirve su kit (campeones-kit.json) y las builds que se juegan con él.
 function kitCards(c) {

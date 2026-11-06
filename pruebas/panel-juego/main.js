@@ -32,12 +32,14 @@ const game = lang => {
     ],
     building: [], kept: [], bestAugments: null, direction: null, plan: null, inventoryFull: false,
     styles: [
-      { key: 'on_hit', name: 'on-hit', share: 0.61, winRate: 0.524, active: true, locked: false, items: [3124, 3115, 3302].map(id => ({ name: String(id), icon: icon(id) })) },
-      { key: 'ap', name: 'AP', share: 0.32, winRate: 0.511, active: false, locked: false, items: [] },
+      { key: 'crit', name: es ? 'crítico' : 'crit', share: 0.61, winRate: 0.524, active: true, locked: false, items: [3124, 3115, 3302].map(id => ({ name: String(id), icon: icon(id) })) },
+      { key: 'on_hit', name: 'on-hit', share: 0.32, winRate: 0.511, active: false, locked: false, items: [] },
     ],
     styleSource: es ? 'lo habitual con Kayle' : 'the usual Kayle build',
     fullBuild: [3006, 3124, 3115, 3302, 2510, 3153].map(id => ({ item: item(id, String(id)), owned: false })),
-    augments: [], cards: [], skills: null,
+    augments: [], cards: [], skills: { order: 'QEW', winRate: 0.51, games: 900000, share: 0.62 },
+    // 2+ aumentos de ataques y on-hit sin fijar: el aviso de «puedes fijar on-hit».
+    onHitHint: { names: es ? ['Espada de Fuego', '¡¡¡ABEJAS!!!'] : ['Firebrand', 'BEES!!!'] },
   };
 };
 const live = lang => ({ type: 'live', phase: 'ingame', status: '', lang, panel: true, autoAugmentsTab: true,

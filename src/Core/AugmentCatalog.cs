@@ -64,6 +64,9 @@ public sealed class AugmentCatalog
 
     public Augment? Get(int id) => _byId.GetValueOrDefault(id);
 
+    /// <summary>Un catálogo con estos aumentos (para las herramientas de pruebas que prueban otras descripciones).</summary>
+    public static AugmentCatalog FromList(IEnumerable<Augment> augments) => new(augments.ToList());
+
     /// <summary>
     /// Completa con las descripciones de mayhemmeta.com (en inglés) los aumentos que el juego deja sin texto
     /// o sin estadísticas reconocidas, para que también se sepa con qué objetos van. Las que ya hay no se tocan.

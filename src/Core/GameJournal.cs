@@ -21,10 +21,15 @@ public sealed record JournalBuy(
     [property: JsonPropertyName("item")] int ItemId,
     [property: JsonPropertyName("why")] string Reason);
 
-/// <summary>Una muerte: minuto y oro que llevabas sin gastar.</summary>
+/// <summary>
+/// Una muerte: minuto, oro al morir y oro al reaparecer (<paramref name="Left"/>, desde la 1.8.3). El oro al morir NO es oro
+/// sin gastar: muerto estás en la tienda y compras ahí. Lo que quedaba al reaparecer sí (antes, «moriste 89 veces con
+/// 1.300+ de oro sin gastar» contaba compras normales). Null en los diarios de antes.
+/// </summary>
 public sealed record JournalDeath(
     [property: JsonPropertyName("min")] double Minute,
-    [property: JsonPropertyName("gold")] int Gold);
+    [property: JsonPropertyName("gold")] int Gold,
+    [property: JsonPropertyName("left")] int? Left = null);
 
 /// <summary>
 /// El diario de una partida: lo que la app vio y recomendó mientras jugabas (cartas y su nota, compras, muertes).

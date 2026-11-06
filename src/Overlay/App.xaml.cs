@@ -300,6 +300,9 @@ public partial class App : System.Windows.Application
                 Log.Write($"Muerto (min {game.GameTime / 60:0}, reaparece en {game.RespawnTimer:0} s, oro {game.Gold:0})");
                 _journal?.Deaths.Add(new JournalDeath(Math.Round(game.GameTime / 60, 1), (int)game.Gold));
             }
+            // Al reaparecer: el oro que te quedó sin gastar (muerto se compra; el oro al morir no dice nada de eso).
+            if (!game.IsDead && _wasDead && _journal is { Deaths.Count: > 0 } jd && jd.Deaths[^1] is { Left: null } lastDeath)
+                jd.Deaths[^1] = lastDeath with { Left = (int)game.Gold };
             _gameMinutes = game.GameTime / 60;
             _lastMyItems = game.MyItems;
             _lastPhase = gamePhase;
@@ -1181,6 +1184,19 @@ public partial class App : System.Windows.Application
         }
     }
 
+    /// <summary>
+    /// Con 2+ aumentos de ataques u on-hit y un campeón que también se juega on-hit (sale en el selector de build sin estar
+    /// activa), un aviso en el panel: «puedes fijar on-hit». No cambia la build sola: cambiar antes de estilo acierta menos
+    /// lo que compra la gente (pruebas/evaluar-objetos, 2026-11-06: 45,2 → 45,0 %, on-hit 43,0 → 42,5 %). Lo pidió un jugador
+    /// con Yunara («con aumentos on-hit la build debería adaptarse más»). Null si no toca.
+    /// </summary>
+    object? OnHitHint(Advice advice)
+    {
+        if (advice.Styles?.FirstOrDefault(s => s.Key == "on_hit") is not { Active: false }) return null;
+        var augs = _myAugments.Where(a => !a.IsAnvil && a.StatList.Contains("OnHit")).ToList();
+        return augs.Count < 2 ? null : new { names = augs.Take(3).Select(a => a.DisplayName).ToList() };
+    }
+
     void PushLive(string phase, string status, IReadOnlyList<ChampionOption>? champSelect = null, (GameSnapshot Game, Advice Advice)? game = null)
     {
         object? gameDto = null;
@@ -1240,7 +1256,8 @@ public partial class App : System.Windows.Application
                 cards = _cards.Select(c => AugmentDto(c.Hit.Augment, c.Rec, c.GoodItems, c.Rec.AugmentId == bestId, c.Anvil?.Reason, c.Synergy,
                     c.Score, c.Grade, c.Hit.Bounds, c.Anvil is null ? BuildDirections.CardLabel(c.Hit.Augment, magic) : null,
                     c.Anvil is null ? Popularity(g.Game.Champion, c.Hit.Augment) : null)),
-                skills = g.Advice.Skills is { } sk ? new { order = sk.MaxOrder, winRate = sk.WinRate, games = sk.Games } : null,
+                skills = g.Advice.Skills is { } sk ? new { order = sk.MaxOrder, winRate = sk.WinRate, games = sk.Games, share = sk.Share } : null,
+                onHitHint = OnHitHint(g.Advice),
             };
         }
 
@@ -1250,6 +1267,8 @@ public partial class App : System.Windows.Application
             champSelect = (champSelect ?? []).Select(o => new { championId = o.Champion.Id, alias = o.Champion.Alias, name = o.Champion.DisplayName, icon = o.Champion.Icon, winRate = o.WinRate, games = o.Games, isCurrent = o.IsCurrent,
                 damage = _kits.For(o.Champion.Alias)?.DamageType, // "physical" / "magic" / "mixed": para ver qué le falta a tu equipo
                 tier = o.Mayhem?.Tier, mayhemWinRate = o.Mayhem?.WinRate / 100, mayhemGames = o.Mayhem?.Games,
+                // El orden de habilidades más jugado con ese campeón (aramkit), para el tuyo y los del banco.
+                skills = new Advisor(_stats).CommonSkills(o.Champion.Alias) is { } csk ? new { order = csk.MaxOrder, share = csk.Share } : null,
                 spells = o.Spells is { } sp
                     ? new { names = sp.Names, icons = sp.Icons, winRate = sp.WinRate, pickRate = sp.PickRate, games = sp.Games, reason = sp.Reason } : null }),
             champSelectInfo = phase == "champselect" ? ChampSelectInfo() : null,
