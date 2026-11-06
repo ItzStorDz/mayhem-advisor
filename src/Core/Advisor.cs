@@ -379,11 +379,18 @@ public sealed partial class Advisor(StatsStore stats)
 
         var swap = full ? BestSwap(myChampion, myItems, ranked, profile, myAugments, iAmMagic, gold, keep) : null;
 
-        // Lo próximo que conviene comprar: lo que ya estás terminando; si no, botas si aún no tienes; si no, el mejor objeto.
-        // Lleno: terminar lo empezado o, si no hay nada, el cambio.
+        // Lo próximo que conviene comprar: lo que ya estás terminando; si no, tu primer objeto grande, luego las botas y
+        // después el mejor objeto. Lleno: terminar lo empezado o, si no hay nada, el cambio.
+        // Antes las botas iban lo primero (costumbre de la Grieta del Invocador). En Mayhem casi nadie empieza por ellas:
+        // según aramkit (16.21), salen con botas el 0,3 % de las Annie y el 18 % de las Jinx y los Garen, y el 26-38 % no
+        // las compra en toda la partida.
+        bool firstItemDone = myItems.Any(id => Data.Item(id) is { IsFinal: true, IsBoots: false, PriceTotal: >= FirstItemGold } i
+                                               && !i.Has("Consumable") && !i.Has("Trinket"));
         var nextItem = commit?.Item
-                       ?? (boots is { InProgress: true } ? boots.Item : null)
-                       ?? (full ? items.FirstOrDefault()?.Item : boots?.Item ?? items.FirstOrDefault()?.Item);
+                       ?? (firstItemDone && boots is { InProgress: true } ? boots.Item : null)
+                       ?? (full ? items.FirstOrDefault()?.Item
+                           : firstItemDone ? boots?.Item ?? items.FirstOrDefault()?.Item
+                           : items.FirstOrDefault()?.Item ?? boots?.Item);
         NextBuy? next = nextItem is not null
             ? new NextBuy(nextItem, Data.RemainingCost(nextItem, myItems), Math.Max(0, Data.RemainingCost(nextItem, myItems) - (int)gold))
             : swap is not null ? new NextBuy(swap.Buy.Item, swap.Cost - swap.SellGold, swap.GoldMissing) : null;
@@ -396,6 +403,9 @@ public sealed partial class Advisor(StatsStore stats)
         return new Advice(profile, items, boots, next, skills, myAugments, swap, full, fullBuild, building, plan,
             Direction(myChampion, myItems, myAugments), phase, StyleOptions(myChampion, myItems), StyleSource(myChampion, myAugments));
     }
+
+    /// <summary>Precio desde el que un objeto terminado cuenta como «tu primer objeto» (después van las botas).</summary>
+    const int FirstItemGold = 2000;
 
     /// <summary>En el inicio de partida, dos objetos casi igual de buenos se desempatan por el más barato.</summary>
     const double EarlyTieMargin = 0.005;

@@ -144,7 +144,7 @@ static class Cloud
     // Lo que se cuenta de cada línea del registro. Los fallos de red de «buscar actualizaciones» o del cliente de LoL
     // arrancando son avisos (pasan sin internet o al abrir el cliente), no errores.
     static readonly Regex Errors = new(@"^(Error |Fallo al |No pude (?!buscar actualizaciones|copiar el historial)|Overlay Electron no )", RegexOptions.Compiled);
-    static readonly Regex Warnings = new(@"^(No pude buscar actualizaciones|No pude copiar el historial|La partida no apareció|Overlay Electron iniciado \(intento [2-9])", RegexOptions.Compiled);
+    static readonly Regex Warnings = new(@"^(No pude buscar actualizaciones|No pude copiar el historial|La partida no apareció|Overlay Electron iniciado \(intento [2-9]|Overlay Electron se cerró)", RegexOptions.Compiled);
     static readonly Regex Scan = new(@"^Lectura de pantalla: (\d+) ms de media \((\d+) lecturas", RegexOptions.Compiled);
 
     static readonly object Gate = new();

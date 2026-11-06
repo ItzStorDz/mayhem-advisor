@@ -94,9 +94,15 @@ public sealed class GameData
     public static async Task<GameData> LoadAsync(HttpClient http)
     {
         var path = Path.Combine(Paths.DataDir, "gamedata-v6.json");
+        // Un archivo a medio escribir (apagón) no debe impedir que arranque la app: se lee como si no estuviera.
+        static async Task<Cache?> Read(string file)
+        {
+            try { return JsonSerializer.Deserialize<Cache>(await File.ReadAllTextAsync(file)) is { Items.Count: > 0 } c ? c : null; }
+            catch (Exception ex) when (ex is JsonException or IOException) { return null; }
+        }
         Cache? cache = null;
         if (File.Exists(path) && File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddDays(-1))
-            cache = JsonSerializer.Deserialize<Cache>(await File.ReadAllTextAsync(path));
+            cache = await Read(path);
 
         if (cache is null)
         {
@@ -104,11 +110,12 @@ public sealed class GameData
             {
                 cache = await DownloadAsync(http);
                 Directory.CreateDirectory(Paths.DataDir);
-                await File.WriteAllTextAsync(path, JsonSerializer.Serialize(cache));
+                await File.WriteAllTextAsync(path + ".tmp", JsonSerializer.Serialize(cache));
+                File.Move(path + ".tmp", path, overwrite: true);
             }
             catch when (File.Exists(path))
             {
-                cache = JsonSerializer.Deserialize<Cache>(await File.ReadAllTextAsync(path))!;
+                cache = await Read(path) ?? throw new InvalidDataException("gamedata-v6.json dañado y sin conexión");
             }
         }
 

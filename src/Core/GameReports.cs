@@ -282,7 +282,7 @@ public sealed class GameReports(GameData data, AugmentCatalog catalog, StatsStor
             dmgRank = ranks?["dmg"], takenRank = ranks?["tank"], healRank = ranks?["heal"],
             score = me is not null ? sc![me.Id].Score : (double?)null,
             augs = m.Augments.Select(AugDto), items = m.Items.Where(i => data.Item(i) is { } it && !it.Has("Trinket")).Select(ItemDto),
-            players = g is null ? null : g.Players.OrderBy(p => p.Team != me!.Team).Select(p => new { icon = Champ(p.Alias)?.Icon ?? "", name = p.Player, me = p.Id == g.Me }),
+            players = g is null || me is null ? null : g.Players.OrderBy(p => p.Team != me.Team).Select(p => new { icon = Champ(p.Alias)?.Icon ?? "", name = p.Player, me = p.Id == g.Me }),
             hasReport = g is not null,
         };
     }
@@ -293,7 +293,9 @@ public sealed class GameReports(GameData data, AugmentCatalog catalog, StatsStor
         var all = MyMatches.Load();
         var today = all.Where(m => DateTimeOffset.FromUnixTimeMilliseconds(m.Date).LocalDateTime.Date == DateTime.Now.Date).ToList();
         var reports = today.Select(m => (M: m, G: Load(m.Id))).ToList();
-        var mine = reports.Where(r => r.G is not null).Select(r => (r.M, r.G, Me: r.G!.Players.First(p => p.Id == r.G.Me), Sc: Scores(r.G.Players))).ToList();
+        // Una partida guardada sin tu fila (el cliente no dijo cuál eras) no cuenta: antes tumbaba toda la pestaña.
+        var mine = reports.Where(r => r.G is not null && r.G.Players.Any(p => p.Id == r.G.Me))
+            .Select(r => (r.M, r.G, Me: r.G!.Players.First(p => p.Id == r.G.Me), Sc: Scores(r.G.Players))).ToList();
         object? summary = today.Count == 0 ? null : new
         {
             games = today.Count, wins = today.Count(m => m.Win), losses = today.Count(m => !m.Win),

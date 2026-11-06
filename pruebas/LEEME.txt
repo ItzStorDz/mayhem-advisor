@@ -33,6 +33,12 @@ seleccion-campeon\  Dibuja el panel de la selección de campeón del overlay con
                     español e inglés y guarda champselect-es/en.png y .txt:
                       overlay-electron\node_modules\electron\dist\electron.exe pruebas\seleccion-campeon overlay-electron <salida>
 
+panel-juego\        Dibuja el panel del juego (overlay.html) con una partida de ejemplo, sin ventana: normal (con la pista de
+                    cómo moverlo), compacto (botón ⊟) y otra vez normal, en español e inglés. Guarda .png y .txt:
+                      overlay-electron\node_modules\electron\dist\electron.exe pruebas\panel-juego <ruta completa de overlay-electron> <salida>
+
+top-aumentos\       (también) objetos=3031,3085 : las cartas y la build con esos objetos ya comprados.
+
 ventana-ingles.js   Recorre la ventana principal en inglés (también cambiando de idioma con páginas abiertas) y apunta
                     el texto que parece español. Abrir la app con WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333
                     y luego:  set ELECTRON_RUN_AS_NODE=1 & overlay-electron\node_modules\electron\dist\electron.exe pruebas\ventana-ingles.js <salida>

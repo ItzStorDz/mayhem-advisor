@@ -43,6 +43,7 @@ public sealed class ElectronBridge : IDisposable
         }
     }
     bool _disposed; // la app se está cerrando: no se vuelve a arrancar Electron
+    bool _connected; // el Electron de ahora llegó a conectarse por la tubería (para el registro si se cierra)
 
     /// <summary>Busca la carpeta overlay-electron subiendo desde donde está el programa. Null si no está instalada.</summary>
     public static ElectronBridge? TryCreate()
@@ -88,6 +89,21 @@ public sealed class ElectronBridge : IDisposable
     {
         if (Running && _pipe is not null) return true;
         if (_starts >= MaxStarts || DateTime.UtcNow < _nextStart) return false;
+        // Por qué se cerró el anterior: en el informe del 05-11 a un jugador no le arrancaba (5 intentos y vuelta al overlay
+        // de antes) y no se sabía por qué. El código va en hexadecimal (0xC0000005…): el resumen de errores quita los números.
+        try
+        {
+            if (_process is { HasExited: true } old)
+                Log.Write($"Overlay Electron se cerró solo (código 0x{old.ExitCode:X8}{old.ExitCode switch
+                {
+                    // Los de overlay-electron/main.js:
+                    17 => ": ya había otro overlay abierto",
+                    18 or 19 => ": no pudo conectarse con la app",
+                    _ => "",
+                }}{(_connected ? "" : ", sin llegar a conectarse")})");
+        }
+        catch (InvalidOperationException) { }
+        _connected = false;
         _starts++;
         _nextStart = DateTime.UtcNow.AddSeconds(10);
         StopProcess();
@@ -103,6 +119,7 @@ public sealed class ElectronBridge : IDisposable
                 {
                     if (t.IsFaulted || pipe != _pipe) return;
                     _writer = new StreamWriter(pipe, new UTF8Encoding(false)) { NewLine = "\n" };
+                    _connected = true;
                     Log.Write("Overlay Electron conectado");
                     if (_lastLive is not null) Write(_lastLive);
                 }

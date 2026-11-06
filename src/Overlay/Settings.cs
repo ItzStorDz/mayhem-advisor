@@ -45,8 +45,11 @@ public sealed class Settings
         try
         {
             Directory.CreateDirectory(Paths.DataDir);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Json));
+            // Primero a un archivo aparte y luego se cambia de nombre: un apagón a medias ya no deja los ajustes rotos (se
+            // perdían todos, idioma y «no volver a preguntar» incluidos).
+            File.WriteAllText(FilePath + ".tmp", JsonSerializer.Serialize(this, Json));
+            File.Move(FilePath + ".tmp", FilePath, overwrite: true);
         }
-        catch (IOException ex) { Log.Write($"No pude guardar los ajustes: {ex.Message}"); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Log.Write($"No pude guardar los ajustes: {ex.Message}"); }
     }
 }

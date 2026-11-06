@@ -204,7 +204,8 @@ async function getCommunity(request, env, ctx) {
     .map(r => r.p).filter((p, i, a) => a.indexOf(p) === i).slice(0, 2);
   const rows = patches.length === 0 ? [] : (await env.DB.prepare(
     `SELECT id, patch, data FROM matches WHERE ${patches.map((_, i) => `patch LIKE ?${i + 1}`).join(' OR ')} ORDER BY received DESC LIMIT 6000`)
-    .bind(...patches.map(p => p + '%')).all()).results;
+    // Con el punto: «16.3%» también cogería el 16.30-16.39.
+    .bind(...patches.map(p => p + '.%')).all()).results;
   const body = rows.map(r => JSON.stringify({ id: r.id, v: r.patch, p: JSON.parse(r.data).p })).join('\n');
   const resp = new Response(body, { headers: { 'content-type': 'application/x-ndjson', 'cache-control': 'public, max-age=3600' } });
   ctx.waitUntil(cache.put(request, resp.clone()));

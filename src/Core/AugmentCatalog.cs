@@ -96,24 +96,30 @@ public sealed class AugmentCatalog
     public static async Task<AugmentCatalog> LoadAsync(HttpClient http, bool forceRefresh = false)
     {
         var cache = Paths.CatalogCache;
-        if (!forceRefresh && File.Exists(cache) && File.GetLastWriteTimeUtc(cache) > DateTime.UtcNow.AddDays(-3))
-        {
-            var cached = JsonSerializer.Deserialize<List<Augment>>(await File.ReadAllTextAsync(cache));
-            if (cached is { Count: > 0 }) return new AugmentCatalog(cached);
-        }
+        if (!forceRefresh && File.Exists(cache) && File.GetLastWriteTimeUtc(cache) > DateTime.UtcNow.AddDays(-3)
+            && await ReadCache(cache) is { } cached)
+            return new AugmentCatalog(cached);
 
         try
         {
             var list = await DownloadAsync(http);
             Directory.CreateDirectory(Paths.DataDir);
-            await File.WriteAllTextAsync(cache, JsonSerializer.Serialize(list));
+            await File.WriteAllTextAsync(cache + ".tmp", JsonSerializer.Serialize(list));
+            File.Move(cache + ".tmp", cache, overwrite: true);
             return new AugmentCatalog(list);
         }
         catch when (OfflineCache(cache) is not null)
         {
             // Sin internet: usamos la caché vieja aunque esté caducada (o la de la versión anterior de la app, recién actualizada).
-            return new AugmentCatalog(JsonSerializer.Deserialize<List<Augment>>(await File.ReadAllTextAsync(OfflineCache(cache)!))!);
+            return new AugmentCatalog(await ReadCache(OfflineCache(cache)!) ?? throw new InvalidDataException("caché de aumentos dañada y sin conexión"));
         }
+    }
+
+    /// <summary>La caché de aumentos, o null si falta o está a medio escribir (un apagón no debe impedir que arranque la app).</summary>
+    static async Task<List<Augment>?> ReadCache(string file)
+    {
+        try { return JsonSerializer.Deserialize<List<Augment>>(await File.ReadAllTextAsync(file)) is { Count: > 0 } list ? list : null; }
+        catch (Exception ex) when (ex is JsonException or IOException) { return null; }
     }
 
     /// <summary>La caché de aumentos que haya: la actual o, si aún no existe, la más nueva de versiones anteriores (augments-v6…).</summary>

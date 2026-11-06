@@ -110,7 +110,8 @@ public partial class MainWindow : Window
             top.Children.Add(Label("/100 · " + new string('▮', AugmentScale.Confidence(card.Rec)) + new string('▯', 3 - AugmentScale.Confidence(card.Rec)), 12,
                 Muted, FontWeights.Normal, new Thickness(4, 3, 0, 0)));
             panel.Children.Add(top);
-            panel.Children.Add(Label(card.Rec.Global ? L($"~{card.Rec.Games:N0} partidas en Mayhem (todos)", $"~{card.Rec.Games:N0} Mayhem games (everyone)")
+            // Todas las partidas que respaldan la nota (mayhemmeta + AramHex/aramkit), como en el overlay de Electron (1.8.1).
+            panel.Children.Add(Label(card.Rec.Global ? L($"~{card.Rec.EvidenceGames:N0} partidas en Mayhem (todos)", $"~{card.Rec.EvidenceGames:N0} Mayhem games (everyone)")
                 : card.Rec.Games > 0 ? L($"{card.Rec.Games} partidas con tu campeón", $"{card.Rec.Games} games on your champion") : L("sin partidas con tu campeón aún", "no games on your champion yet"),
                 11, Muted, FontWeights.Normal, new Thickness(0, 2, 0, 0)));
 

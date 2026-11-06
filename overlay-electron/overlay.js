@@ -17,6 +17,23 @@ let lastGame = null;
 let minimized = false;
 try { minimized = localStorage.getItem('panelMinimized') === '1'; } catch { }
 let nextIndex = 0, nextFirstId = null;
+// Versión compacta (botón ⊟ de la cabecera): solo «Compra ahora». Un jugador (05-11) pedía un panel de un tercio del
+// tamaño, «o uno que pueda ir grande o pequeño».
+let compact = false;
+try { compact = localStorage.getItem('panelCompact') === '1'; } catch { }
+// Pista visible de cómo mover, cambiar de tamaño y encoger el panel: las 3 primeras partidas, hasta que lo uses. El mismo
+// jugador creía que no se podía mover ni cambiar de tamaño: solo lo decía un «title», que dentro del juego no se ve.
+let hintGames = 0, hintDone = false, inGame = false;
+try {
+  hintGames = Number(localStorage.getItem('panelHintGames') ?? 0) || 0;
+  // Quien ya lo movió o le cambió el tamaño sabe hacerlo: no le sale.
+  hintDone = localStorage.getItem('panelHintDone') === '1' || localStorage.getItem('panelPos') !== null || localStorage.getItem('panelSize') !== null;
+} catch { }
+function finishHint() {
+  if (hintDone) return;
+  hintDone = true;
+  try { localStorage.setItem('panelHintDone', '1'); } catch { }
+}
 
 window.mayhem.onData(message => {
   if (message.lang) LANG = message.lang;
@@ -37,6 +54,8 @@ window.mayhem.onData(message => {
   renderCards(game?.cards ?? []);
   autoAugments = message.autoAugmentsTab !== false;
   if (!game) keptHere.clear(); // partida nueva: los "Me quedo con…" vuelven a empezar
+  if (game && !inGame && !hintDone) { hintGames++; try { localStorage.setItem('panelHintGames', String(hintGames)); } catch { } }
+  inGame = !!game;
   lastGame = message.panel !== false ? game : null;
   renderSide(lastGame);
 });
@@ -153,12 +172,22 @@ function renderSide(game) {
   }
 
   const head = `<div class="pn-head" title="${tr('dragHint')}"><span class="pn-logo">M</span><b>MAYHEM</b><span class="pn-champ">${esc(game.championName)}</span>
+    <button class="btn-icon" data-act="compact" title="${tr(compact ? 'fullView' : 'compactView')}">${compact ? '⊞' : '⊟'}</button>
     <button class="btn-icon" data-act="minimize" title="${tr('minimize')}">–</button></div>
-    <div class="pn-tabs">${TABS.map(([id, label]) => `<button class="pn-tab${tab === id ? ' on' : ''}" data-act="tab" data-id="${id}">${tr(label)}</button>`).join('')}</div>`;
+    ${!hintDone && hintGames <= 3 ? `<div class="pn-hint">${tr('panelHint')}</div>` : ''}`;
+  const grip = `<button class="pn-grip" data-act="resize" title="${tr('resizeHint')}"></button>`;
+  if (compact) {
+    // Compacto: lo que compras ahora y nada más (sin pestañas, selector de build ni detalles).
+    const parts = [];
+    if (game.dead) parts.push(`<div class="pn-dead">${tr('dead', game.respawn)}</div>`);
+    buyNowBlock(game, parts, true);
+    return showSide(`${head}<div class="pn-body">${parts.join('') || `<div class="pn-text">${tr('nothingToBuy')}</div>`}</div>${grip}`, false, true);
+  }
+  const tabs = `<div class="pn-tabs">${TABS.map(([id, label]) => `<button class="pn-tab${tab === id ? ' on' : ''}" data-act="tab" data-id="${id}">${tr(label)}</button>`).join('')}</div>`;
   const body = tab === 'adaptar' ? adaptTab(game) : tab === 'aumentos' ? augmentsTab(game) : buyTab(game);
-  showSide(`${head}<div class="pn-body">${body}</div>
+  showSide(`${head}${tabs}<div class="pn-body">${body}</div>
     <div class="pn-scroll"><button class="btn-icon" data-act="scroll" data-id="up" title="${tr('up')}">▲</button><button class="btn-icon" data-act="scroll" data-id="down" title="${tr('down')}">▼</button></div>
-    <button class="pn-grip" data-act="resize" title="${tr('resizeHint')}"></button>`, false);
+    ${grip}`, false);
 }
 
 const moreBtn = (open, closed) => `<button class="pn-more" data-act="details">${details ? open : closed}</button>`;
@@ -203,8 +232,11 @@ function buyTab(game) {
   return parts.join('');
 }
 
-/** Lo que compras ahora (con la pieza que ya puedes comprar si no te llega), qué conservar y la build completa. */
-function buyNowBlock(game, parts) {
+/**
+ * Lo que compras ahora (con la pieza que ya puedes comprar si no te llega), qué conservar y la build completa.
+ * En el panel compacto, sin el porqué, las otras opciones ni la build completa.
+ */
+function buyNowBlock(game, parts, small = false) {
   const options = game.nextOptions?.length ? game.nextOptions : game.next ? [game.next] : [];
   if (options[0]?.id !== nextFirstId) { nextFirstId = options[0]?.id; nextIndex = 0; } // cambió la recomendación
   if (nextIndex >= options.length) nextIndex = 0;
@@ -217,15 +249,15 @@ function buyNowBlock(game, parts) {
         <div class="${ok ? 'pn-ok' : 'pn-gold'}">${ok ? tr('affordable') : tr('missing', num(next.missing))}</div>
         ${next.badges?.length ? `<div class="pn-badges">${next.badges.map(b => `<span>${esc(b)}</span>`).join('')}</div>` : ''}</div></div>
       ${next.part ? `<div class="pn-part">${icon(next.part.icon, 'icon sm')}<span>${tr('canBuyPart', esc(next.part.name), num(next.part.cost))}</span></div>` : ''}
-      ${why ? `<div class="pn-why">${esc(why)}</div>` : ''}
-      ${options.length > 1 ? `<button class="pn-link" data-act="next">${nextIndex + 1 < options.length ? tr('otherOpt') : tr('backFirst')}</button>` : ''}`);
+      ${why && !small ? `<div class="pn-why">${esc(why)}</div>` : ''}
+      ${options.length > 1 && !small ? `<button class="pn-link" data-act="next">${nextIndex + 1 < options.length ? tr('otherOpt') : tr('backFirst')}</button>` : ''}`);
   }
   for (const b of (game.building ?? []).filter(b => !(game.kept ?? []).includes(b.id) && !keptHere.has(b.id)))
     parts.push(`<button class="pn-keep" data-act="keep" data-id="${b.id}">${tr('keep', esc(b.name))}</button>`);
   if (game.swap && !keptHere.has(game.swap.sell.id)) parts.push(`<div class="pn-alert">${tr('full', esc(game.swap.sell.name), esc(game.swap.buy.name))}
       <button class="pn-keep" data-act="keep" data-id="${game.swap.sell.id}">${tr('keepMine')}</button></div>`);
   const build = game.plan?.recommended ?? (game.fullBuild ?? []).map(b => ({ ...b.item, owned: b.owned }));
-  if (build.length) parts.push(`<div class="pn-lbl">${tr('yourBuild')}</div>${iconRow(build)}`);
+  if (build.length && !small) parts.push(`<div class="pn-lbl">${tr('yourBuild')}</div>${iconRow(build)}`);
 }
 
 function adaptTab(game) {
@@ -267,13 +299,14 @@ function augmentsTab(game) {
     ${anyOnScreen ? '' : `<div class="pn-why">${tr('reroll')}</div>`}`;
 }
 
-function showSide(html, small) {
+function showSide(html, small, compactView = false) {
   if (sideEl.dataset.html !== html) {
     sideEl.innerHTML = html; sideEl.dataset.html = html;
     const body = sideEl.querySelector('.pn-body');
     if (body) body.scrollTop = scrollY;
   }
   sideEl.classList.toggle('mini', small);
+  sideEl.classList.toggle('compact', compactView);
   placeSide();
   sideEl.classList.remove('hidden');
   const body = sideEl.querySelector('.pn-body');
@@ -332,6 +365,8 @@ function dragEnd() {
     const r = sideEl.getBoundingClientRect();
     panelPos = { x: r.left / window.innerWidth, y: r.top / window.innerHeight };
     try { localStorage.setItem('panelPos', JSON.stringify(panelPos)); } catch { }
+    finishHint(); // ya sabe moverlo: fuera la pista
+    renderSide(lastGame);
   }
   reportButtons();
 }
@@ -373,7 +408,8 @@ function resizeMove(dx, dy) {
   if (!resizing) return;
   resizing.moved = true;
   const s = window.devicePixelRatio || 1;
-  const zoom = Math.min(1.7, Math.max(0.8, (resizing.width - dx / s) / resizing.base));
+  // Desde el 70 % (antes 80 %): «tapa cosas», decía un jugador. Para mucho más pequeño está el panel compacto (⊟).
+  const zoom = Math.min(1.7, Math.max(0.7, (resizing.width - dx / s) / resizing.base));
   const body = Math.min(0.85, Math.max(0.2, (resizing.body + dy / s) / window.innerHeight));
   panelSize = { zoom: Math.round(zoom * 100) / 100, body: Math.round(body * 1000) / 1000 };
   // Movido a mano: se mantiene su borde derecho (el de por defecto ya va pegado a la derecha).
@@ -387,6 +423,7 @@ function resizeEnd() {
   resizing = null;
   window.mayhem.setDragging(false);
   if (moved) try { localStorage.setItem('panelSize', JSON.stringify(panelSize)); if (panelPos) localStorage.setItem('panelPos', JSON.stringify(panelPos)); } catch { }
+  if (moved) { finishHint(); renderSide(lastGame); }
   placeSide();
   reportButtons();
 }
@@ -446,6 +483,12 @@ function doAction(act, id) {
   if (act === 'minimize' || act === 'restore') {
     minimized = act === 'minimize';
     try { localStorage.setItem('panelMinimized', minimized ? '1' : '0'); } catch { }
+  }
+  if (act === 'compact') {
+    compact = !compact;
+    scrollY = 0;
+    try { localStorage.setItem('panelCompact', compact ? '1' : '0'); } catch { }
+    finishHint();
   }
   if (act === 'next') nextIndex++;
   if (act === 'style') {

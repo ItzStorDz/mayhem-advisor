@@ -151,7 +151,13 @@ public sealed class StatsStore
             foreach (var line in File.ReadLines(path))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                try { if (JsonSerializer.Deserialize<MatchRecord>(line) is { } r) records.Add(r); }
+                // Una línea con campos vacíos (null) haría fallar todo el cálculo más abajo: se salta.
+                try
+                {
+                    if (JsonSerializer.Deserialize<MatchRecord>(line) is { Players: not null } r
+                        && r.Players.All(p => p is { Champion: not null, Items: not null, Augments: not null, Skills: not null }))
+                        records.Add(r);
+                }
                 catch (JsonException) { /* línea cortada si se cerró el recolector a medias */ }
             }
         }

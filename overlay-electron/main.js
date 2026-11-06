@@ -10,7 +10,11 @@ const readline = require('node:readline');
 
 const GAME_WINDOW_TITLE = 'League of Legends (TM) Client';
 
-if (!app.requestSingleInstanceLock()) app.quit();
+// Códigos de salida para el registro del programa en C# («Overlay Electron se cerró solo (código 0x…)»): un jugador
+// (informe del 05-11) se quedaba sin este overlay tras 5 intentos y no se sabía por qué.
+const EXIT_ALREADY_OPEN = 17, EXIT_NO_PIPE = 18, EXIT_CANT_CONNECT = 19;
+
+if (!app.requestSingleInstanceLock()) app.exit(EXIT_ALREADY_OPEN); // ya hay otro overlay abierto
 
 const webPreferences = {
   preload: path.join(__dirname, 'preload.js'),
@@ -168,7 +172,7 @@ app.whenReady().then(() => {
 /** Se conecta a la tubería del programa en C#; si este se cierra, nos cerramos con él. */
 function connect(attempt = 1) {
   const name = process.argv.find(a => a.startsWith('--mayhem-pipe='))?.slice('--mayhem-pipe='.length);
-  if (!name) { console.error('Falta --mayhem-pipe: este overlay lo arranca Mayhem Advisor'); app.quit(); return; }
+  if (!name) { console.error('Falta --mayhem-pipe: este overlay lo arranca Mayhem Advisor'); app.exit(EXIT_NO_PIPE); return; }
 
   socket = net.connect('\\\\.\\pipe\\' + name);
   socket.setEncoding('utf8');
@@ -183,7 +187,7 @@ function connect(attempt = 1) {
   socket.on('error', err => {
     if (connected) return; // el cierre lo gestiona 'close'
     if (attempt < 20) setTimeout(() => connect(attempt + 1), 250);
-    else { console.error('No pude conectar con Mayhem Advisor:', err.message); app.quit(); }
+    else { console.error('No pude conectar con Mayhem Advisor:', err.message); app.exit(EXIT_CANT_CONNECT); }
   });
   // Conectados alguna vez y se cortó (Mayhem Advisor se cerró, aunque sea de golpe): nos cerramos con él.
   socket.on('close', () => { if (connected) app.quit(); });

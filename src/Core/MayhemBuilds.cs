@@ -110,7 +110,13 @@ public sealed class MayhemBuilds
             Patch = file?.Patch ?? "",
             FetchedAt = file?.FetchedAt ?? default,
             // Un campeón sin alias (el script no lo reconoció) se salta en vez de tumbar la carga.
-            Champions = file?.Champions.Where(c => c.Alias is not null).ToList() ?? [],
+            // Una lista vacía que venga como null (celda que el script no pudo leer) se toma como vacía: si no, falla al usarla.
+            Champions = file?.Champions.Where(c => c.Alias is not null)
+                .Select(c => c with
+                {
+                    Spells = c.Spells ?? [], Boots = c.Boots ?? [], ItemsCommon = c.ItemsCommon ?? [], ItemsBest = c.ItemsBest ?? [],
+                    AugmentsBest = c.AugmentsBest ?? [], AugmentsPopular = c.AugmentsPopular ?? [],
+                }).ToList() ?? [],
         };
         foreach (var c in builds.Champions) builds._byAlias[c.Alias] = c;
         return builds;

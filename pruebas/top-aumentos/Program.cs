@@ -18,14 +18,16 @@ stats.Links = new AugmentItemLinks(catalog.Augments, data, builds.ItemNames);
 stats.Kits = ChampionKits.Load(DataFiles.Resolve("campeones-kit.json"));
 var advisor = new Advisor(stats);
 int n = args.FirstOrDefault(a => a.StartsWith("n=")) is { } na ? int.Parse(na[2..]) : 10;
+// objetos=3031,3085: con esos objetos ya comprados (p. ej. Kog'Maw de crítico).
+List<int> owned = args.FirstOrDefault(a => a.StartsWith("objetos=")) is { } oa ? oa[8..].Split(',').Select(int.Parse).ToList() : [];
 
-foreach (var champion in args.Where(a => !a.StartsWith("n=") && a != "build"))
+foreach (var champion in args.Where(a => !a.StartsWith("n=") && a != "build" && !a.StartsWith("objetos=")))
 {
     var scale = AugmentScale.For(champion, DamageMix.Mixed, stats, catalog);
     var cards = catalog.Augments.Where(a => !a.IsAnvil).Select(a =>
     {
         var rec = stats.Rate(champion, a.Id);
-        var syn = advisor.SynergyWith(a, [], champion, []);
+        var syn = advisor.SynergyWith(a, [], champion, owned);
         double score = scale.Score(AugmentScale.Evidence(rec) + (syn?.Bonus ?? 0), AugmentScale.IsReliable(rec));
         return (a, rec, syn, score);
     }).OrderByDescending(c => c.score).ToList();
@@ -34,7 +36,7 @@ foreach (var champion in args.Where(a => !a.StartsWith("n=") && a != "build"))
     if (args.Contains("build"))
     {
         (string, IReadOnlyList<int>)[] enemies = [("Garen", []), ("Lux", []), ("Jinx", []), ("Leona", []), ("Ahri", [])];
-        var advice = advisor.Build(champion, [], enemies, [], 0);
+        var advice = advisor.Build(champion, owned, enemies, [], 0);
         Console.WriteLine($"   build: {string.Join(", ", (advice.FullBuild ?? []).Select(b => data.Item(b.Item.Item.Id)?.NameEn))}");
         Console.WriteLine($"   botas: {advice.Boots?.Item.NameEn} · primera compra: {advice.Next?.Item.NameEn}");
     }
