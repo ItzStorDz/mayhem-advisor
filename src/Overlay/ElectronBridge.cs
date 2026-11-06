@@ -32,8 +32,17 @@ public sealed class ElectronBridge : IDisposable
     public event Action<JsonElement>? MessageReceived;
 
     /// <summary>True si Electron dejó de arrancar demasiadas veces: entonces se usa el overlay de antes.</summary>
-    public bool GaveUp => _starts >= MaxStarts && !Running;
-    bool Running => _process is { HasExited: false };
+    public bool GaveUp => !_disposed && _starts >= MaxStarts && !Running;
+    bool Running
+    {
+        get
+        {
+            // Un Process ya cerrado con Dispose lanza «No process is associated with this object» (informe del 05-11).
+            try { return _process is { HasExited: false }; }
+            catch (InvalidOperationException) { return false; }
+        }
+    }
+    bool _disposed; // la app se está cerrando: no se vuelve a arrancar Electron
 
     /// <summary>Busca la carpeta overlay-electron subiendo desde donde está el programa. Null si no está instalada.</summary>
     public static ElectronBridge? TryCreate()
@@ -52,6 +61,9 @@ public sealed class ElectronBridge : IDisposable
         var line = JsonSerializer.Serialize(message, Json);
         lock (_gate)
         {
+            // Al salir (Quit) el bucle aún puede mandar algo una vez: antes preguntaba al proceso ya cerrado y saltaba
+            // «Error en el bucle» (1.8.0 y 1.8.2, informe del 05-11); sin esto, además, podría arrancar otro Electron.
+            if (_disposed) return;
             if (line.StartsWith("{\"type\":\"live\"", StringComparison.Ordinal)) _lastLive = line;
             if (!EnsureStarted() || _writer is null) return; // aún conectando: se manda _lastLive al conectar
             Write(line);
@@ -148,6 +160,8 @@ public sealed class ElectronBridge : IDisposable
     {
         lock (_gate)
         {
+            if (_disposed) return;
+            _disposed = true;
             if (_writer is not null) Write("{\"type\":\"quit\"}");
             ClosePipe(); // al cerrarse la tubería, Electron se cierra solo
             StopProcess();

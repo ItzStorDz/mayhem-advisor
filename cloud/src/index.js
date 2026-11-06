@@ -264,6 +264,10 @@ async function dailyReport(env) {
     'SELECT received, app, lang, os, kind, rating, source, text, context FROM feedback WHERE received > ?1 AND received <= ?2 ORDER BY received')
     .bind(since, until).all()).results;
 
+  // Personas por día: conexiones distintas (la IP cifrada con una clave que cambia cada día, la misma para partidas,
+  // resúmenes y opiniones) antes de borrar esos contadores. Solo se guarda el número del día, nunca quién.
+  const people = await countPeople(env);
+
   // Limpieza: contadores de días pasados, datos de errores de hace más de 90 días y opiniones de hace más de un año.
   await env.DB.prepare('DELETE FROM limits WHERE day < ?1').bind(today()).run();
   await env.DB.prepare('DELETE FROM reports WHERE received < ?1').bind(new Date(Date.now() - 90 * 86400_000).toISOString()).run();
@@ -273,8 +277,8 @@ async function dailyReport(env) {
     await env.DB.prepare(`INSERT OR REPLACE INTO state (key, value) VALUES ('lastReport', ?1)`).bind(until).run();
     return;
   }
-  const body = await buildReport(env, matches, reports, feedback, since);
-  const title = `Daily report ${until.slice(0, 10)} · ${matches.length} games · ${reports.length} error reports`
+  const body = await buildReport(env, matches, reports, feedback, since, people);
+  const title = `Daily report ${until.slice(0, 10)} · ${people.yesterday ?? 0} people · ${matches.length} games · ${reports.length} error reports`
     + (feedback.length ? ` · ${feedback.length} feedback` : '');
   if (env.GITHUB_TOKEN && env.REPORT_REPO) {
     const r = await fetch(`https://api.github.com/repos/${env.REPORT_REPO}/issues`, {
@@ -285,6 +289,23 @@ async function dailyReport(env) {
     if (!r.ok) { console.error('GitHub', r.status, await r.text()); return; } // se reintenta mañana con todo
   } else console.log(title + '\n\n' + body);
   await env.DB.prepare(`INSERT OR REPLACE INTO state (key, value) VALUES ('lastReport', ?1)`).bind(until).run();
+}
+
+/**
+ * Cuántas personas usaron la app ayer (día UTC completo) y los 7 días anteriores. El número de cada día se apunta en
+ * «state» (people:AAAA-MM-DD) para la historia; si el informe corre dos veces, se queda el mayor (los contadores de ayer
+ * ya no estarían). Quien no comparte datos y no escribe opiniones no se cuenta.
+ */
+async function countPeople(env) {
+  const day = new Date(Date.now() - 86400_000).toISOString().slice(0, 10);
+  const row = await env.DB.prepare(`SELECT COUNT(DISTINCT substr(key, 3)) AS n FROM limits WHERE day = ?1`).bind(day).first();
+  const n = row?.n ?? 0;
+  if (n > 0) await env.DB.prepare(
+    `INSERT INTO state (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = MAX(CAST(value AS INTEGER), CAST(excluded.value AS INTEGER))`)
+    .bind('people:' + day, String(n)).run();
+  const history = (await env.DB.prepare(`SELECT key, value FROM state WHERE key LIKE 'people:%' ORDER BY key DESC LIMIT 8`).all()).results
+    .map(r => [r.key.slice(7), Number(r.value)]);
+  return { day, yesterday: history.find(([d]) => d === day)?.[1] ?? n, history };
 }
 
 /**
@@ -310,9 +331,12 @@ function feedbackLines(list) {
 const count = (list, f) => { const m = new Map(); for (const x of list) { const k = f(x); m.set(k, (m.get(k) ?? 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
 const pct = (a, b) => b ? `${Math.round(a / b * 100)}%` : '–';
 
-async function buildReport(env, matches, reports, feedback, since) {
+async function buildReport(env, matches, reports, feedback, since, people = { history: [] }) {
   const lines = [];
   lines.push(`Since ${since.slice(0, 16).replace('T', ' ')} UTC.`, '');
+  lines.push(`**People yesterday (UTC ${people.day ?? '?'}):** ${people.yesterday ?? 0}`
+    + (people.history.length > 1 ? ` · before: ${people.history.filter(([d]) => d !== people.day).slice(0, 7).map(([d, n]) => `${d.slice(5)} ${n}`).join(' · ')}` : '')
+    + ' (different connections that sent games, error summaries or feedback; people who turned off data sharing only count if they wrote feedback)', '');
   if (feedback.length) lines.push(...feedbackLines(feedback));
 
   // Errores agrupados por mensaje (ya normalizado en la app), con las versiones donde salen.
