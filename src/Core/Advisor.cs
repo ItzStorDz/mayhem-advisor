@@ -157,7 +157,11 @@ public sealed record Advice(
     BuildDirection? Direction = null,
     GamePhase Phase = GamePhase.Mid,
     IReadOnlyList<StyleOption>? Styles = null,
-    string? StyleSource = null);
+    string? StyleSource = null,
+    ItemInfo? MakeRoom = null,
+    (ItemInfo Part, ItemInfo For)? EarlyPart = null,
+    ItemInfo? Elixir = null,
+    ItemInfo? StatBonus = null);
 
 /// <summary>
 /// Una build que se juega con tu campeón (selector del panel): cuánta gente la juega (0-1), cuánto gana (0-100), sus
@@ -174,7 +178,8 @@ public sealed record EnemyThreat(string Name, double MagicShare);
 /// <param name="Augment">Nombre del aumento tuyo con el que encaja, si encaja con alguno.</param>
 public sealed record CategoryItem(ItemInfo Item, double? WinRate, int Games, string? Augment, bool Owned);
 /// <summary>Lo que pide la partida (p. ej. "RESISTENCIA MÁGICA"), por qué, y sus objetos por % de victorias.</summary>
-public sealed record CounterCategory(string Title, string Why, IReadOnlyList<CategoryItem> Items);
+/// <param name="Offensive">Para aprovechar al rival (heridas graves, antiescudos, % de vida, penetración), no para aguantar.</param>
+public sealed record CounterCategory(string Title, string Why, IReadOnlyList<CategoryItem> Items, bool Offensive = false);
 
 /// <summary>
 /// "Adaptar build": cómo es el daño enemigo, una build situacional de 6 objetos para comparar con la recomendada,
@@ -182,8 +187,10 @@ public sealed record CounterCategory(string Title, string Why, IReadOnlyList<Cat
 /// build habitual te puedes saltar. Son sugerencias.
 /// </summary>
 /// <param name="Changed">Objetos de la build situacional que no están en la recomendada.</param>
+/// <param name="Replaced">Por cada objeto nuevo de la build situacional, el de la recomendada al que sustituye («cambia X por Y»).</param>
 public sealed record CounterPlan(double MagicShare, IReadOnlyList<EnemyThreat> Enemies, IReadOnlyList<BuildSlot> Situational,
-    IReadOnlySet<int> Changed, IReadOnlyList<CounterCategory> Categories, IReadOnlyList<Discard> Discards);
+    IReadOnlySet<int> Changed, IReadOnlyList<CounterCategory> Categories, IReadOnlyList<Discard> Discards,
+    IReadOnlyDictionary<int, ItemInfo>? Replaced = null);
 
 /// <summary>Junta estadísticas, datos del juego y el contexto de la partida para decir qué comprar.</summary>
 public sealed partial class Advisor(StatsStore stats)
@@ -339,8 +346,14 @@ public sealed partial class Advisor(StatsStore stats)
         var ranked = scored.Where(a => !a.Item.IsBoots).OrderByDescending(a => a.Score).ToList();
 
         // Con las 6 casillas llenas solo puedes terminar lo que ya estás haciendo (los componentes dejan sitio) o vender.
-        int usedSlots = myItems.Count(id => Data.Item(id) is { PriceTotal: > 0 } i && !i.Has("Trinket"));
+        // Una poción (o un elixir, un Juguito de Gorrito…) ocupa casilla pero no es un objeto: con ella el inventario NO está
+        // lleno, solo hay que venderla o usarla. Antes la app pedía vender un legendario recién hecho con una poción en la
+        // esquina (opinión de un jugador, 2026-11-08).
+        var slotItems = myItems.Select(Data.Item).OfType<ItemInfo>().Where(i => i.PriceTotal > 0 && !i.Has("Trinket")).ToList();
+        static bool IsConsumable(ItemInfo i) => i.Has("Consumable");
+        int usedSlots = slotItems.Count(i => !IsConsumable(i));
         bool full = usedSlots >= InventorySlots;
+        var makeRoom = !full && slotItems.Count >= InventorySlots ? slotItems.Where(IsConsumable).MinBy(i => i.PriceTotal) : null;
         var buyable = full ? ranked.Where(a => a.InProgress).ToList() : ranked;
         // Build ya clara (Shaco con 2 objetos AD): los de daño contrario no entran ni como "otra opción"; si faltan opciones,
         // se completan abajo con objetos de la tienda de tu tipo de daño.
@@ -402,8 +415,29 @@ public sealed partial class Advisor(StatsStore stats)
         // Objetos empezados que no son la siguiente compra: el overlay ofrece "me quedo con este".
         var building = ranked.Where(a => a.InProgress && a.Item.Id != next?.Item.Id).Take(2).ToList();
         var plan = Plan(myChampion, myItems, enemies, profile, myAugments, iAmMagic, ranked, fullBuild);
+        // Con el inventario lleno de objetos y oro de sobra: un elixir de tu tipo de build (Mayhem tiene los tres en la tienda)
+        // o «Estadística adicional». Lo pidió un jugador («potion selection would be great», 2026-11-08). Es una sugerencia:
+        // no hay datos de quién compra elixires.
+        var spare = full && gold >= ElixirGold ? Data.Item(_tankBuild ? ElixirOfIron : iAmMagic ? ElixirOfSorcery : ElixirOfWrath) : null;
         return new Advice(profile, items, boots, next, skills, myAugments, swap, full, fullBuild, building, plan,
-            Direction(myChampion, myItems, myAugments), phase, StyleOptions(myChampion, myItems), StyleSource(myChampion, myAugments));
+            Direction(myChampion, myItems, myAugments), phase, StyleOptions(myChampion, myItems), StyleSource(myChampion, myAugments),
+            makeRoom, EarlyTear(fullBuild, myItems), spare, gold >= StatBonusGold && full ? Data.Item(StatBonus) : null);
+    }
+
+    const int TearOfTheGoddess = 3070, ElixirOfIron = 2138, ElixirOfSorcery = 2139, ElixirOfWrath = 2140, StatBonus = 6032;
+    const int ElixirGold = 500, StatBonusGold = 750;
+
+    /// <summary>
+    /// Si tu build lleva un objeto que sale de la Lágrima de la Diosa (Báculo del Arcángel, Manamune, Umbral del Invierno) y aún
+    /// no la tienes: la Lágrima y ese objeto. Se carga con el tiempo, así que conviene comprarla pronto (un jugador, 2026-11-08:
+    /// «la app no dice que compres pronto una pieza importante, como la Lágrima»). Null si no toca.
+    /// </summary>
+    (ItemInfo Part, ItemInfo For)? EarlyTear(List<BuildSlot> fullBuild, IReadOnlyList<int> myItems)
+    {
+        if (myItems.Contains(TearOfTheGoddess) || Data.Item(TearOfTheGoddess) is not { } tear) return null;
+        var target = fullBuild.Where(b => !b.Owned).Select(b => b.Item.Item)
+            .FirstOrDefault(i => BuildsInto(i, TearOfTheGoddess) && !Owns(myItems, i.Id));
+        return target is null ? null : (tear, target);
     }
 
     /// <summary>
@@ -471,6 +505,9 @@ public sealed partial class Advisor(StatsStore stats)
         if (!_tankBuild && !iAmMagic && (profile.Tanks >= 2 || profile.ArmorItems >= 3)) needs.Add((L("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION"), L($"Compran armadura ({profile.ArmorItems} objetos)", $"They buy armor ({profile.ArmorItems} items)"), 0.05, i => i.Has("ArmorPenetration")));
         if (!_tankBuild && iAmMagic && (profile.Tanks >= 2 || profile.MagicResistItems >= 3)) needs.Add((L("PENETRACIÓN MÁGICA", "MAGIC PENETRATION"), L($"Compran resist. mágica ({profile.MagicResistItems} objetos)", $"They buy magic resist ({profile.MagicResistItems} items)"), 0.05, i => i.Has("MagicPenetration")));
         needs = needs.OrderByDescending(n => n.Weight).ToList();
+        // Las de aprovechar al rival (no aguantar): para enseñarlas también aunque pese más una defensiva.
+        var offensiveTitles = new HashSet<string> { L("HERIDAS GRAVES", "GRIEVOUS WOUNDS"), L("ANTIESCUDOS", "ANTI-SHIELD"),
+            L("DAÑO POR % DE VIDA", "% HEALTH DAMAGE"), L("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION"), L("PENETRACIÓN MÁGICA", "MAGIC PENETRATION") };
 
         // Cada categoría: objetos que la cubren y le sirven a tu campeón, por % de victorias con él (mayhemmeta.com).
         int champGames = stats.Global.For(champion)?.Games ?? 0;
@@ -488,12 +525,13 @@ public sealed partial class Advisor(StatsStore stats)
             .ToList();
         var categories = needs.Select(n => new CounterCategory(n.Title, n.Why, store.Where(n.Counters).Select(Describe)
                 .OrderByDescending(c => c.WinRate.HasValue).ThenByDescending(c => c.WinRate ?? 0).ThenByDescending(c => c.Augment is not null)
-                .Take(5).ToList()))
+                .Take(5).ToList(), offensiveTitles.Contains(n.Title)))
             .Where(c => c.Items.Count > 0).ToList();
 
         // Build situacional: la recomendada, cambiando lo que haga falta para cubrir las categorías (como mucho 3 cambios).
         var build = recommended.ToList();
         var changed = new HashSet<int>();
+        var replaced = new Dictionary<int, ItemInfo>();
         foreach (var (need, category) in needs.Zip(needs.Select(n => categories.FirstOrDefault(c => c.Title == n.Title))))
         {
             if (category is null || changed.Count >= 3) continue;
@@ -517,6 +555,7 @@ public sealed partial class Advisor(StatsStore stats)
             string reason = L($"cubre {category.Title.ToLowerInvariant()}", $"covers {category.Title.ToLowerInvariant()}")
                             + (pick.WinRate is { } wr ? L($" ({wr:P1} de victorias con tu campeón)", $" ({wr:P1} win rate with your champion)") : "")
                             + (pick.Augment is not null ? L($" · va con tu aumento «{pick.Augment}»", $" · fits your augment “{pick.Augment}”") : "");
+            replaced[pick.Item.Id] = build[replace].Item.Item;
             build[replace] = new BuildSlot(new ItemAdvice(pick.Item, 0, pick.Games, reason), false);
             changed.Add(pick.Item.Id);
         }
@@ -550,7 +589,7 @@ public sealed partial class Advisor(StatsStore stats)
             if (discards.Count == 3) break;
         }
 
-        return new CounterPlan(profile.MagicShare, threats, build, changed, categories, discards);
+        return new CounterPlan(profile.MagicShare, threats, build, changed, categories, discards, replaced);
     }
 
     /// <summary>A partir de qué parte hecha (en oro) un objeto se termina antes de cambiar a otro.</summary>

@@ -301,6 +301,16 @@ button { font: inherit; pointer-events: auto; cursor: pointer; }
 .pn-hint b { color: var(--gold-2); }
 .pn-dir .pn-hint { margin: 8px 0 0; }
 .pn-skill { margin: 8px 0 2px; font-size: 12px; color: #c9d1da; }
+/* Piezas del objeto de «Compra ahora» (las tuyas, apagadas y con ✓). */
+.pn-recipe { display: flex; align-items: center; gap: 6px; margin: 8px 0 2px; flex-wrap: wrap; }
+.pn-recipe-l { font-size: 11px; color: var(--muted); }
+.pn-piece { position: relative; display: flex; flex-direction: column; align-items: center; }
+.pn-piece small { font-size: 9.5px; color: var(--gold-2); margin-top: 1px; }
+.pn-piece.own .icon { opacity: .45; }
+.pn-piece b { position: absolute; top: 4px; font-size: 13px; color: var(--green); text-shadow: 0 0 3px #000; }
+/* «Cambia X por Y» en Adaptar. */
+.pn-swap { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; color: #d9e2ea; }
+.pn-arrow { color: var(--gold-2); font-weight: 800; }
 .pn-skill b { color: var(--gold-2); letter-spacing: .04em; }
 /* Panel compacto (⊟): solo «Compra ahora». */
 .side.compact { width: 214px; }

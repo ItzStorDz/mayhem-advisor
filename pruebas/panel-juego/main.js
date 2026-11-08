@@ -27,10 +27,26 @@ const game = lang => {
     nextOptions: [
       { id: 3124, name: es ? 'Espadafuria de Guinsoo' : "Guinsoo's Rageblade", icon: icon(3124), badges: ['Daño'],
         reason: es ? 'build habitual: lo compra el 61 % con Kayle en Mayhem' : 'standard build: 61% of Kayle players buy it in Mayhem',
-        missing: 1550, part: { name: es ? 'Arco Recurvo' : 'Recurve Bow', icon: icon(1043), cost: 700 }, progress: 0.4 },
+        missing: 1550, part: { name: es ? 'Arco Recurvo' : 'Recurve Bow', icon: icon(1043), cost: 700 }, progress: 0.4,
+        // Sus piezas (1.8.4): una ya comprada.
+        recipe: [{ name: es ? 'Arco Recurvo' : 'Recurve Bow', icon: icon(1043), cost: 700, owned: true }, { name: 'Bastón', icon: icon(3115), cost: 850, owned: false },
+                 { name: es ? 'Arco Recurvo' : 'Recurve Bow', icon: icon(1043), cost: 700, owned: false }] },
       { id: 3006, name: es ? 'Grebas del Berserker' : "Berserker's Greaves", icon: icon(3006), badges: ['Movilidad'], reason: '', missing: 0, part: null, progress: 1 },
     ],
-    building: [], kept: [], bestAugments: null, direction: null, plan: null, inventoryFull: false,
+    building: [], kept: [], bestAugments: null, direction: null, inventoryFull: false,
+    // 1.8.4: inventario lleno por una poción, la Lágrima pronto y oro de sobra (en la partida no salen los tres a la vez).
+    makeRoom: { name: es ? 'Poción de Vida' : 'Health Potion', icon: icon(3006) },
+    earlyPart: { name: es ? 'Lágrima de la Diosa' : 'Tear of the Goddess', icon: icon(3115), cost: 400, forName: 'Manamune' },
+    elixir: { name: es ? 'Elixir de Furia' : 'Elixir of Wrath', icon: icon(3124), cost: 500 },
+    statBonus: { name: es ? 'Estadística adicional' : 'Stat Bonus', icon: icon(3153), cost: 750 },
+    // «Adaptar» con «cambia X por Y» y una categoría defensiva + una para aprovechar al rival.
+    plan: { magicShare: 0.68, enemies: [{ name: 'Lux', magic: 0.95 }, { name: 'Garen', magic: 0.1 }],
+      recommended: [3006, 3124, 3115, 3302, 2510, 3153].map(id => ({ name: String(id), icon: icon(id), owned: false })),
+      situational: [{ name: es ? 'Fauces de Malmortius' : 'Maw of Malmortius', icon: icon(3302), owned: false, changed: true, reason: es ? 'cubre resistencia mágica' : 'covers magic resist',
+        replaces: { name: es ? 'Filo de la Noche' : 'Edge of Night', icon: icon(2510) } }],
+      categories: [{ title: es ? 'RESISTENCIA MÁGICA' : 'MAGIC RESIST', why: '68 %', offensive: false, items: [3302, 3153].map(id => ({ name: String(id), icon: icon(id), winRate: 0.52, games: 900 })) },
+                   { title: es ? 'DAÑO POR % DE VIDA' : '% HEALTH DAMAGE', why: '2 tanques', offensive: true, items: [3153].map(id => ({ name: String(id), icon: icon(id), winRate: 0.53, games: 1200 })) }],
+      discards: [] },
     styles: [
       { key: 'crit', name: es ? 'crítico' : 'crit', share: 0.61, winRate: 0.524, active: true, locked: false, items: [3124, 3115, 3302].map(id => ({ name: String(id), icon: icon(id) })) },
       { key: 'on_hit', name: 'on-hit', share: 0.32, winRate: 0.511, active: false, locked: false, items: [] },
@@ -67,6 +83,11 @@ app.whenReady().then(async () => {
     await new Promise(r => setTimeout(r, 450)); // el mismo botón dos veces seguidas se ignora (400 ms)
     win.webContents.send('data', live(lang));
     await shot(`normal-sin-pista-${lang}`);
+    await win.webContents.executeJavaScript('doAction("tab", "adaptar")');
+    await new Promise(r => setTimeout(r, 450));
+    win.webContents.send('data', live(lang));
+    await shot(`adaptar-${lang}`);
+    await win.webContents.executeJavaScript('doAction("tab", "compra")');
     await win.webContents.executeJavaScript('localStorage.clear(); location.reload()');
     await new Promise(r => setTimeout(r, 1500));
   }

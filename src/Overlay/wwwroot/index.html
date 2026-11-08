@@ -214,7 +214,8 @@
       <div class="top"><h1><b data-t="nav.champs"></b><span id="champCount"></span></h1><div class="lang" data-lang></div></div>
       <div id="champList">
         <div class="toolbar" style="margin-bottom:14px"><input class="search" id="champSearch">
-          <button class="chip on" data-cf="all"></button><button class="chip" data-cf="mine"></button><button class="chip" data-cf="top"></button></div>
+          <button class="chip on" data-cf="all"></button><button class="chip" data-cf="mine"></button><button class="chip" data-cf="top"></button>
+          <button class="chip" id="randomChamp" data-t="randomChamp"></button></div>
         <div class="grid" id="champGrid"></div>
       </div>
       <div id="champDetail" class="hidden"></div>
@@ -312,7 +313,7 @@ const T = {
     skillsTitle: "CÓMO SE SUBEN SUS HABILIDADES", skillsSub: "se maximiza primero · % de partidas · % de victorias",
     noHistory: "Aún no hay partidas tuyas guardadas. Abre el cliente de LoL: la app copia tu historial de ARAM: Caos sola (o pulsa «Copiar ahora» en Ajustes).",
     liveIn: c => `En partida con <b>${c}</b>`, liveNext: n => `compra ahora: <b class="gold">${n}</b>`, liveSelect: "Selección de campeón", liveBest: n => `Mejor opción del banco: <b class="gold">${n}</b>`,
-    champSearch: "Buscar campeón…", cfAll: "Todos", cfMine: "Los que juego", cfTop: "Mejor tier", champCount: n => `${n} campeones`, patch: p => ` · parche ${p}`,
+    randomChamp: "🎲 Uno al azar", champSearch: "Buscar campeón…", cfAll: "Todos", cfMine: "Los que juego", cfTop: "Mejor tier", champCount: n => `${n} campeones`, patch: p => ` · parche ${p}`,
     noChamps: "No hay campeones con ese filtro.", you: (w, g) => `Tú: ${w} V · ${g - w} D`, wrPill: w => `${w} de victorias`, gamesPill: g => `${g} partidas`, tierPill: tr => `Tier ${tr}`,
     back: "‹ Todos los campeones", build: "BUILD MÁS POPULAR", wr: "% victorias", prismatic: "PRISMÁTICOS", gold: "DE ORO", silver: "DE PLATA", bestAugs: "AUMENTOS CON MEJOR NOTA",
     kitTitle: "KIT DEL CAMPEÓN", kitScales: "Su daño escala con", kitOnHit: "Aplica efectos al impactar", kitAs: "Da o usa velocidad de ataque",
@@ -368,7 +369,7 @@ const T = {
     skillsTitle: "HOW ITS SKILLS ARE LEVELED", skillsSub: "maxed first · % of games · win rate",
     noHistory: "No games of yours saved yet. Open the League client: the app copies your ARAM: Mayhem history on its own (or press “Copy now” in Settings).",
     liveIn: c => `In game with <b>${c}</b>`, liveNext: n => `buy now: <b class="gold">${n}</b>`, liveSelect: "Champion select", liveBest: n => `Best bench pick: <b class="gold">${n}</b>`,
-    champSearch: "Search champion…", cfAll: "All", cfMine: "I play", cfTop: "Best tier", champCount: n => `${n} champions`, patch: p => ` · patch ${p}`,
+    randomChamp: "🎲 Random one", champSearch: "Search champion…", cfAll: "All", cfMine: "I play", cfTop: "Best tier", champCount: n => `${n} champions`, patch: p => ` · patch ${p}`,
     noChamps: "No champions with that filter.", you: (w, g) => `You: ${w} W · ${g - w} L`, wrPill: w => `${w} win rate`, gamesPill: g => `${g} games`, tierPill: tr => `${tr} tier`,
     back: "‹ All champions", build: "MOST POPULAR BUILD", wr: "win rate", prismatic: "PRISMATIC", gold: "GOLD", silver: "SILVER", bestAugs: "TOP-SCORED AUGMENTS",
     kitTitle: "CHAMPION KIT", kitScales: "Damage scales with", kitOnHit: "Applies on-hit effects", kitAs: "Gives or uses attack speed",
@@ -595,6 +596,8 @@ function renderChamps() {
     || `<div class="empty" style="grid-column:1/-1">${t("noChamps")}</div>`;
 }
 $("#champGrid").onclick = e => { const el = e.target.closest("[data-champ]"); if (el) openChampion(el.dataset.champ); };
+// Un campeón al azar de los que se ven (con el filtro y la búsqueda de ahora): lo pidió un jugador (2026-11-08).
+$("#randomChamp").onclick = () => { const tiles = $$("#champGrid [data-champ]"); if (tiles.length) openChampion(tiles[Math.floor(Math.random() * tiles.length)].dataset.champ); };
 function openChampion(alias) {
   champDetail = { want: alias, loading: true };
   $("#champList").classList.add("hidden"); $("#champDetail").classList.remove("hidden");

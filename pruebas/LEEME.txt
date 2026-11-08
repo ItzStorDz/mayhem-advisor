@@ -37,6 +37,10 @@ panel-juego\        Dibuja el panel del juego (overlay.html) con una partida de 
                     cómo moverlo), compacto (botón ⊟) y otra vez normal, en español e inglés. Guarda .png y .txt:
                       overlay-electron\node_modules\electron\dist\electron.exe pruebas\panel-juego <ruta completa de overlay-electron> <salida>
 
+casos-compra\       Casos de compra concretos (1.8.4): inventario lleno por una poción, build con la Lágrima, oro de sobra con
+                    el inventario lleno y «cambia X por Y» en Adaptar. Imprime qué recomienda la app en cada uno.
+                      $env:MAYHEM_DATA_DIR = "<copia de datos>"; dotnet run --project pruebas\casos-compra -c Release
+
 consejos\           Los consejos que daría la app con una copia de tus datos (con partidas\ y diario\): los de Inicio y los de
                     «Para la próxima» de tus últimas partidas, y los generales.
                       $env:MAYHEM_DATA_DIR = "<copia>"; dotnet run --project pruebas\consejos -c Release [-- en] [partidas=3]

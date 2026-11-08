@@ -243,6 +243,8 @@ function buyNowBlock(game, parts, small = false) {
   if (options[0]?.id !== nextFirstId) { nextFirstId = options[0]?.id; nextIndex = 0; } // cambió la recomendación
   if (nextIndex >= options.length) nextIndex = 0;
   const next = options[nextIndex];
+  // Una poción ocupa la última casilla: venderla o usarla (no un objeto). Opinión de un jugador, 2026-11-08.
+  if (game.makeRoom) parts.push(`<div class="pn-alert">${tr('makeRoom', esc(game.makeRoom.name))}</div>`);
   if (next) {
     const ok = !next.missing;
     const why = next.reason ?? [...(game.items ?? []), game.boots].find(i => i?.id === next.id)?.reason;
@@ -250,10 +252,16 @@ function buyNowBlock(game, parts, small = false) {
       <div class="pn-big">${icon(next.icon, 'icon xl')}<div><div class="pn-name">${esc(next.name)}</div>
         <div class="${ok ? 'pn-ok' : 'pn-gold'}">${ok ? tr('affordable') : tr('missing', num(next.missing))}</div>
         ${next.badges?.length ? `<div class="pn-badges">${next.badges.map(b => `<span>${esc(b)}</span>`).join('')}</div>` : ''}</div></div>
+      ${next.recipe?.length && !small ? `<div class="pn-recipe"><span class="pn-recipe-l">${tr('recipe')}</span>${next.recipe.map(r =>
+        `<span class="pn-piece${r.owned ? ' own' : ''}" title="${esc(r.name)} (${num(r.cost)})">${icon(r.icon, 'icon sm')}${r.owned ? '<b>✓</b>' : `<small>${num(r.cost)}</small>`}</span>`).join('')}</div>` : ''}
       ${next.part ? `<div class="pn-part">${icon(next.part.icon, 'icon sm')}<span>${tr('canBuyPart', esc(next.part.name), num(next.part.cost))}</span></div>` : ''}
       ${why && !small ? `<div class="pn-why">${esc(why)}</div>` : ''}
       ${options.length > 1 && !small ? `<button class="pn-link" data-act="next">${nextIndex + 1 < options.length ? tr('otherOpt') : tr('backFirst')}</button>` : ''}`);
   }
+  // La Lágrima se carga con el tiempo: si tu build la necesita, pronto (opinión de un jugador, 2026-11-08).
+  if (game.earlyPart) parts.push(`<div class="pn-part">${icon(game.earlyPart.icon, 'icon sm')}<span>${tr('earlyPart', esc(game.earlyPart.name), num(game.earlyPart.cost), esc(game.earlyPart.forName))}</span></div>`);
+  // Inventario lleno y oro de sobra: un elixir o «Estadística adicional».
+  if (game.elixir) parts.push(`<div class="pn-part">${icon(game.elixir.icon, 'icon sm')}<span>${tr('spareGold', esc(game.elixir.name), num(game.elixir.cost), game.statBonus ? esc(game.statBonus.name) : null, game.statBonus ? num(game.statBonus.cost) : null)}</span></div>`);
   for (const b of (game.building ?? []).filter(b => !(game.kept ?? []).includes(b.id) && !keptHere.has(b.id)))
     parts.push(`<button class="pn-keep" data-act="keep" data-id="${b.id}">${tr('keep', esc(b.name))}</button>`);
   if (game.swap && !keptHere.has(game.swap.sell.id)) parts.push(`<div class="pn-alert">${tr('full', esc(game.swap.sell.name), esc(game.swap.buy.name))}
@@ -269,8 +277,14 @@ function adaptTab(game) {
   const sentence = magic >= 55 ? tr('magicMost', magic) : magic <= 45 ? tr('physMost', 100 - magic) : tr('mixed', magic, 100 - magic);
   const parts = [`<div class="pn-sentence">${sentence}</div>
     <div class="dmg"><i class="mag" style="width:${magic}%"></i><i class="phy" style="width:${100 - magic}%"></i></div>`];
-  const first = plan.categories?.[0];
-  if (first) parts.push(`<div class="pn-lbl">${tr('buyCat', esc(first.title))}</div><div class="pn-three">${first.items.slice(0, 3).map(i =>
+  // Qué cambiar en tu build: «cambia X por Y» (antes solo decía qué comprar; opinión de un jugador, 2026-11-08).
+  const swaps = (plan.situational ?? []).filter(b => b.changed && b.replaces);
+  if (swaps.length) parts.push(`<div class="pn-lbl">${tr('changeTitle')}</div>${swaps.slice(0, 2).map(b =>
+    `<div class="pn-swap">${icon(b.replaces.icon, 'icon sm')}<span class="pn-arrow">→</span>${icon(b.icon, 'icon sm')}<span>${tr('swapFor', esc(b.replaces.name), esc(b.name))}</span></div>`).join('')}`);
+  // La categoría más importante y, si es defensiva, también una para aprovechar al rival (antiescudos, % de vida…).
+  const cats = plan.categories ?? [];
+  const shownCats = [cats[0], cats[0] && !cats[0].offensive ? cats.find(c => c.offensive) : null].filter(Boolean);
+  for (const c of shownCats) parts.push(`<div class="pn-lbl">${tr('buyCat', esc(c.title))}</div><div class="pn-three">${c.items.slice(0, 3).map(i =>
     `<div title="${esc(i.name)}">${icon(i.icon, 'icon lg')}<small>${i.winRate != null ? Math.round(i.winRate * 100) + (LANG === 'en' ? '%' : ' %') : '–'}${i.augment ? ' ⚡' : ''}${i.owned ? ' ✓' : ''}</small></div>`).join('')}</div>`);
   if (plan.discards?.length) parts.push(`<div class="pn-lbl">${tr('avoid')}</div>${plan.discards.map(d =>
     `<div class="pn-avoid">${icon(d.icon, 'icon sm')}<span>${esc(d.name)}</span></div>`).join('')}`);
@@ -279,7 +293,7 @@ function adaptTab(game) {
   if (details) {
     parts.push(`<div class="pn-text">${plan.enemies.map(e => `<span class="${e.magic >= 0.6 ? 'mag-t' : e.magic <= 0.4 ? 'phy-t' : ''}">${esc(e.name)}</span>`).join(' · ')}</div>`);
     parts.push(`<div class="pn-lbl">${tr('situational')}</div>${iconRow(plan.situational ?? [])}`);
-    for (const b of (plan.situational ?? []).filter(b => b.changed)) parts.push(`<div class="pn-text"><b class="chg-t">↻ ${esc(b.name)}</b>: ${esc(b.reason ?? '')}</div>`);
+    for (const b of (plan.situational ?? []).filter(b => b.changed)) parts.push(`<div class="pn-text"><b class="chg-t">↻ ${b.replaces ? tr('swapFor', esc(b.replaces.name), esc(b.name)) : esc(b.name)}</b>: ${esc(b.reason ?? '')}</div>`);
     for (const c of plan.categories ?? []) {
       parts.push(`<div class="pn-lbl">${esc(c.title)}</div><div class="pn-text">${esc(c.why)}</div>`);
       parts.push(c.items.map(i => `<div class="row">${icon(i.icon)}<div class="t"><div class="n">${esc(i.name)}${i.owned ? ' <span class="ok">✓</span>' : ''}</div>

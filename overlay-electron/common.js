@@ -30,6 +30,10 @@ const OT = {
     skillLine: (o, sh) => `🎯 Habilidades: maximiza <b>${o}</b>${sh ? ` (el ${Math.round(sh * 100)} % de los jugadores)` : ''}`,
     skillsShort: o => `Habilidades: <b>${o}</b>`,
     onHitHint: n => `Tienes aumentos de ataques (${n}): si quieres ir a por ellos, pulsa <b>on-hit</b> aquí arriba y todas las compras la seguirán.`,
+    makeRoom: n => `🧪 Lo que te llena el inventario es <b>${n}</b>: si lo vendes o lo usas, tienes sitio (no vendas un objeto).`,
+    recipe: 'Piezas:', earlyPart: (n, g, f) => `💧 Compra pronto la <b>${n}</b> (${g}): se carga con el tiempo y la necesitas para ${f}.`,
+    spareGold: (e, g, s, sg) => `💰 Te sobra oro: <b>${e}</b> (${g})${s ? ` o <b>${s}</b> (${sg}, estadísticas para siempre)` : ''}.`,
+    changeTitle: 'CAMBIA EN TU BUILD', swapFor: (a, b) => `Cambia ${a} por ${b}`,
     panelHint: 'Muévelo arrastrando esta barra · cambia su tamaño con la esquina de abajo a la izquierda · <b>⊟</b> = panel pequeño · <b>–</b> = minimizar',
   },
   en: {
@@ -58,6 +62,10 @@ const OT = {
     skillLine: (o, sh) => `🎯 Skills: max <b>${o}</b>${sh ? ` (${Math.round(sh * 100)}% of players)` : ''}`,
     skillsShort: o => `Skills: <b>${o}</b>`,
     onHitHint: n => `You have attack augments (${n}): if you want to lean into them, tap <b>on-hit</b> above and every purchase will follow it.`,
+    makeRoom: n => `🧪 Inventory full because of <b>${n}</b>: sell or use it to make room (don't sell an item).`,
+    recipe: 'Parts:', earlyPart: (n, g, f) => `💧 Buy <b>${n}</b> early (${g}): it charges over time and you need it for ${f}.`,
+    spareGold: (e, g, s, sg) => `💰 Spare gold: <b>${e}</b> (${g})${s ? ` or <b>${s}</b> (${sg}, permanent stats)` : ''}.`,
+    changeTitle: 'CHANGE IN YOUR BUILD', swapFor: (a, b) => `Swap ${a} for ${b}`,
     panelHint: 'Drag this bar to move it · resize it from the bottom-left corner · <b>⊟</b> = small panel · <b>–</b> = minimize',
   },
 };

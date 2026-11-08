@@ -1173,12 +1173,18 @@ public partial class App : System.Windows.Application
             int cost = _data.RemainingCost(item, game.MyItems);
             // Sin oro para el objeto entero: la pieza más cara de su receta que ya puedes comprar.
             var part = cost > game.Gold ? _data.AffordablePart(item, game.MyItems, (int)game.Gold) : null;
+            // Sus piezas (la receta de la tienda), con las que ya llevas marcadas: al empezar se veía el objeto pero no qué
+            // comprar de él (opinión de un jugador, 2026-11-08). Cada pieza tuya cuenta una vez, como en la tienda.
+            var bag = game.MyItems.ToList();
+            var recipe = (item.From ?? []).Select(_data.Item).OfType<ItemInfo>()
+                .Select(c => new { name = c.DisplayName, icon = c.Icon, cost = c.PriceTotal, owned = bag.Remove(c.Id) }).ToList();
             yield return new
             {
                 id = item.Id, name = item.DisplayName, icon = item.Icon, badges = ItemBadges.For(item),
                 reason = all.FirstOrDefault(a => a.Item.Id == item.Id)?.Reason,
                 missing = Math.Max(0, cost - (int)game.Gold),
                 part = part is null ? null : new { name = part.DisplayName, icon = part.Icon, cost = _data.RemainingCost(part, game.MyItems) },
+                recipe,
                 progress = Math.Min(1, game.Gold / Math.Max(1, cost)),
             };
         }
@@ -1236,10 +1242,11 @@ public partial class App : System.Windows.Application
                     enemies = pl.Enemies.Select(e => new { name = e.Name, magic = e.MagicShare }),
                     recommended = (g.Advice.FullBuild ?? []).Select(b => new { name = b.Item.Item.DisplayName, icon = b.Item.Item.Icon, owned = b.Owned }),
                     situational = pl.Situational.Select(b => new { name = b.Item.Item.DisplayName, icon = b.Item.Item.Icon, owned = b.Owned,
-                        changed = pl.Changed.Contains(b.Item.Item.Id), reason = pl.Changed.Contains(b.Item.Item.Id) ? b.Item.Reason : null }),
+                        changed = pl.Changed.Contains(b.Item.Item.Id), reason = pl.Changed.Contains(b.Item.Item.Id) ? b.Item.Reason : null,
+                        replaces = pl.Replaced?.GetValueOrDefault(b.Item.Item.Id) is { } old ? new { name = old.DisplayName, icon = old.Icon } : null }),
                     categories = pl.Categories.Select(c => new
                     {
-                        title = c.Title, why = c.Why,
+                        title = c.Title, why = c.Why, offensive = c.Offensive,
                         items = c.Items.Select(i => new { name = i.Item.DisplayName, icon = i.Item.Icon, winRate = i.WinRate, games = i.Games, augment = i.Augment, owned = i.Owned }),
                     }),
                     discards = pl.Discards.Select(d => new { name = d.Item.DisplayName, icon = d.Item.Icon, reason = d.Reason }),
@@ -1258,6 +1265,11 @@ public partial class App : System.Windows.Application
                     c.Anvil is null ? Popularity(g.Game.Champion, c.Hit.Augment) : null)),
                 skills = g.Advice.Skills is { } sk ? new { order = sk.MaxOrder, winRate = sk.WinRate, games = sk.Games, share = sk.Share } : null,
                 onHitHint = OnHitHint(g.Advice),
+                // Inventario lleno solo por una poción: venderla o usarla (no un objeto). La Lágrima, pronto. Oro de sobra: un elixir.
+                makeRoom = g.Advice.MakeRoom is { } room ? new { name = room.DisplayName, icon = room.Icon } : null,
+                earlyPart = g.Advice.EarlyPart is { } early ? new { name = early.Part.DisplayName, icon = early.Part.Icon, cost = early.Part.PriceTotal, forName = early.For.DisplayName } : null,
+                elixir = g.Advice.Elixir is { } elx ? new { name = elx.DisplayName, icon = elx.Icon, cost = elx.PriceTotal } : null,
+                statBonus = g.Advice.StatBonus is { } sb ? new { name = sb.DisplayName, icon = sb.Icon, cost = sb.PriceTotal } : null,
             };
         }
 
