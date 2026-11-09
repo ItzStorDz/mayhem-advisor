@@ -17,7 +17,7 @@ public sealed record Augment(int Id, string ApiName, string Rarity, Dictionary<s
     public string Name => RealName("es_mx") ?? RealName("default") ?? Fallback;
     /// <summary>El nombre en el idioma elegido: "default" es el inglés del juego.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public string DisplayName => Lang.English ? RealName("default") ?? Name : Name;
+    public string DisplayName => !Lang.English ? Name : (Lang.Code == "en" ? null : RealName(Lang.Current.Locale)) ?? RealName("default") ?? Name;
     /// <summary>Descripción en el idioma elegido (en inglés, la de mayhemmeta.com si la hay).</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public string DisplayDescription => Lang.English && ExtraDescription != "" ? ExtraDescription : Description;
@@ -51,7 +51,9 @@ public sealed class AugmentCatalog
 {
     const string Base = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global";
     const string StringTable = "https://raw.communitydragon.org/latest/game/es_mx/data/menu/en_us/lol.stringtable.json";
-    static readonly string[] Locales = ["default", "es_mx", "es_es"];
+    // También los nombres en portugués, francés, alemán y vietnamita (1.8.5): para enseñarlos en ese idioma y para reconocer
+    // las cartas con el juego en cualquiera de ellos (el lector compara con todos los nombres).
+    static readonly string[] Locales = ["default", "es_mx", "es_es", "pt_br", "fr_fr", "de_de", "vi_vn"];
 
     public IReadOnlyList<Augment> Augments { get; }
     readonly Dictionary<int, Augment> _byId;

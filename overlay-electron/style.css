@@ -323,7 +323,9 @@ button { font: inherit; pointer-events: auto; cursor: pointer; }
 .side.compact .pn-ok, .side.compact .pn-gold { font-size: 12px; }
 .side.compact .pn-badges { display: none; }
 .pn-tabs { display: flex; gap: 4px; padding: 0 10px 8px; border-bottom: 1px solid rgba(255, 255, 255, .06); }
-.pn-tab { flex: 1; border: 0; background: none; font-size: 12px; font-weight: 700; padding: 5px 0; border-radius: 8px; color: var(--muted); }
+/* Cada pestaña mide según su texto y luego crece igual que las demás: caben palabras largas («Aprimoramentos»,
+   «Augmentierungen»); si el panel es muy estrecho, se cortan con «…». */
+.pn-tab { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 0; background: none; font-size: 12px; font-weight: 700; padding: 5px 4px; border-radius: 8px; color: var(--muted); }
 .pn-tab:hover { color: var(--text); }
 .pn-tab.on { color: #1a1206; background: linear-gradient(180deg, #ffe7a3, #d9a64a); }
 .pn-body { padding: 12px 14px 12px; max-height: var(--pn-body-h, 46vh); overflow-y: auto; }

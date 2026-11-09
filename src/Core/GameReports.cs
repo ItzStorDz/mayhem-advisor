@@ -170,7 +170,7 @@ public sealed partial class GameReports(GameData data, AugmentCatalog catalog, S
         // Build: lo que acabaste llevando frente a lo que recomendaba la app al final, y sus compras recomendadas.
         var finalItems = me.Items.Where(i => data.Item(i) is { } it && !it.Has("Trinket")).ToList();
         var recommended = (journal?.FinalBuild ?? []).Select(i => new { item = ItemDto(i), owned = finalItems.Contains(i) }).ToList();
-        var buys = (journal?.Buys ?? []).Select(b => new { min = b.Minute, item = ItemDto(b.ItemId), why = journal!.Lang == Lang.Code ? b.Reason : "", bought = finalItems.Contains(b.ItemId) }).ToList();
+        var buys = (journal?.Buys ?? []).Select(b => new { min = b.Minute, item = ItemDto(b.ItemId), why = journal!.Lang == Lang.TextCode ? b.Reason : "", bought = finalItems.Contains(b.ItemId) }).ToList();
 
         var deaths = journal?.Deaths ?? [];
         var tips = Tips(me, myRanks, myScore, place, augs.Select(x => (x.name, x.score, x.grade, x.offered?.Select(o => (o.name, o.score, o.grade)).ToList(), (double?)x.minute)).ToList(), deaths)

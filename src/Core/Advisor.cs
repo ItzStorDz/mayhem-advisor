@@ -110,7 +110,7 @@ public sealed record EnemyProfile(double MagicShare, DamageMix Mix, int Tanks, i
             {
                 DamageMix.Magic => L($"Mucho daño mágico ({MagicShare:P0})", $"Lots of magic damage ({MagicShare:P0})"),
                 DamageMix.Physical => L($"Mucho daño físico ({1 - MagicShare:P0})", $"Lots of physical damage ({1 - MagicShare:P0})"),
-                _ => L("Daño mixto", "Mixed damage"),
+                _ => T("Daño mixto", "Mixed damage", "Dano misto", "Dégâts mixtes", "Gemischter Schaden", "Sát thương hỗn hợp"),
             },
         };
         if (Tanks >= 2) parts.Add(L($"{Tanks} tanques", $"{Tanks} tanks"));
@@ -493,21 +493,21 @@ public sealed partial class Advisor(StatsStore stats)
         // Lo que pide la partida, de más a menos importante.
         var needs = new List<(string Title, string Why, double Weight, Func<ItemInfo, bool> Counters)>();
         double lean = profile.MagicShare - 0.5;
-        if (lean > 0.03) needs.Add((L("RESISTENCIA MÁGICA", "MAGIC RESIST"),
+        if (lean > 0.03) needs.Add((T("RESISTENCIA MÁGICA", "MAGIC RESIST", "RESISTÊNCIA MÁGICA", "RÉSISTANCE MAGIQUE", "MAGIERESISTENZ", "KHÁNG PHÉP"),
             L($"{(apCount >= 2 ? $"{apCount} hacen daño mágico" : "Mucho daño mágico")}: el {profile.MagicShare:P0} del daño", $"{(apCount >= 2 ? $"{apCount} deal magic damage" : "Lots of magic damage")}: {profile.MagicShare:P0} of the damage") + With(Names(t => t.MagicShare >= 0.6)), lean, i => i.Has("SpellBlock")));
-        if (lean < -0.03) needs.Add((L("ARMADURA", "ARMOR"),
+        if (lean < -0.03) needs.Add((T("ARMADURA", "ARMOR", "ARMADURA", "ARMURE", "RÜSTUNG", "GIÁP"),
             L($"{(adCount >= 2 ? $"{adCount} hacen daño físico" : "Mucho daño físico")}: el {1 - profile.MagicShare:P0} del daño", $"{(adCount >= 2 ? $"{adCount} deal physical damage" : "Lots of physical damage")}: {1 - profile.MagicShare:P0} of the damage") + With(Names(t => t.MagicShare <= 0.4)), -lean, i => i.Has("Armor")));
-        if (profile.Healers >= 2) needs.Add((L("HERIDAS GRAVES", "GRIEVOUS WOUNDS"), L($"{profile.Healers} enemigos se curan mucho", $"{profile.Healers} enemies heal a lot"), 0.03 * profile.Healers, i => i.AppliesWounds));
-        if (profile.Shields >= 2) needs.Add((L("ANTIESCUDOS", "ANTI-SHIELD"), L($"{profile.Shields} escudos en el equipo enemigo", $"{profile.Shields} shields on the enemy team"), 0.025 * profile.Shields, i => i.Is(ItemCounters.AntiShield)));
-        if (profile.CritItems >= 3) needs.Add((L("ANTICRÍTICO", "ANTI-CRIT"), L($"Llevan {profile.CritItems} objetos de crítico", $"They have {profile.CritItems} crit items"), 0.02 * profile.CritItems, i => i.Is(ItemCounters.AntiCrit)));
-        if (profile.AttackSpeedItems >= 3) needs.Add((L("CONTRA VELOCIDAD DE ATAQUE", "ANTI-ATTACK SPEED"), L($"Llevan {profile.AttackSpeedItems} objetos de velocidad de ataque", $"They have {profile.AttackSpeedItems} attack speed items"), 0.02 * profile.AttackSpeedItems, i => i.Is(ItemCounters.AntiAttackSpeed)));
-        if (profile.Tanks >= 2 || profile.HealthItems >= 6) needs.Add((L("DAÑO POR % DE VIDA", "% HEALTH DAMAGE"), profile.Tanks >= 2 ? L($"{profile.Tanks} tanques", $"{profile.Tanks} tanks") : L("Compran mucha vida", "They stack health"), 0.06, i => i.Is(ItemCounters.PercentHealth)));
-        if (!_tankBuild && !iAmMagic && (profile.Tanks >= 2 || profile.ArmorItems >= 3)) needs.Add((L("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION"), L($"Compran armadura ({profile.ArmorItems} objetos)", $"They buy armor ({profile.ArmorItems} items)"), 0.05, i => i.Has("ArmorPenetration")));
-        if (!_tankBuild && iAmMagic && (profile.Tanks >= 2 || profile.MagicResistItems >= 3)) needs.Add((L("PENETRACIÓN MÁGICA", "MAGIC PENETRATION"), L($"Compran resist. mágica ({profile.MagicResistItems} objetos)", $"They buy magic resist ({profile.MagicResistItems} items)"), 0.05, i => i.Has("MagicPenetration")));
+        if (profile.Healers >= 2) needs.Add((T("HERIDAS GRAVES", "GRIEVOUS WOUNDS", "FERIDAS DOLOROSAS", "BLESSURES GRAVES", "KLAFFENDE WUNDEN", "VẾT THƯƠNG SÂU"), L($"{profile.Healers} enemigos se curan mucho", $"{profile.Healers} enemies heal a lot"), 0.03 * profile.Healers, i => i.AppliesWounds));
+        if (profile.Shields >= 2) needs.Add((T("ANTIESCUDOS", "ANTI-SHIELD", "ANTIESCUDO", "ANTI-BOUCLIER", "ANTI-SCHILD", "PHÁ LÁ CHẮN"), L($"{profile.Shields} escudos en el equipo enemigo", $"{profile.Shields} shields on the enemy team"), 0.025 * profile.Shields, i => i.Is(ItemCounters.AntiShield)));
+        if (profile.CritItems >= 3) needs.Add((T("ANTICRÍTICO", "ANTI-CRIT", "ANTICRÍTICO", "ANTI-CRITIQUE", "ANTI-KRIT", "CHỐNG CHÍ MẠNG"), L($"Llevan {profile.CritItems} objetos de crítico", $"They have {profile.CritItems} crit items"), 0.02 * profile.CritItems, i => i.Is(ItemCounters.AntiCrit)));
+        if (profile.AttackSpeedItems >= 3) needs.Add((T("CONTRA VELOCIDAD DE ATAQUE", "ANTI-ATTACK SPEED", "CONTRA VELOCIDADE DE ATAQUE", "CONTRE LA VITESSE D'ATTAQUE", "GEGEN ANGRIFFSTEMPO", "CHỐNG TỐC ĐỘ ĐÁNH"), L($"Llevan {profile.AttackSpeedItems} objetos de velocidad de ataque", $"They have {profile.AttackSpeedItems} attack speed items"), 0.02 * profile.AttackSpeedItems, i => i.Is(ItemCounters.AntiAttackSpeed)));
+        if (profile.Tanks >= 2 || profile.HealthItems >= 6) needs.Add((T("DAÑO POR % DE VIDA", "% HEALTH DAMAGE", "DANO POR % DE VIDA", "DÉGÂTS EN % DES PV", "SCHADEN NACH % LEBEN", "SÁT THƯƠNG THEO % MÁU"), profile.Tanks >= 2 ? L($"{profile.Tanks} tanques", $"{profile.Tanks} tanks") : L("Compran mucha vida", "They stack health"), 0.06, i => i.Is(ItemCounters.PercentHealth)));
+        if (!_tankBuild && !iAmMagic && (profile.Tanks >= 2 || profile.ArmorItems >= 3)) needs.Add((T("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION", "PENETRAÇÃO DE ARMADURA", "PÉNÉTRATION D'ARMURE", "RÜSTUNGSDURCHDRINGUNG", "XUYÊN GIÁP"), L($"Compran armadura ({profile.ArmorItems} objetos)", $"They buy armor ({profile.ArmorItems} items)"), 0.05, i => i.Has("ArmorPenetration")));
+        if (!_tankBuild && iAmMagic && (profile.Tanks >= 2 || profile.MagicResistItems >= 3)) needs.Add((T("PENETRACIÓN MÁGICA", "MAGIC PENETRATION", "PENETRAÇÃO MÁGICA", "PÉNÉTRATION MAGIQUE", "MAGIEDURCHDRINGUNG", "XUYÊN KHÁNG PHÉP"), L($"Compran resist. mágica ({profile.MagicResistItems} objetos)", $"They buy magic resist ({profile.MagicResistItems} items)"), 0.05, i => i.Has("MagicPenetration")));
         needs = needs.OrderByDescending(n => n.Weight).ToList();
         // Las de aprovechar al rival (no aguantar): para enseñarlas también aunque pese más una defensiva.
-        var offensiveTitles = new HashSet<string> { L("HERIDAS GRAVES", "GRIEVOUS WOUNDS"), L("ANTIESCUDOS", "ANTI-SHIELD"),
-            L("DAÑO POR % DE VIDA", "% HEALTH DAMAGE"), L("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION"), L("PENETRACIÓN MÁGICA", "MAGIC PENETRATION") };
+        var offensiveTitles = new HashSet<string> { T("HERIDAS GRAVES", "GRIEVOUS WOUNDS", "FERIDAS DOLOROSAS", "BLESSURES GRAVES", "KLAFFENDE WUNDEN", "VẾT THƯƠNG SÂU"), T("ANTIESCUDOS", "ANTI-SHIELD", "ANTIESCUDO", "ANTI-BOUCLIER", "ANTI-SCHILD", "PHÁ LÁ CHẮN"),
+            T("DAÑO POR % DE VIDA", "% HEALTH DAMAGE", "DANO POR % DE VIDA", "DÉGÂTS EN % DES PV", "SCHADEN NACH % LEBEN", "SÁT THƯƠNG THEO % MÁU"), T("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION", "PENETRAÇÃO DE ARMADURA", "PÉNÉTRATION D'ARMURE", "RÜSTUNGSDURCHDRINGUNG", "XUYÊN GIÁP"), T("PENETRACIÓN MÁGICA", "MAGIC PENETRATION", "PENETRAÇÃO MÁGICA", "PÉNÉTRATION MAGIQUE", "MAGIEDURCHDRINGUNG", "XUYÊN KHÁNG PHÉP") };
 
         // Cada categoría: objetos que la cubren y le sirven a tu campeón, por % de victorias con él (mayhemmeta.com).
         int champGames = stats.Global.For(champion)?.Games ?? 0;
@@ -917,9 +917,9 @@ public sealed partial class Advisor(StatsStore stats)
     /// <summary>Nombre del estilo de aramkit para los textos ("utility" → "apoyo").</summary>
     public static string StyleName(string key) => key switch
     {
-        "utility" => L("apoyo", "support"), "ap" => "AP", "ad" => "AD", "tank" => L("tanque", "tank"),
-        "on_hit" => "on-hit", "crit" => L("crítico", "crit"), "lethality" => L("letalidad", "lethality"),
-        "bruiser" => L("luchador", "bruiser"), "hybrid" => L("híbrido", "hybrid"),
+        "utility" => T("apoyo", "support", "suporte", "support", "Support", "hỗ trợ"), "ap" => "AP", "ad" => "AD", "tank" => T("tanque", "tank", "tanque", "tank", "Tank", "đỡ đòn"),
+        "on_hit" => "on-hit", "crit" => T("crítico", "crit", "crítico", "critique", "Krit", "chí mạng"), "lethality" => T("letalidad", "lethality", "letalidade", "létalité", "Tödlichkeit", "sát lực"),
+        "bruiser" => T("luchador", "bruiser", "lutador", "combattant", "Kämpfer", "đấu sĩ"), "hybrid" => T("híbrido", "hybrid", "híbrido", "hybride", "Hybrid", "lai"),
         _ => key.ToUpperInvariant(),
     };
 

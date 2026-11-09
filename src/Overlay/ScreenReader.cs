@@ -24,7 +24,13 @@ public sealed class ScreenReader
 
     public static ScreenReader? Create()
     {
-        var engine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("es-MX"))
+        // Con la app en portugués, francés o alemán, primero el lector de ese idioma si Windows lo tiene (lee mejor sus acentos
+        // y letras, como «ã» o «ß»). El vietnamita no lo trae Windows: sirven los demás, porque los nombres se comparan sin
+        // acentos (AugmentCatalog.Normalize). Si no, el de siempre: el español también lee las cartas en inglés.
+        var preferred = Core.Lang.Code is "pt" or "fr" or "de"
+            ? OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language(Core.Lang.Current.Culture)) : null;
+        var engine = preferred
+                     ?? OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("es-MX"))
                      ?? OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("es-ES"))
                      ?? OcrEngine.TryCreateFromUserProfileLanguages()
                      ?? OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));

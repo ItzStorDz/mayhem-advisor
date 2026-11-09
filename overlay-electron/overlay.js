@@ -210,7 +210,7 @@ function buyTab(game) {
   const d = game.direction;
   if (styles.length) {
     const active = styles.find(s => s.active) ?? styles[0];
-    const pc = x => Math.round(x * 100) + (LANG === 'en' ? '%' : ' %');
+    const pc = x => Math.round(x * 100) + pctSign();
     parts.push(`<div class="pn-dir pn-style"><div class="pn-dir-h">🧭 ${tr('buildTitle')} <b>${esc(active.name)}</b>
         <span class="${active.locked ? 'pn-lock' : 'pn-auto'}">${active.locked ? '🔒 ' + tr('lockedTag') : tr('autoTag')}</span></div>
       <div class="pn-chips">${styles.map(s => `<button class="pn-chip${s.active ? ' on' : ''}${s.locked ? ' lock' : ''}" data-act="style" data-id="${esc(s.key)}"
@@ -220,7 +220,7 @@ function buyTab(game) {
       ${active.items?.length ? `<div class="pn-three">${active.items.map(i => `<div title="${esc(i.name)}">${icon(i.icon, 'icon')}</div>`).join('')}</div>` : ''}</div>`);
   } else if (d) parts.push(`<div class="pn-dir"><div class="pn-dir-h">🧭 ${tr('dirTitle')} <b>${esc(d.label)}</b></div>
     ${d.reason ? `<div class="pn-text">${esc(d.reason)}</div>` : ''}
-    <div class="pn-three">${d.items.map(i => `<div title="${esc(i.name)}">${icon(i.icon, 'icon')}<small>${i.winRate != null ? Math.round(i.winRate * 100) + (LANG === 'en' ? '%' : ' %') : '–'}</small></div>`).join('')}</div>
+    <div class="pn-three">${d.items.map(i => `<div title="${esc(i.name)}">${icon(i.icon, 'icon')}<small>${i.winRate != null ? Math.round(i.winRate * 100) + pctSign() : '–'}</small></div>`).join('')}</div>
     ${d.warning ? `<div class="pn-warn">⚠ ${esc(d.warning)}</div>` : ''}</div>`);
 
   parts.push(moreBtn(tr('hideDetails'), tr('showDetails')));
@@ -285,7 +285,7 @@ function adaptTab(game) {
   const cats = plan.categories ?? [];
   const shownCats = [cats[0], cats[0] && !cats[0].offensive ? cats.find(c => c.offensive) : null].filter(Boolean);
   for (const c of shownCats) parts.push(`<div class="pn-lbl">${tr('buyCat', esc(c.title))}</div><div class="pn-three">${c.items.slice(0, 3).map(i =>
-    `<div title="${esc(i.name)}">${icon(i.icon, 'icon lg')}<small>${i.winRate != null ? Math.round(i.winRate * 100) + (LANG === 'en' ? '%' : ' %') : '–'}${i.augment ? ' ⚡' : ''}${i.owned ? ' ✓' : ''}</small></div>`).join('')}</div>`);
+    `<div title="${esc(i.name)}">${icon(i.icon, 'icon lg')}<small>${i.winRate != null ? Math.round(i.winRate * 100) + pctSign() : '–'}${i.augment ? ' ⚡' : ''}${i.owned ? ' ✓' : ''}</small></div>`).join('')}</div>`);
   if (plan.discards?.length) parts.push(`<div class="pn-lbl">${tr('avoid')}</div>${plan.discards.map(d =>
     `<div class="pn-avoid">${icon(d.icon, 'icon sm')}<span>${esc(d.name)}</span></div>`).join('')}`);
 

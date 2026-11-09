@@ -69,9 +69,12 @@ const OT = {
     panelHint: 'Drag this bar to move it · resize it from the bottom-left corner · <b>⊟</b> = small panel · <b>–</b> = minimize',
   },
 };
-const tr = (k, ...a) => { const v = OT[LANG]?.[k] ?? OT.es[k] ?? k; return typeof v === 'function' ? v(...a) : v; };
+// Portugués, francés, alemán y vietnamita: en i18n.js (se carga después). Lo que falte en esos sale en inglés.
+const tr = (k, ...a) => { const v = OT[LANG]?.[k] ?? (LANG === 'es' ? undefined : OT.en[k]) ?? OT.es[k] ?? k; return typeof v === 'function' ? v(...a) : v; };
+// Español, francés y alemán ponen un espacio antes del % («54 %»); inglés, portugués y vietnamita no («54%»).
+const pctSign = () => ['es', 'fr', 'de'].includes(LANG) ? ' %' : '%';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const pct = (v, digits = 1) => v == null ? '–' : (v * 100).toLocaleString(LANG, { minimumFractionDigits: digits, maximumFractionDigits: digits }) + (LANG === 'en' ? '%' : ' %');
+const pct = (v, digits = 1) => v == null ? '–' : (v * 100).toLocaleString(LANG, { minimumFractionDigits: digits, maximumFractionDigits: digits }) + pctSign();
 const num = v => (v ?? 0).toLocaleString(LANG);
 const signed = (v, digits = 1) => (v >= 0 ? '+' : '') + (v * 100).toLocaleString(LANG, { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const GRADES = ['OP', 'S', 'A', 'B', 'C', 'D'];

@@ -47,7 +47,7 @@ public static class BuildDirections
     public static string? CardLabel(Augment a, bool championIsMagic)
     {
         var (ap, ad, tank) = Lean(a, championIsMagic);
-        var kinds = new[] { (K: "AP", V: ap), (K: "AD", V: ad), (K: L("TANQUE", "TANK"), V: tank) }.Where(x => x.V > 0).OrderByDescending(x => x.V).ToList();
+        var kinds = new[] { (K: "AP", V: ap), (K: "AD", V: ad), (K: T("TANQUE", "TANK", "TANQUE", "TANK", "TANK", "ĐỠ ĐÒN"), V: tank) }.Where(x => x.V > 0).OrderByDescending(x => x.V).ToList();
         if (kinds.Count == 0 || kinds[0].V < 0.5) return null; // apenas se decanta (un escudo solo, p. ej.)
         // Mezcla: las dos direcciones (p. ej. Goliat con Nasus: vida + fuerza adaptable → "AD/TANQUE").
         return kinds.Count > 1 && kinds[1].V >= kinds[0].V * 0.6 ? $"{kinds[0].K}/{kinds[1].K}" : kinds[0].K;
@@ -55,9 +55,9 @@ public static class BuildDirections
 
     public static string Name(BuildKind k) => k switch
     {
-        BuildKind.AP => "AP", BuildKind.AD => "AD", BuildKind.Tank => L("TANQUE", "TANK"),
-        BuildKind.HybridAdAp => L("HÍBRIDO AD/AP", "HYBRID AD/AP"), BuildKind.HybridApTank => L("AP TANQUE", "AP TANK"),
-        _ => L("LUCHADOR (AD/TANQUE)", "BRUISER (AD/TANK)"),
+        BuildKind.AP => "AP", BuildKind.AD => "AD", BuildKind.Tank => T("TANQUE", "TANK", "TANQUE", "TANK", "TANK", "ĐỠ ĐÒN"),
+        BuildKind.HybridAdAp => T("HÍBRIDO AD/AP", "HYBRID AD/AP", "HÍBRIDO AD/AP", "HYBRIDE AD/AP", "HYBRID AD/AP", "LAI AD/AP"), BuildKind.HybridApTank => T("AP TANQUE", "AP TANK", "AP TANQUE", "AP TANK", "AP-TANK", "AP ĐỠ ĐÒN"),
+        _ => T("LUCHADOR (AD/TANQUE)", "BRUISER (AD/TANK)", "LUTADOR (AD/TANQUE)", "COMBATTANT (AD/TANK)", "KÄMPFER (AD/TANK)", "ĐẤU SĨ (AD/ĐỠ ĐÒN)"),
     };
 
     /// <summary>¿Encaja el objeto con la dirección? (híbridos: objetos que dan las dos cosas, o cualquiera de ellas).</summary>

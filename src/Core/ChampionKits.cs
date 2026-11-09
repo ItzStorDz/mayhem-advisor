@@ -34,7 +34,7 @@ public sealed record ChampionKit(
 
     /// <summary>"Q y E", "la pasiva"… para los textos.</summary>
     public static string Keys(string[]? keys) => keys is not { Length: > 0 } ? ""
-        : string.Join(L(" y ", " and "), keys.Select(k => k == "P" ? L("la pasiva", "the passive") : k));
+        : string.Join(T(" y ", " and ", " e ", " et ", " und ", " và "), keys.Select(k => k == "P" ? T("la pasiva", "the passive", "a passiva", "le passif", "die Passive", "nội tại") : k));
 
     /// <summary>
     /// Qué estadísticas aprovecha su kit, de más a menos (ratios de daño), para el texto de la página del campeón:
@@ -43,9 +43,9 @@ public sealed record ChampionKit(
     public IReadOnlyList<string> ScalesWith() =>
         (Ratios ?? []).GroupBy(kv => kv.Key switch
             {
-                "ad" or "bonusAd" => "AD", "ap" => "AP", "health" or "bonusHealth" => L("vida", "health"),
-                "armor" or "bonusArmor" => L("armadura", "armor"), "mr" or "bonusMr" => L("resist. mágica", "magic resist"),
-                "crit" => L("crítico", "crit"), "as" => L("vel. ataque", "attack speed"), _ => kv.Key,
+                "ad" or "bonusAd" => "AD", "ap" => "AP", "health" or "bonusHealth" => T("vida", "health", "vida", "PV", "Leben", "máu"),
+                "armor" or "bonusArmor" => T("armadura", "armor", "armadura", "armure", "Rüstung", "giáp"), "mr" or "bonusMr" => T("resist. mágica", "magic resist", "resist. mágica", "résist. magique", "Magieresistenz", "kháng phép"),
+                "crit" => T("crítico", "crit", "crítico", "critique", "Krit", "chí mạng"), "as" => T("vel. ataque", "attack speed", "vel. de ataque", "vit. d'attaque", "Angriffstempo", "tốc độ đánh"), _ => kv.Key,
             })
             .Select(g => (Name: g.Key, Sum: g.Sum(kv => kv.Value)))
             .Where(x => x.Sum >= 0.5 || x.Name is "vida" or "health" or "armadura" or "armor" or "resist. mágica" or "magic resist" && x.Sum >= 0.05)

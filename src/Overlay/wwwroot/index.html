@@ -41,7 +41,7 @@
   .top h1 { font-size: 24px; font-weight: 800; flex: 1; letter-spacing: -.01em; }
   .top h1 span { color: var(--muted); font-weight: 600; font-size: 15px; margin-left: 8px; }
   .lang { display: flex; padding: 3px; border-radius: 99px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08); }
-  .lang button { all: unset; cursor: pointer; padding: 5px 13px; border-radius: 99px; font-size: 12.5px; font-weight: 800; color: #9aa3b2; }
+  .lang button { all: unset; cursor: pointer; padding: 5px 9px; border-radius: 99px; font-size: 12px; font-weight: 800; color: #9aa3b2; }
   .lang button.on { color: #1a1206; background: linear-gradient(180deg, #ffe7a3, #d9a64a); }
   .status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); }
   .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
@@ -250,9 +250,8 @@
           <label class="card opt"><div><b data-t="set.share"></b><span><span data-t="set.shareSub"></span> <a href="#" data-data="privacy" data-t="data.details"></a></span></div><input type="checkbox" data-key="shareData"><i class="sw"></i></label>
         </div>
         <div class="col">
-          <div class="lbl" style="margin:0">IDIOMA · LANGUAGE</div>
-          <div class="card langs"><button data-setlang="es"><b>Español</b><span>App, panel del juego y nombres de objetos y aumentos</span></button>
-            <button data-setlang="en"><b>English</b><span>App, in-game panel and item &amp; augment names</span></button></div>
+          <div class="lbl" style="margin:0" data-t="set.lang"></div>
+          <div class="card langs" id="langGrid"></div>
           <div class="lbl" style="margin:8px 0 0" data-t="set.data"></div>
           <div class="card row"><div class="t"><b data-t="set.saved"></b><span id="savedText"></span></div><button class="btn" id="syncBtn" data-t="set.syncNow"></button></div>
           <div class="card row hidden" id="adminData"><div class="t"><b data-t="set.folder"></b><span data-t="set.folderSub"></span></div><button class="btn ghost" id="openData" data-t="set.open"></button></div>
@@ -290,6 +289,7 @@
   </main>
 </div>
 
+<script src="i18n.js"></script>
 <script src="partidas.js"></script>
 <script src="sugerencias.js"></script>
 <script>
@@ -331,6 +331,7 @@ const T = {
     "set.startup": "Iniciar con Windows", "set.startupSub": "Se abre sola al encender el PC y se queda junto al reloj.", "set.data": "DATOS",
     "set.saved": "Partidas guardadas", saved: n => `${n} partidas · se copian solas del cliente después de cada partida`, "set.syncNow": "Copiar ahora", syncing: "Copiando…",
     "set.folder": "Carpeta de datos", "set.folderSub": "Tus partidas y el registro (overlay.log), por si hay que revisar un fallo.", "set.open": "Abrir",
+    "set.lang": "IDIOMA · LANGUAGE",
     setFoot: v => `Mayhem Advisor ${v} · Creado por ItzStorDz · © 2026`,
     "upd.new": v => `Hay una versión nueva: ${v}`, "upd.have": v => `Tienes la ${v}. Se instala encima: tus partidas y ajustes no se tocan.`,
     "upd.install": mb => `Instalar ahora (${mb} MB)`, "upd.notes": "Novedades",
@@ -387,6 +388,7 @@ const T = {
     "set.startup": "Start with Windows", "set.startupSub": "Opens when your PC starts and stays next to the clock.", "set.data": "DATA",
     "set.saved": "Saved games", saved: n => `${n} games · copied from the client after each game`, "set.syncNow": "Copy now", syncing: "Copying…",
     "set.folder": "Data folder", "set.folderSub": "Your games and the log (overlay.log), in case a bug needs checking.", "set.open": "Open",
+    "set.lang": "LANGUAGE",
     setFoot: v => `Mayhem Advisor ${v} · Made by ItzStorDz · © 2026`,
     "upd.new": v => `A new version is available: ${v}`, "upd.have": v => `You have ${v}. It installs on top: your games and settings are kept.`,
     "upd.install": mb => `Install now (${mb} MB)`, "upd.notes": "What's new",
@@ -413,9 +415,14 @@ const T = {
     "fb.bugTip": "For a bug, say which champion, augment or item it happened with and what you expected. If you attach your last game, it includes the champion, augments, items and the build the app recommended.",
   },
 };
+// Portugués, francés, alemán y vietnamita (i18n.js). Lo que falte en un idioma sale en inglés (en español, lo de español).
+Object.assign(T, window.I18N?.T);
+const LANGS = [["es", "Español"], ["en", "English"], ["pt", "Português (Brasil)"], ["fr", "Français"], ["de", "Deutsch"], ["vi", "Tiếng Việt"]];
 let lang = "es";
-const t = (k, ...a) => { const v = T[lang][k] ?? T.es[k] ?? k; return typeof v === "function" ? v(...a) : v; };
-const pct = (v, d = 0) => v == null ? "–" : (v * 100).toLocaleString(lang, { minimumFractionDigits: d, maximumFractionDigits: d }) + (lang === "es" ? " %" : "%");
+const t = (k, ...a) => { const v = T[lang]?.[k] ?? (lang === "es" ? undefined : T.en[k]) ?? T.es[k] ?? k; return typeof v === "function" ? v(...a) : v; };
+// Español, francés y alemán ponen un espacio antes del % («54 %»); inglés, portugués y vietnamita no («54%»).
+const pctSign = () => ["es", "fr", "de"].includes(lang) ? " %" : "%";
+const pct = (v, d = 0) => v == null ? "–" : (v * 100).toLocaleString(lang, { minimumFractionDigits: d, maximumFractionDigits: d }) + pctSign();
 const num = v => Math.round(v ?? 0).toLocaleString(lang);
 const dec = (v, d = 1) => (v ?? 0).toLocaleString(lang, { minimumFractionDigits: d, maximumFractionDigits: d });
 const when = ts => new Date(ts).toLocaleString(lang, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -430,8 +437,9 @@ let init = null, home = null, settings = null, live = null, champDetail = null, 
 function applyStatic() {
   document.documentElement.lang = lang;
   $$("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
-  $$("[data-lang]").forEach(el => el.innerHTML = ["es", "en"].map(l => `<button data-setlang="${l}" class="${l === lang ? "on" : ""}">${l.toUpperCase()}</button>`).join(""));
-  $$(".langs [data-setlang]").forEach(b => b.classList.toggle("on", b.dataset.setlang === lang));
+  $$("[data-lang]").forEach(el => el.innerHTML = LANGS.map(([l, n]) => `<button data-setlang="${l}" title="${esc(n)}" class="${l === lang ? "on" : ""}">${l.toUpperCase()}</button>`).join(""));
+  // Ajustes → Idioma: cada uno con su nombre y su explicación en su propio idioma.
+  $("#langGrid").innerHTML = LANGS.map(([l, n]) => `<button data-setlang="${l}" class="${l === lang ? "on" : ""}"><b>${esc(n)}</b><span>${esc(window.I18N?.langSub?.[l] ?? "")}</span></button>`).join("");
   $("#champSearch").placeholder = t("champSearch"); $("#augSearch").placeholder = t("champSearch");
   $('[data-cf="all"]').textContent = t("cfAll"); $('[data-cf="mine"]').textContent = t("cfMine"); $('[data-cf="top"]').textContent = t("cfTop");
   $('[data-rf="all"]').textContent = t("rfAll"); $('[data-rf="prismatic"]').textContent = t("rfP"); $('[data-rf="gold"]').textContent = t("rfG"); $('[data-rf="silver"]').textContent = t("rfS");

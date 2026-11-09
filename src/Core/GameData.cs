@@ -8,8 +8,8 @@ namespace MayhemAdvisor.Core;
 public sealed record ItemInfo(int Id, string Name, int PriceTotal, string[] Categories, bool AppliesWounds, bool IsFinal, bool InStore, string Icon,
     int[]? From = null, string[]? Counters = null, string? NameEn = null)
 {
-    /// <summary>El nombre en el idioma elegido (ver <see cref="Lang"/>).</summary>
-    public string DisplayName => Lang.English && !string.IsNullOrEmpty(NameEn) ? NameEn : Name;
+    /// <summary>El nombre en el idioma elegido (ver <see cref="Lang"/>; portugués, francés, alemán y vietnamita, de <see cref="LocalizedNames"/>).</summary>
+    public string DisplayName => Lang.Names?.Item(Id) ?? (Lang.English && !string.IsNullOrEmpty(NameEn) ? NameEn : Name);
     public bool Has(string category) => Categories.Contains(category);
     public bool Is(string counter) => Counters?.Contains(counter) == true;
     public bool IsBoots => Has("Boots") && PriceTotal >= 900;
@@ -19,7 +19,7 @@ public sealed record ItemInfo(int Id, string Name, int PriceTotal, string[] Cate
 
 public sealed record ChampionInfo(int Id, string Alias, string Name, string[] Roles, string Icon, string? NameEn = null)
 {
-    public string DisplayName => Lang.English && !string.IsNullOrEmpty(NameEn) ? NameEn : Name;
+    public string DisplayName => Lang.Names?.Champion(Id) ?? (Lang.English && !string.IsNullOrEmpty(NameEn) ? NameEn : Name);
 }
 
 /// <summary>

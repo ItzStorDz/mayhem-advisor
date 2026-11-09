@@ -45,15 +45,15 @@ public static class ItemSets
             .Concat((stats.Global.For(champion.Alias)?.ItemsCommon ?? []).Select(i => stats.Data.Item(i.Id)).OfType<ItemInfo>())
             .Where(i => i.IsFinal && i.InStore && !i.IsBoots && !inBuild.Contains(i.Id)).DistinctBy(i => i.Id).Take(5).ToList();
 
-        string skills = normal.Skills is { } s ? " · " + L($"maximiza {string.Join(" › ", s.MaxOrder.ToCharArray())}", $"max {string.Join(" › ", s.MaxOrder.ToCharArray())}") : "";
+        string skills = normal.Skills is { } s ? " · " + T("maximiza ", "max ", "maximize ", "monter ", "maximiere ", "nâng tối đa ") + string.Join(" › ", s.MaxOrder.ToCharArray()) : "";
         var blocks = new List<object?>
         {
-            Block(L("Build de Mayhem Advisor (en orden)", "Mayhem Advisor build (in order)") + skills, build.Where(i => !i.IsBoots)),
-            Block(L("Botas", "Boots"), build.Where(i => i.IsBoots)),
-            Block(L("Otras buenas opciones", "Other good options"), others),
-            Block(L("Si el enemigo es casi todo daño mágico", "If the enemy is mostly magic damage"), Versus(MagicTeam)),
-            Block(L("Si el enemigo es casi todo daño físico", "If the enemy is mostly physical damage"), Versus(PhysicalTeam)),
-            Block(L("Consumibles", "Consumables"), [2003, 2138, 2139, 2140], stats.Data),
+            Block(T("Build de Mayhem Advisor (en orden)", "Mayhem Advisor build (in order)", "Build do Mayhem Advisor (em ordem)", "Build de Mayhem Advisor (dans l'ordre)", "Build von Mayhem Advisor (in Reihenfolge)", "Build của Mayhem Advisor (theo thứ tự)") + skills, build.Where(i => !i.IsBoots)),
+            Block(T("Botas", "Boots", "Botas", "Bottes", "Stiefel", "Giày"), build.Where(i => i.IsBoots)),
+            Block(T("Otras buenas opciones", "Other good options", "Outras boas opções", "Autres bons choix", "Weitere gute Optionen", "Lựa chọn tốt khác"), others),
+            Block(T("Si el enemigo es casi todo daño mágico", "If the enemy is mostly magic damage", "Se o inimigo for quase todo dano mágico", "Si l'ennemi fait surtout des dégâts magiques", "Wenn der Gegner fast nur magischen Schaden macht", "Nếu địch gần như toàn sát thương phép"), Versus(MagicTeam)),
+            Block(T("Si el enemigo es casi todo daño físico", "If the enemy is mostly physical damage", "Se o inimigo for quase todo dano físico", "Si l'ennemi fait surtout des dégâts physiques", "Wenn der Gegner fast nur physischen Schaden macht", "Nếu địch gần như toàn sát thương vật lý"), Versus(PhysicalTeam)),
+            Block(T("Consumibles", "Consumables", "Consumíveis", "Consommables", "Verbrauchsgegenstände", "Tiêu hao"), [2003, 2138, 2139, 2140], stats.Data),
         }.OfType<object>().ToList();
 
         var set = new

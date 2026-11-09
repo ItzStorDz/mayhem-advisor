@@ -10,8 +10,11 @@ public sealed class Settings
     public bool AutoAccept { get; set; }
     /// <summary>Con AutoAccept: solo en colas de ARAM: Caos (las demás se dejan para que las aceptes tú).</summary>
     public bool AutoAcceptOnlyMayhem { get; set; } = true;
-    /// <summary>Idioma de la app y del panel: "es" o "en". La primera vez, el de Windows (español si es español; si no, inglés).</summary>
-    public string Language { get; set; } = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "es" ? "es" : "en";
+    /// <summary>
+    /// Idioma de la app y del panel: "es", "en", "pt", "fr", "de" o "vi" (ver Lang.All). La primera vez, el de Windows si es
+    /// uno de esos; si no, inglés.
+    /// </summary>
+    public string Language { get; set; } = Lang.Normalize(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
     /// <summary>Al salir las cartas, el panel salta solo a la pestaña "Aumentos".</summary>
     public bool AutoAugmentsTab { get; set; } = true;
     /// <summary>Opciones de administrador (p. ej. la carpeta de datos con el registro): solo en el PC del creador.</summary>

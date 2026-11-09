@@ -77,11 +77,11 @@ public sealed class AugmentScale
 
     public static string Label(double score) => score switch
     {
-        >= 96 => L("Rendimiento excepcional", "Exceptional"),
-        >= 88 => L("Rendimiento muy alto", "Very strong"),
-        >= 70 => L("Rendimiento alto", "Strong"),
-        >= 45 => L("Rendimiento medio", "Average"),
-        >= 25 => L("Rendimiento bajo", "Weak"),
-        _ => L("Rendimiento muy bajo", "Very weak"),
+        >= 96 => T("Rendimiento excepcional", "Exceptional", "Excepcional", "Exceptionnel", "Herausragend", "Xuất sắc"),
+        >= 88 => T("Rendimiento muy alto", "Very strong", "Muito forte", "Très fort", "Sehr stark", "Rất mạnh"),
+        >= 70 => T("Rendimiento alto", "Strong", "Forte", "Fort", "Stark", "Mạnh"),
+        >= 45 => T("Rendimiento medio", "Average", "Médio", "Moyen", "Durchschnittlich", "Trung bình"),
+        >= 25 => T("Rendimiento bajo", "Weak", "Fraco", "Faible", "Schwach", "Yếu"),
+        _ => T("Rendimiento muy bajo", "Very weak", "Muito fraco", "Très faible", "Sehr schwach", "Rất yếu"),
     };
 }

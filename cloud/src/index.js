@@ -79,7 +79,8 @@ const ints = (v, maxLen, min, max) => Array.isArray(v) && v.length <= maxLen && 
 const need = (ok, what) => { if (!ok) throw new Bad('bad ' + what); };
 
 const APP = /^\d{1,2}\.\d{1,2}\.\d{1,3}$/;
-const LANG = /^(es|en)$/;
+// Los idiomas de la app (1.8.5: también portugués, francés, alemán y vietnamita).
+const LANG = /^(es|en|pt|fr|de|vi)$/;
 
 function checkParticipant(p) {
   need(p && typeof p === 'object', 'participant');

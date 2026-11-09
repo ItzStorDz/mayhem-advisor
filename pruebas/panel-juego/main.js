@@ -72,7 +72,8 @@ app.whenReady().then(async () => {
     const box = await win.webContents.executeJavaScript('JSON.stringify(document.getElementById("side").getBoundingClientRect())');
     console.log(name, box);
   };
-  for (const lang of ['es', 'en']) {
+  // Otros idiomas: PANEL_LANGS=es,en,pt,fr,de,vi (1.8.5). Lo que calcula el programa llega en inglés en pt/fr/de/vi.
+  for (const lang of (process.env.PANEL_LANGS || 'es,en').split(',')) {
     win.webContents.send('data', live(lang));
     await shot(`panel-${lang}`);
     // El botón ⊟ (como si lo pulsara el jugador): panel compacto.

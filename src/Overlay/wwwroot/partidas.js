@@ -23,6 +23,7 @@ const GT = {
     deaths: "MUERTES", deathsSub: (n, g) => g != null ? `${n} muertes · oro de media al morir (antes de comprar): ${num(g)}` : `${n} muertes`, highGold: "más de 1.300 de oro al morir",
     tips: "PARA LA PRÓXIMA", teams: "LOS 10 JUGADORES", ally: "TU EQUIPO", enemy: "RIVALES", kills: k => `${k} asesinatos`, mvp: "MVP",
     multi: "MULTIASESINATOS", spree: n => `racha máx. ${n}`, seeGame: "Ver la partida ›", names: ["MVP", "Muy buena", "Buena", "Normal", "Floja"],
+    gameWord: "partida", w: "V", l: "D", // victorias y derrotas en «hoy»
   },
   en: {
     title: "Games", today: "TODAY'S GAMES", noToday: "You haven't played ARAM: Mayhem today yet.", list: "YOUR GAMES",
@@ -44,20 +45,29 @@ const GT = {
     deaths: "DEATHS", deathsSub: (n, g) => g != null ? `${n} deaths · average gold on death (before shopping): ${num(g)}` : `${n} deaths`, highGold: "1,300+ gold on death",
     tips: "NEXT TIME", teams: "ALL 10 PLAYERS", ally: "YOUR TEAM", enemy: "ENEMIES", kills: k => `${k} kills`, mvp: "MVP",
     multi: "MULTIKILLS", spree: n => `best spree ${n}`, seeGame: "See the game ›", names: ["MVP", "Great", "Good", "Average", "Rough"],
+    gameWord: "game", w: "W", l: "L",
   },
 };
-const g_ = (k, ...a) => { const v = GT[lang]?.[k] ?? GT.es[k] ?? k; return typeof v === "function" ? v(...a) : v; };
+Object.assign(GT, window.I18N?.GT); // portugués, francés, alemán y vietnamita (i18n.js)
+const g_ = (k, ...a) => { const v = GT[lang]?.[k] ?? (lang === "es" ? undefined : GT.en[k]) ?? GT.es[k] ?? k; return typeof v === "function" ? v(...a) : v; };
 
 let gamesData = null, gameOpen = null, gameDetail = null, captureNote = null;
 
 function ago(ts) {
   const m = Math.round((Date.now() - ts) / 60000);
-  if (m < 60) return lang === "es" ? `hace ${Math.max(1, m)} min` : `${Math.max(1, m)} min ago`;
   const h = Math.round(m / 60);
+  if (lang !== "es" && lang !== "en") {
+    // Los demás idiomas, con el formato del propio navegador («há 5 min.», «il y a 5 min», «vor 5 Min.», «5 phút trước»).
+    const rtf = new Intl.RelativeTimeFormat(lang, { style: "short" });
+    if (m < 60) return rtf.format(-Math.max(1, m), "minute");
+    if (h < 24) return rtf.format(-h, "hour");
+    return when(ts);
+  }
+  if (m < 60) return lang === "es" ? `hace ${Math.max(1, m)} min` : `${Math.max(1, m)} min ago`;
   if (h < 24) return lang === "es" ? `hace ${h} h` : `${h} h ago`;
   return when(ts);
 }
-const scoreName = s => GT[lang]?.names?.[s >= 80 ? 0 : s >= 65 ? 1 : s >= 50 ? 2 : s >= 35 ? 3 : 4] ?? "";
+const scoreName = s => (GT[lang] ?? GT.en).names?.[s >= 80 ? 0 : s >= 65 ? 1 : s >= 50 ? 2 : s >= 35 ? 3 : 4] ?? "";
 const scoreClass = s => s >= 80 ? "sc-mvp" : s >= 65 ? "sc-hi" : s >= 50 ? "sc-mid" : s >= 35 ? "sc-lo" : "sc-bad";
 const ring = (s, label, sm) => s == null ? "" :
   `<div class="ring ${sm ? "sm " : ""}${scoreClass(s)}" style="--v:${Math.max(2, s)}"><b>${dec(s, sm ? 0 : 1)}</b>${label ? `<small>${esc(label)}</small>` : ""}</div>`;
@@ -88,7 +98,7 @@ function renderToday(s) {
   const multis = [["double", s.multi.doubles], ["triple", s.multi.triples], ["quadra", s.multi.quadras], ["penta", s.multi.pentas]].filter(m => m[1] > 0);
   return `<div class="card"><div class="lbl">${g_("today")}<em>${new Date().toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" })}</em></div>
     <div class="today">
-      <div class="rec"><div class="wl"><span class="w">${s.wins}V</span> <span class="l">${s.losses}D</span></div>
+      <div class="rec"><div class="wl"><span class="w">${s.wins}${g_("w")}</span> <span class="l">${s.losses}${g_("l")}</span></div>
         <div class="wrbar"><i style="width:${s.winRate * 100}%"></i></div>
         <div class="wr ${s.winRate >= .5 ? "up" : "down"}">${pct(s.winRate)} <span>${g_("wr")}</span></div><span>${g_("played", num(s.minutes))}</span></div>
       <div>
@@ -98,7 +108,7 @@ function renderToday(s) {
           <div class="tile2" style="display:flex;align-items:center;gap:12px" title="${g_("scoreSub")}">${ring(s.score, null, true)}<div><b style="font-size:15px">${s.score != null ? esc(scoreName(s.score)) : "–"}</b><span>${g_("score")}</span></div></div>
         </div>
         ${multis.length ? `<div class="multis">${multis.map(([k, n]) => `<span class="mk ${k === "penta" ? "p" : ""}">${g_(k)} ×${n}</span>`).join("")}</div>` : ""}
-        <div class="champsToday">${s.champions.map(c => `<div title="${esc(c.name)}: ${c.wins}V ${c.games - c.wins}D"><img src="${esc(c.icon)}"><em class="${c.wins * 2 >= c.games ? "up" : "down"}">${c.wins}-${c.games - c.wins}</em></div>`).join("")}</div>
+        <div class="champsToday">${s.champions.map(c => `<div title="${esc(c.name)}: ${c.wins}${g_("w")} ${c.games - c.wins}${g_("l")}"><img src="${esc(c.icon)}"><em class="${c.wins * 2 >= c.games ? "up" : "down"}">${c.wins}-${c.games - c.wins}</em></div>`).join("")}</div>
       </div>
       ${s.best ? `<div class="bestg" data-game="${esc(s.best.id)}"><div class="h">★ ${g_("best")}</div>
         <div class="row"><img src="${esc(s.best.icon)}"><div class="t"><b>${esc(s.best.champion)}</b><span>${s.best.k} / ${s.best.d} / ${s.best.a} · ${esc(scoreName(s.best.score))}</span></div>${ring(s.best.score, null, true)}</div>
@@ -207,7 +217,7 @@ function capture(copy) {
     const r = card.getBoundingClientRect();
     const d = gameDetail?.data;
     send({ type: "capture", copy, rect: { x: r.left, y: r.top, w: r.width, h: r.height, vw: window.innerWidth },
-           name: d ? `${d.champion.name} ${d.k}-${d.d}-${d.a}` : (lang === "en" ? "game" : "partida") });
+           name: d ? `${d.champion.name} ${d.k}-${d.d}-${d.a}` : g_("gameWord") });
     captureNote = { pending: copy };
   }, 120));
 }

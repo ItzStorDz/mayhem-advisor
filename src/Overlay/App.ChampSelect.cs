@@ -111,8 +111,8 @@ public partial class App
                 bool accept = msg.TryGetProperty("accept", out var a) && a.ValueKind == JsonValueKind.True;
                 _lcuActions.Enqueue(async (lcu, ct) =>
                     Notice(await ChampSelect.AnswerTradeAsync(lcu, tradeId, accept, ct)
-                        ? (accept ? L("Cambio aceptado", "Trade accepted") : L("Cambio rechazado", "Trade declined"))
-                        : L("El cambio ya no está disponible", "That trade is no longer available")));
+                        ? (accept ? T("Cambio aceptado", "Trade accepted", "Troca aceita", "Échange accepté", "Tausch angenommen", "Đã đồng ý đổi") : T("Cambio rechazado", "Trade declined", "Troca recusada", "Échange refusé", "Tausch abgelehnt", "Đã từ chối đổi"))
+                        : T("El cambio ya no está disponible", "That trade is no longer available", "A troca não está mais disponível", "Cet échange n'est plus disponible", "Dieser Tausch ist nicht mehr verfügbar", "Lượt đổi này không còn nữa")));
                 break;
             case "borderless":
                 _lcuActions.Enqueue(async (lcu, ct) =>

@@ -26,7 +26,8 @@ app.whenReady().then(async () => {
   const win = new BrowserWindow({ width: 420, height: 760, show: false, transparent: false, backgroundColor: '#1b1f27',
     webPreferences: { preload: path.join(overlayDir, 'preload.js'), contextIsolation: true } });
   await win.loadFile(path.join(overlayDir, 'champselect.html'));
-  for (const lang of ['es', 'en']) {
+  // Otros idiomas: PANEL_LANGS=es,en,pt,fr,de,vi (1.8.5). Lo que calcula el programa llega en inglés en pt/fr/de/vi.
+  for (const lang of (process.env.PANEL_LANGS || 'es,en').split(',')) {
     win.webContents.send('data', live(lang));
     await new Promise(r => setTimeout(r, 2500));
     const text = await win.webContents.executeJavaScript('document.body.innerText');

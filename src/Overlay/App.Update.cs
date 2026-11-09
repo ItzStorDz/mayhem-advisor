@@ -100,7 +100,7 @@ public partial class App
             _updateState = "installing";
             PushUpdate();
             Log.Write($"Instalando la versión {u.Version.ToString(3)}: la app se cierra y se vuelve a abrir sola");
-            Updater.Install(file, Lang.Code);
+            Updater.Install(file, Lang.TextCode); // el instalador solo tiene español e inglés
             await Task.Delay(1500); // que la ventana vea «Instalando…»
             Quit();
         }

@@ -82,7 +82,7 @@ public partial class App : System.Windows.Application
         if (_bridge is not null) _bridge.MessageReceived += msg => Dispatcher.InvokeAsync(() => OnOverlayMessage(msg));
         _overlay.Suppressed = _bridge is not null;
         _panelEnabled = _settings.ShowPanel;
-        Lang.English = _settings.Language == "en";
+        Lang.Set(_settings.Language);
         Cloud.Allowed = _settings.ShareData;
         Cloud.NoticeShown = _settings.DataNoticeShown;
         CreateTray();
@@ -103,6 +103,9 @@ public partial class App : System.Windows.Application
             _catalog = await AugmentCatalog.LoadAsync(http);
             _matcher = new AugmentMatcher(_catalog);
             _data = await GameData.LoadAsync(http);
+            // Portugués, francés, alemán o vietnamita: los nombres de objetos y campeones en ese idioma (los de los aumentos
+            // vienen en el catálogo).
+            if (Lang.Code is not ("es" or "en")) Lang.Names = await LocalizedNames.LoadAsync(http, Lang.Current.Locale);
             // Para reconocer tu campeón aunque el juego dé un nombre raro (Seraphine salió como «Name», 2026-11-02): alias o
             // nombre visible, en español o en inglés, también sin espacios ni apóstrofos («Kog'Maw», «Lee Sin»).
             var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -241,7 +244,7 @@ public partial class App : System.Windows.Application
                     var options = ChampSelect.Rank(select, _stats, _mayhem);
                     if (_panelEnabled) _overlay.ShowChampSelect(options); else _overlay.HideSidePanel();
                     _overlay.KeepOnTop();
-                    PushLive("champselect", L("Selección de campeón", "Champion select"), champSelect: options);
+                    PushLive("champselect", T("Selección de campeón", "Champion select", "Seleção de campeões", "Sélection des champions", "Championauswahl", "Chọn tướng"), champSelect: options);
                     await Delay(1000, ct);
                 }
                 else
@@ -249,7 +252,7 @@ public partial class App : System.Windows.Application
                     _overlay.HideSidePanel();
                     _lcuActions.Clear(); // un botón pulsado justo al salir de la selección ya no vale
                     _trades = [];
-                    PushLive("idle", lcu is null ? L("Cliente de LoL cerrado", "League client closed") : L("Esperando partida de ARAM: Caos", "Waiting for an ARAM: Mayhem game"));
+                    PushLive("idle", lcu is null ? T("Cliente de LoL cerrado", "League client closed", "Cliente do LoL fechado", "Client de LoL fermé", "LoL-Client geschlossen", "Client LMHT đã đóng") : T("Esperando partida de ARAM: Caos", "Waiting for an ARAM: Mayhem game", "Esperando uma partida de ARAM: Desordem", "En attente d'une partie d'ARAM du chaos", "Warte auf ein ARAM: Chaos-Spiel", "Đang chờ trận ARAM: Hỗn Loạn"));
                     if (lcu is not null && _settings.AutoAccept) await TryAutoAcceptAsync(lcu, ct);
                     // Con "aceptar partida" activado se mira cada segundo (el aviso dura ~10 s); si no, cada 3 s.
                     await Delay(_settings.AutoAccept ? 1000 : 3000, ct);
@@ -267,7 +270,7 @@ public partial class App : System.Windows.Application
                 if (game.UnknownChampion is { } rawNames)
                     Log.Write($"No reconozco el campeón (no se recomiendan objetos): {rawNames}");
                 lastChampion = game.Champion;
-                _journal = new GameJournal { StartedUtc = DateTime.UtcNow, Lang = Lang.Code, Champion = _data.Champion(game.Champion)?.Alias ?? game.Champion };
+                _journal = new GameJournal { StartedUtc = DateTime.UtcNow, Lang = Lang.TextCode, Champion = _data.Champion(game.Champion)?.Alias ?? game.Champion };
                 lastContext = null;
                 _myAugments.Clear();
                 _keepItems.Clear();
@@ -1105,7 +1108,7 @@ public partial class App : System.Windows.Application
     {
         id = a.Id, score, grade = grade ?? r.Tier, lean,
         popularity, popularityLabel = popularity is { } pop ? MayhemAugments.PopularityLabel(pop) : null,
-        scoreLabel = score is { } sc ? AugmentScale.Label(sc) + (note is null && !AugmentScale.IsReliable(r) ? L(" · pocos datos", " · little data") : "") : null,
+        scoreLabel = score is { } sc ? AugmentScale.Label(sc) + (note is null && !AugmentScale.IsReliable(r) ? T(" · pocos datos", " · little data", " · poucos dados", " · peu de données", " · wenig Daten", " · ít dữ liệu") : "") : null,
         box = box is { } bx ? new { x = bx.X, y = bx.Y, w = bx.Width, h = bx.Height } : null,
         // Sin % de victorias del aumento: Riot no deja enseñarlo en apps ni overlays («Products cannot display win rates for
         // Augments»). Van la nota 0-100, el rango, las partidas y la fiabilidad (1-3).
@@ -1142,7 +1145,7 @@ public partial class App : System.Windows.Application
         if (list.Count == 0) return null;
         string label = rarity switch
         {
-            "kPrismatic" => L("PRISMÁTICOS", "PRISMATIC"), "kGold" => L("DE ORO", "GOLD"), "kSilver" => L("DE PLATA", "SILVER"), _ => "",
+            "kPrismatic" => T("PRISMÁTICOS", "PRISMATIC", "PRISMÁTICOS", "PRISMATIQUES", "PRISMATISCHE", "KIM CƯƠNG"), "kGold" => T("DE ORO", "GOLD", "DE OURO", "D'OR", "GOLDENE", "VÀNG"), "kSilver" => T("DE PLATA", "SILVER", "DE PRATA", "D'ARGENT", "SILBERNE", "BẠC"), _ => "",
         };
         return new { rarity = label, champion = _data.ChampionName(champion), list };
     }
@@ -1474,23 +1477,31 @@ public partial class App : System.Windows.Application
         if (_update is { } update && _updateState is "available" or "ingame" or "error")
             menu.Items.Add(new Forms.ToolStripMenuItem(L($"Instalar la versión {update.Version.ToString(3)}", $"Install version {update.Version.ToString(3)}"),
                 null, (_, _) => OpenDashboard("actualizar")) { Font = new System.Drawing.Font(menu.Font, System.Drawing.FontStyle.Bold) });
-        menu.Items.Add(L("Abrir Mayhem Advisor", "Open Mayhem Advisor"), null, (_, _) => OpenDashboard());
-        menu.Items.Add(L("Ajustes", "Settings"), null, (_, _) => OpenDashboard("ajustes"));
-        menu.Items.Add(L("Sugerencias y fallos", "Suggestions & bugs"), null, (_, _) => OpenDashboard("sugerencias"));
+        menu.Items.Add(Lang.T("Abrir Mayhem Advisor", "Open Mayhem Advisor", "Abrir o Mayhem Advisor", "Ouvrir Mayhem Advisor", "Mayhem Advisor öffnen", "Mở Mayhem Advisor"),
+            null, (_, _) => OpenDashboard());
+        menu.Items.Add(Lang.T("Ajustes", "Settings", "Configurações", "Paramètres", "Einstellungen", "Cài đặt"), null, (_, _) => OpenDashboard("ajustes"));
+        menu.Items.Add(Lang.T("Sugerencias y fallos", "Suggestions & bugs", "Sugestões e erros", "Suggestions et bugs", "Vorschläge und Fehler", "Góp ý và lỗi"),
+            null, (_, _) => OpenDashboard("sugerencias"));
         menu.Items.Add(new Forms.ToolStripSeparator());
-        _trayPanel = new Forms.ToolStripMenuItem(L("Mostrar panel en la partida", "Show in-game panel")) { CheckOnClick = true };
+        _trayPanel = new Forms.ToolStripMenuItem(Lang.T("Mostrar panel en la partida", "Show in-game panel", "Mostrar painel na partida",
+            "Afficher le panneau en jeu", "Panel im Spiel anzeigen", "Hiện bảng trong trận")) { CheckOnClick = true };
         _trayPanel.Click += (_, _) => SetSetting("showPanel", _trayPanel.Checked);
-        _trayAccept = new Forms.ToolStripMenuItem(L("Aceptar partida automáticamente", "Auto-accept matches")) { CheckOnClick = true };
+        _trayAccept = new Forms.ToolStripMenuItem(Lang.T("Aceptar partida automáticamente", "Auto-accept matches", "Aceitar partida automaticamente",
+            "Accepter les parties automatiquement", "Spiele automatisch annehmen", "Tự động chấp nhận trận")) { CheckOnClick = true };
         _trayAccept.Click += (_, _) => SetSetting("autoAccept", _trayAccept.Checked);
-        _trayStartup = new Forms.ToolStripMenuItem(L("Iniciar con Windows", "Start with Windows")) { CheckOnClick = true };
+        _trayStartup = new Forms.ToolStripMenuItem(Lang.T("Iniciar con Windows", "Start with Windows", "Iniciar com o Windows",
+            "Lancer avec Windows", "Mit Windows starten", "Khởi động cùng Windows")) { CheckOnClick = true };
         _trayStartup.Click += (_, _) => SetSetting("startup", _trayStartup.Checked);
-        var language = new Forms.ToolStripMenuItem(L("Idioma: Español", "Language: English"));
-        language.DropDownItems.Add("Español", null, (_, _) => SetLanguage("es"));
-        language.DropDownItems.Add("English", null, (_, _) => SetLanguage("en"));
+        var language = new Forms.ToolStripMenuItem(Lang.T("Idioma", "Language", "Idioma", "Langue", "Sprache", "Ngôn ngữ") + ": " + Lang.Current.Name);
+        foreach (var l in Lang.All)
+        {
+            var code = l.Code;
+            language.DropDownItems.Add(new Forms.ToolStripMenuItem(l.Name, null, (_, _) => SetLanguage(code)) { Checked = code == Lang.Code });
+        }
         menu.Items.AddRange([_trayPanel, _trayAccept, _trayStartup, language]);
         SyncTray();
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add(L("Salir", "Quit"), null, (_, _) => Quit());
+        menu.Items.Add(Lang.T("Salir", "Quit", "Sair", "Quitter", "Beenden", "Thoát"), null, (_, _) => Quit());
     }
 
     Forms.ToolStripMenuItem _trayPanel = null!, _trayAccept = null!, _trayStartup = null!;
@@ -1517,10 +1528,25 @@ public partial class App : System.Windows.Application
     /// <summary>Cambia el idioma de todo (ventana principal, panel del juego y bandeja) y lo guarda.</summary>
     void SetLanguage(string code)
     {
-        _settings.Language = code == "en" ? "en" : "es";
-        Lang.English = _settings.Language == "en";
+        _settings.Language = Lang.Normalize(code);
+        Lang.Set(_settings.Language);
         _settings.Save();
         Log.Write($"Idioma: {_settings.Language}");
+        _ = ApplyLanguageAsync();
+    }
+
+    /// <summary>Con el idioma ya cambiado: los nombres del juego en ese idioma (pueden bajarse) y todo lo que se ve, de nuevo.</summary>
+    async Task ApplyLanguageAsync()
+    {
+        string code = Lang.Code;
+        LocalizedNames? names = null;
+        if (code is not ("es" or "en"))
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+            names = await LocalizedNames.LoadAsync(http, Lang.Current.Locale);
+        }
+        if (code != Lang.Code) return; // se volvió a cambiar mientras se bajaban
+        Lang.Names = names;
         BuildTrayMenu();
         _scale = null; // las etiquetas de las notas van en el idioma
         _forceAdvice = true; // recalcular los consejos con los textos en el idioma nuevo

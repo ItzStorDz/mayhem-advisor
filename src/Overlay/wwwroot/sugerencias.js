@@ -44,6 +44,7 @@
       needSome: "Pick a rating or write something to send.",
     },
   };
+  Object.assign(TX, window.I18N?.TX); // portugués, francés, alemán y vietnamita (i18n.js)
   const MAX = 2000;
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const post = m => window.chrome?.webview?.postMessage(m);
@@ -55,7 +56,7 @@
    */
   window.FeedbackForm = function (root, source, getLang) {
     const st = { rating: 0, kind: "idea", text: "", attach: true, lastGame: null, state: "form", sent: false };
-    const tx = () => TX[getLang()] ?? TX.es;
+    const tx = () => TX[getLang()] ?? TX.en;
     const canSend = () => st.rating > 0 || st.text.trim().length >= 3;
 
     function render() {
