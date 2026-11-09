@@ -328,7 +328,7 @@ public sealed partial class Advisor(StatsStore stats)
         foreach (var id in myAugments.SelectMany(a => stats.Links.RequiredBy(a.Id)).Distinct())
             // …salvo que no se pueda llevar con lo tuyo (Relicario Enervante con el Bastón de las Eras) o sea del daño
             // contrario a tu build (Filo del Infinito para Ahri con «Mejorar Filo del Infinito»).
-            if (!myItems.Contains(id) && pool.All(p => p.Item.Id != id) && Data.Item(id) is { } wanted
+            if (!Owns(myItems, id) && pool.All(p => p.Item.Id != id) && Data.Item(id) is { } wanted
                 && !ConflictsWithOwned(wanted, myItems) && !WrongDamageFor(wanted, iAmMagic))
                 pool.Add((wanted, stats.ChampionBase(myChampion), 0));
         // Con otro estilo de build (Sona de AP con Mago Tirador), lo que se compra en ese estilo entra aunque no salga en las
@@ -788,7 +788,7 @@ public sealed partial class Advisor(StatsStore stats)
         var needed = needs.Select(Data.Item).OfType<ItemInfo>().Where(i => i.IsFinal).ToList();
         if (heuristics && needed.Count > 0 && needed.All(i => WrongDamageFor(i, magic)))
             Add(-0.08, L($"Pide {needed[0].DisplayName}, que no es para tu build de {(magic ? "AP" : "AD")}", $"Wants {needed[0].DisplayName}, which doesn't fit your {(magic ? "AP" : "AD")} build"));
-        else if (needed.Count > 0 && myItems is not null && needed.All(i => !myItems.Contains(i.Id) && ConflictsWithOwned(i, myItems)))
+        else if (needed.Count > 0 && myItems is not null && needed.All(i => !Owns(myItems, i.Id) && ConflictsWithOwned(i, myItems)))
             Add(-0.08, L($"Pide {needed[0].DisplayName}, que no se puede llevar con lo que ya tienes", $"Wants {needed[0].DisplayName}, which can't be combined with your items"));
 
         if (reason is null) return null;
@@ -1130,7 +1130,20 @@ public sealed partial class Advisor(StatsStore stats)
 
     /// <summary>¿Lo llevas ya (o ya se transformó, p. ej. el Arcángel en Serafín)?</summary>
     static bool Owns(IReadOnlyList<int> myItems, int id) =>
-        myItems.Contains(id) || TransformedFrom.Any(kv => kv.Value == id && myItems.Contains(kv.Key));
+        myItems.Contains(id) || TransformedFrom.Any(kv => kv.Value == id && myItems.Contains(kv.Key))
+        || QuestRewardFrom.Any(kv => myItems.Contains(kv.Key) && kv.Value.Contains(id));
+
+    /// <summary>
+    /// Las misiones que convierten sus objetos en la recompensa al completarse (wiki de LoL, ARAM: Mayhem): con la recompensa
+    /// ya «tienes» esos objetos. Antes, con el Sombrero de Wooglet la app seguía pidiendo el Sombrero Mortífero de Rabadon
+    /// (opinión de un jugador con Kayle, 2026-11-08), porque la misión lo pedía y no se sabía que ya estaba hecha.
+    /// </summary>
+    static readonly Dictionary<int, int[]> QuestRewardFrom = new()
+    {
+        [228002] = [3089, 3157],       // Sombrero de Wooglet ← Sombrero Mortífero de Rabadon + Reloj de Arena de Zhonya
+        [223069] = [6664, 3068],       // Inmolación del Vacío ← Resplandor Vacío + Égida de Fuego Solar
+        [226668] = [6698, 3074, 3748], // Ultrahidra ← Hidra Profana + Hidra Voraz + Hidra Titánica
+    };
 
     IEnumerable<(ItemInfo Item, double Rate, int Games)> CandidatePool(string champion, DamageMix? mix)
     {

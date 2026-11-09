@@ -22,10 +22,12 @@ string Name(int id) => data.Item(id)?.DisplayName ?? id.ToString();
 (string, IReadOnlyList<int>)[] magicTeam = [("Lux", []), ("Brand", []), ("Syndra", []), ("Veigar", []), ("Ziggs", [])];
 (string, IReadOnlyList<int>)[] mixedTeam = [("Garen", []), ("Lux", []), ("Jinx", []), ("Leona", []), ("Ahri", [])];
 
-void Case(string title, string champ, int[] items, double gold, (string, IReadOnlyList<int>)[] enemies)
+void Case(string title, string champ, int[] items, double gold, (string, IReadOnlyList<int>)[] enemies, int[]? augs = null)
 {
-    var a = advisor.Build(champ, items, enemies, [], gold);
+    var mine = (augs ?? []).Select(catalog.Get).OfType<Augment>().ToList();
+    var a = advisor.Build(champ, items, enemies, mine, gold);
     Console.WriteLine($"\n== {title}: {data.ChampionName(champ)} con [{string.Join(", ", items.Select(Name))}], {gold} de oro");
+    Console.WriteLine($"   build: {string.Join(", ", (a.FullBuild ?? []).Select(b => (b.Owned ? "✓" : "") + b.Item.Item.DisplayName))}");
     Console.WriteLine($"   compra ahora: {(a.Next is { } n ? $"{n.Item.DisplayName} (faltan {n.GoldMissing})" : "-")} · lleno: {a.InventoryFull}");
     if (a.Next is { } nb) Console.WriteLine($"   piezas: {string.Join(" + ", (nb.Item.From ?? []).Select(Name))}");
     if (a.MakeRoom is { } room) Console.WriteLine($"   hacer sitio: vende o usa {room.DisplayName}");
@@ -46,3 +48,6 @@ Case("5 objetos y una poción", "Annie", [3020, 4645, 3089, 3157, 4646, 2003], 9
 Case("6 objetos y oro de sobra", "Annie", [3020, 4645, 3089, 3157, 4646, 3135], 900, mixedTeam);
 Case("Contra mucho daño mágico", "Jinx", [3006, 3031], 600, magicTeam);
 Case("Contra mucho daño mágico", "Garen", [3047, 3071], 600, magicTeam);
+// Opinión de un jugador (2026-11-08): con el Sombrero de Wooglet (la misión ya hecha) se seguía pidiendo el Rabadon.
+Case("Sombrero de Wooglet ya hecho", "Kayle", [228002, 3057, 2031, 3006, 3067, 1042], 800, mixedTeam, [1156, 1058, 3094]);
+Case("Misión de Wooglet a medias (solo Rabadon)", "Kayle", [3089, 3006], 800, mixedTeam, [1156]);
