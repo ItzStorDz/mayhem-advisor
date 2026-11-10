@@ -73,7 +73,10 @@ public sealed class AugmentItemLinks
     /// </summary>
     public bool IsReward(int itemId) => IsUnbuyableId(itemId) || _rewards.Contains(itemId);
 
-    static bool IsUnbuyableId(int id) => id / 10000 is 22 or 99;
+    // Los 12xxxx son las versiones de ARAM que sí se compran (Arrogancia, Rito de la Ruina, Espada del Alba Floreciente). El
+    // resto de ids altos son de otros modos: recompensas de Arena (22xxxx, 99xxxx) y la tienda de los modos retro (77xxxx,
+    // 44xxxx, 32xxxx), que la caché marca «en la tienda»: por «Mejora: Portal Zz'Rot» salía el Portal Zz'Rot a 180 campeones.
+    static bool IsUnbuyableId(int id) => id >= 10000 && id / 10000 != 12;
 
     const int SheenId = 3057;
 

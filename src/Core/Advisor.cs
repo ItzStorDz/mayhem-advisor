@@ -314,6 +314,8 @@ public sealed partial class Advisor(StatsStore stats)
         // aumentos: la build ya está empezada.
         if (lockedStyle is not null && LockedStyle(myChampion, lockedStyle) is { } locked) _style = locked;
         else if (StyleFromItems(myChampion, myItems) is { } byItems) _style = byItems;
+        // Y al estilo habitual se le suma lo que se compra según la página del campeón (aramkit se queda corto).
+        if (_style is not null) _style = WithPage(myChampion, _style);
         if (_style is not null && !_fromItems)
         {
             if (_style.Key == "ap") iAmMagic = true;
@@ -977,6 +979,7 @@ public sealed partial class Advisor(StatsStore stats)
     /// <summary>Por qué la app sigue esa build: la elegiste tú, tus objetos, tus aumentos o lo habitual con el campeón.</summary>
     string? StyleSource(string champion, IReadOnlyList<Augment> mine) => _style switch
     {
+        { Mixed: true } => L("tus objetos aún no deciden la build", "your items don't settle the build yet"),
         null or { FromItems: "" } => L($"lo habitual con {Data.ChampionName(champion)}", $"the usual {Data.ChampionName(champion)} build"),
         { Locked: true } => L("la elegiste tú · púlsala otra vez para que elija la app", "your pick · tap it again to let the app choose"),
         { FromItems: { } decisive } => L($"por tus objetos: {decisive}", $"from your items: {decisive}"),
@@ -991,6 +994,40 @@ public sealed partial class Advisor(StatsStore stats)
     /// no tiene ese estilo en sus datos (Twitch on-hit), los objetos salen de la media de todos los campeones (mezclarlo
     /// con lo suyo colaba lo de su estilo habitual: Filo del Infinito a un Twitch on-hit, Piedra Lunar a una Lulu on-hit). Sin objetos terminados, el estilo habitual del campeón. Null si no está claro.
     /// </summary>
+    /// <summary>
+    /// Al estilo habitual del campeón le suma lo que dice su página de mayhemmeta. aramkit solo trae los objetos más
+    /// repetidos de cada estilo y se queda corto con el resto: a Amumu no le daba la Máscara Abisal (la lleva el 30 % y
+    /// gana 2,6 puntos más), ni el Umbral del Invierno (36 %), y la Égida de Fuego Solar le salía con un 12 % (la lleva el
+    /// 42 %; en las partidas guardadas, 22 de 40). Cada objeto cuenta lo que diga la fuente que más le da. No se toca:
+    /// lo que aramkit pone en otro estilo del campeón (Maldad con Amumu es de los que van de AP), ni lo que es solo de AP en
+    /// un estilo de AD o al revés (Descarga Tormentosa a Shaco, Bailarín Espectral a Ashe AP: salía y luego mandaba venderlo).
+    /// Con pruebas/evaluar-objetos (727 partidas): acierto de la build 51,2 → 52,1 % sin objetos, 49,4 → 50,1 % con uno,
+    /// 47,0 → 47,4 % con dos y 42,5 → 42,9 % con tres. Solo los objetos que aramkit no trae (sin subir los que sí) bajaba el
+    /// acierto; contar la página a medias o de más (×0,7, ×1,4), también; y en los estilos que no son el habitual no sumaba.
+    /// </summary>
+    StylePick WithPage(string champion, StylePick style)
+    {
+        var styles = stats.AramkitBuilds.Styles(champion);
+        if (styles.Count == 0 || style.Key != styles[0].Key || style.Generic || stats.Global.For(champion) is not { } page) return style;
+        var items = new Dictionary<int, double>(style.Items);
+        foreach (var p in page.ItemsCommon.Concat(page.ItemsBest))
+        {
+            if (p.PickRate is not { } pick) continue;
+            // La página cuenta el objeto ya transformado (Invierno Nórdico); se compra el de antes (Umbral del Invierno).
+            int id = TransformedFrom.GetValueOrDefault(p.Id, p.Id);
+            if (Data.Item(id) is not { IsFinal: true, InStore: true, IsBoots: false } item) continue;
+            if (!style.Items.ContainsKey(id))
+            {
+                if (styles.Any(s => s.Key != style.Key && s.Items.ContainsKey(id))) continue;
+                bool apOnly = ApItem.Any(item.Has) && !item.Has("Damage") && !item.Has("CriticalStrike") && !item.Has("ArmorPenetration"),
+                     adOnly = AdItem.Any(item.Has) && !ApItem.Any(item.Has);
+                if (style.Key == "ap" ? adOnly : style.Key is "ad" or "crit" or "lethality" or "bruiser" && apOnly) continue;
+            }
+            items[id] = Math.Max(items.GetValueOrDefault(id), pick / 100);
+        }
+        return style with { Items = items };
+    }
+
     public StylePick? StyleFromItems(string champion, IReadOnlyList<int> myItems)
     {
         var finals = myItems.Distinct().Where(id => Data.Item(id) is { IsFinal: true, IsBoots: false, PriceTotal: > 0 } i
@@ -1009,7 +1046,29 @@ public sealed partial class Advisor(StatsStore stats)
             "crit" => kit is { HasCrit: true } || marksman,
             _ => false,
         };
-        if (stats.AramkitBuilds.StyleFromItems(champion, finals, KitFits) is not { Probability: >= AugmentBuilds.ItemStyleConfidence } found) return null;
+        var posterior = stats.AramkitBuilds.StylesFromItems(champion, finals, KitFits);
+        if (posterior.Count == 0) return null;
+        var found = posterior[0];
+        if (found.Probability < AugmentBuilds.ItemStyleConfidence)
+        {
+            // Tus objetos aún no dejan claro el estilo (un Volibear con Corazón de Acero puede acabar tanque u on-hit): se
+            // mezcla lo que se compra en cada estilo según lo probable que es con lo que llevas. Antes se volvía a la mezcla
+            // de TODAS las builds de la página y la app cambiaba de idea a mitad de partida: recomendaba Cicloespada Voltaica
+            // a Lee Sin y luego mandaba venderla (16 partidas de pruebas/auditar-objetos acababan vendiendo algo que la app
+            // había recomendado; con la mezcla, ninguna). Con pruebas/evaluar-objetos acierta más con 1, 2 y 3 objetos ya
+            // comprados (49,1 → 49,4 %, 46,8 → 47,0 % y 42,1 → 42,5 %). Quedarse solo con el estilo más probable acertaba menos.
+            if (_style is not null || styles.Count == 0) return null;
+            // Solo con los estilos del propio campeón: con los de «cualquier campeón» a medias, a una Annie con un Cuchillo
+            // de Statikk le salía el Rey Arruinado («lo compra el 27 % de los Annie», y no lo compra ninguna).
+            var own = posterior.Where(o => !o.Generic).ToList();
+            double known = own.Sum(o => o.Probability);
+            if (known <= 0) return null;
+            var mix = new Dictionary<int, double>();
+            foreach (var (style, p, _) in own)
+                foreach (var (id, share) in style.Items) mix[id] = mix.GetValueOrDefault(id) + p / known * share;
+            return new StylePick(own[0].Style.Key, styles[0].Key, own[0].Probability / known, own[0].Style.WinRate,
+                styles[0].WinRate, own[0].Style.Games, 0, mix, "", Mixed: true);
+        }
 
         string usual = styles.FirstOrDefault()?.Key ?? found.Style.Key;
         if (found.Style.Key == _style?.Key) return _style; // el de tus aumentos ya trae lo que se compra con ellos
@@ -1253,6 +1312,8 @@ public sealed partial class Advisor(StatsStore stats)
     /// <summary>Cuánto mejor tiene que ser el objeto nuevo para que valga la pena vender (evita cambios por nada).</summary>
     const double SwapMargin = 0.03;
     const double SellFinishedMargin = 0.06;
+    /// <summary>Desde esta parte de jugadores que lo compran con el campeón, un objeto terminado no se manda vender.</summary>
+    const double UsualShare = 0.25;
 
     /// <summary>
     /// Con el inventario lleno: el objeto tuyo que menos aporta contra este equipo y el mejor que lo sustituye.
@@ -1292,6 +1353,11 @@ public sealed partial class Advisor(StatsStore stats)
                                                 && !(c.Item.From ?? []).Contains(sell.Item.Id)); // no vender una pieza del propio objeto
             // Un objeto terminado se vende con pérdida (30 % del oro): solo si el nuevo es bastante mejor.
             if (buy is null || buy.Score - sell.Score < (sell.Item.IsFinal ? SellFinishedMargin : SwapMargin)) continue;
+            // Lo que se compra mucho con tu campeón en alguna de sus builds no «rinde poco»: a una Kayle que pasaba de on-hit
+            // a AP se le mandaba vender la Espadafuria de Guinsoo que la propia app le había recomendado.
+            bool wrongResist = profile.Mix == DamageMix.Physical && sell.Item.Has("SpellBlock") && !sell.Item.Has("Armor")
+                               || profile.Mix == DamageMix.Magic && sell.Item.Has("Armor") && !sell.Item.Has("SpellBlock");
+            if (sell.Item.IsFinal && !wrongResist && ChampionShare(champion, sell.Item.Id, anyBuild: true) >= UsualShare) continue;
 
             int sellGold = (int)(sell.Item.PriceTotal * SellRatio);
             int cost = Data.RemainingCost(buy.Item, rest);
@@ -1407,6 +1473,10 @@ public sealed partial class Advisor(StatsStore stats)
                 Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
                     $"tu build {StyleName(_style.Key)} (la elegiste tú): lo compra el {share:P0} de los que van así",
                     $"your {StyleName(_style.Key)} build (your pick): {share:P0} of those builds have it"));
+            else if (_style.Mixed)
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+                    $"con lo que llevas, lo compra el {share:P0} de los {Data.ChampionName(champion)}",
+                    $"with your items, {share:P0} of {Data.ChampionName(champion)} players buy it"));
             else if (_style.FromItems == "")
                 Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
                     $"build habitual de {Data.ChampionName(champion)} ({StyleName(_style.Key)}): lo compra el {share:P0}",
@@ -1422,7 +1492,10 @@ public sealed partial class Advisor(StatsStore stats)
             // Con el crítico al tope, lo que no da crítico y se compra con el campeón (Danza de la Muerte, Rey Arruinado con
             // Vayne) es justo lo que toca después aunque el estilo no lo traiga.
             bool afterCritCap = _critCapped && !item.Has("CriticalStrike") && stats.GlobalItem(champion, item.Id) is { PickRate: >= 5 };
-            Bonus(share < 0.05 && !afterCritCap, _style.FromItems is null ? OffMetaPenalty : StyleItemsPenalty, "");
+            // Lo que necesita un aumento tuyo no se castiga por «no ser de la build»: nadie lo compra sin ese aumento, y con
+            // él es lo primero (Corazón de Acero con «Endurece tu Corazón» se quedaba fuera de la build de 28 campeones).
+            bool needed = myAugments.Any(a => stats.Links.RequiredBy(a.Id).Contains(item.Id)) && !WrongDamageFor(item, iAmMagic);
+            Bonus(share < 0.05 && !afterCritCap && !needed, _style.FromItems is null ? OffMetaPenalty : StyleItemsPenalty, "");
         }
         else
         {
@@ -1450,8 +1523,10 @@ public sealed partial class Advisor(StatsStore stats)
         Bonus(magicLean < -0.03 && item.Has("Armor"), Math.Min(0.05, -magicLean * 0.2 + 0.01),
             L($"armadura: el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"armor: {1 - profile.MagicShare:P0} of enemy damage is physical"));
         Bonus(profile.Healers >= 2 && item.AppliesWounds, 0.04 * fit, L("heridas graves: el enemigo se cura mucho", "grievous wounds: the enemy heals a lot"));
-        Bonus(!_tankBuild && !iAmMagic && (profile.Tanks >= 2 || profile.ArmorItems >= 3) && item.Has("ArmorPenetration"), 0.03, L("penetración de armadura: tanques / armadura", "armor penetration: tanks / armor"));
-        Bonus(!_tankBuild && iAmMagic && (profile.Tanks >= 2 || profile.MagicResistItems >= 3) && item.Has("MagicPenetration"), 0.03, L("penetración mágica: tanques / resist. mágica", "magic penetration: tanks / magic resist"));
+        // La penetración también según lo que se compra con tu campeón: sin eso, la Cicloespada Voltaica le salía a Ezreal y a
+        // Kai'Sa contra tanques (no la compra ni el 1 %) y Florescencia Críptica a Miss Fortune.
+        Bonus(!_tankBuild && !iAmMagic && (profile.Tanks >= 2 || profile.ArmorItems >= 3) && item.Has("ArmorPenetration"), 0.03 * fit, L("penetración de armadura: tanques / armadura", "armor penetration: tanks / armor"));
+        Bonus(!_tankBuild && iAmMagic && (profile.Tanks >= 2 || profile.MagicResistItems >= 3) && item.Has("MagicPenetration"), 0.03 * fit, L("penetración mágica: tanques / resist. mágica", "magic penetration: tanks / magic resist"));
         // Resistencias del tipo equivocado restan.
         Bonus(magicLean < -0.05 && item.Has("SpellBlock") && !item.Has("Armor"), -0.03, "");
         Bonus(magicLean > 0.05 && item.Has("Armor") && !item.Has("SpellBlock"), -0.03, "");

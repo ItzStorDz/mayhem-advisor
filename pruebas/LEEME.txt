@@ -72,6 +72,18 @@ auditar-campeones\  Cuando un jugador avisa de un fallo con un campeón, lo mism
                       dotnet run --project pruebas\auditar-campeones -c Release [-- detalle]
                     Antes → ahora: -p:Antiguo=<carpeta codigo de un respaldo> (desde una copia de la carpeta, como evaluar-objetos).
 
+auditar-objetos\    Los OBJETOS con todos los campeones: la app juega sola miles de situaciones y se comprueba que nada de lo que
+                    recomienda es imposible o absurdo (objeto que no se vende, dos que la tienda no deja juntos, vender lo que
+                    acaba de recomendar, objeto del daño contrario…). A: partida entera de cada campeón × cada build × 4 equipos
+                    enemigos · B: cada objeto de la tienda con cada campeón · C: cada aumento que pide objetos · D: cada aumento
+                    con cada campeón (solo con $env:AUDIT_TODO = "1", tarda minutos) · E: aumentos con el mismo nombre que otro.
+                    Lee TODAS las líneas «== FALLO» y «== aviso» del final (con «detalle» salen todos los casos).
+                      $env:MAYHEM_DATA_DIR = "<copia de tus datos y de datos\>"
+                      dotnet run --project pruebas\auditar-objetos -c Release [-- detalle]
+                    Una partida paso a paso (qué recomienda y por qué): -- traza <Campeón> [equipo 0-3] [build fijada]
+                    (0 mixto, 1 AP, 2 AD crítico, 3 tanques y curas); con $env:TRAZA_OBJETO = "<id>" dice además cuánto se
+                    compra ese objeto según la página del campeón y según cada build de aramkit.
+
 evaluar-cartas\     Con las elecciones reales que llegan a la nube: ¿la carta mejor puntuada es la que eligieron los que ganaron?
                     Exporta las partidas con  npx wrangler d1 execute mayhem-advisor --remote --json --command "SELECT data FROM matches"
                     (desde cloud\) a un .json y:  dotnet run --project pruebas\evaluar-cartas -c Release -- <ese .json>

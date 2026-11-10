@@ -22,9 +22,14 @@ public sealed class AugmentMatcher
 {
     const double MinSimilarity = 0.82;
     readonly List<(Augment Aug, string Name)> _names = [];
+    readonly Func<int, bool>? _inMayhem;
 
-    public AugmentMatcher(AugmentCatalog catalog)
+    /// <param name="inMayhem">Si el aumento sale en los datos de Mayhem. El catálogo del juego trae también los de Arena y
+    /// los de modos antiguos, y algunos se llaman igual: «Icathia's Fall» es el 393 de Arena y el 1361 de Mayhem, y se leía
+    /// el de Arena (sin datos ni objetos).</param>
+    public AugmentMatcher(AugmentCatalog catalog, Func<int, bool>? inMayhem = null)
     {
+        _inMayhem = inMayhem;
         foreach (var a in catalog.Augments)
             foreach (var n in a.Names.Values.Select(AugmentCatalog.Normalize).Distinct())
                 if (n.Length >= 4) _names.Add((a, n));
@@ -63,8 +68,9 @@ public sealed class AugmentMatcher
         }
 
         // Si dos aumentos caen en el mismo sitio, nos quedamos con el más parecido.
+        // Con dos igual de parecidos (se llaman igual), el que sale en Mayhem.
         var hits = new List<AugmentHit>();
-        foreach (var h in best.Values.OrderByDescending(h => h.Similarity))
+        foreach (var h in best.Values.OrderByDescending(h => h.Similarity).ThenByDescending(h => _inMayhem?.Invoke(h.Augment.Id) == true))
             if (!hits.Any(o => Overlaps(o.Bounds, h.Bounds))) hits.Add(h);
 
         // Los nombres de las cartas están todos en la misma fila. Un nombre de aumento que sale en la
@@ -76,6 +82,19 @@ public sealed class AugmentMatcher
                 .OrderByDescending(g => g.Count).ThenByDescending(g => g.Sum(x => x.Similarity))
                 .First();
             if (row.Count >= 2) hits = row;
+        }
+        // Las cartas de una misma tanda son todas de la misma rareza. Si dos aumentos de Mayhem se llaman igual (en español
+        // «¡Estadísticas sobre Estadísticas!» es uno de oro y otro prismático; en portugués «Sobrecarga»), el de la rareza
+        // de las otras cartas.
+        for (int i = 0; i < hits.Count && hits.Count >= 2; i++)
+        {
+            var h = hits[i];
+            var others = hits.Where(o => o != h).GroupBy(o => o.Augment.Rarity).OrderByDescending(g => g.Count()).ToList();
+            if (others.Count != 1 || others[0].Key == h.Augment.Rarity) continue; // las demás no coinciden entre sí, o ya encaja
+            bool Known(AugmentHit x) => _inMayhem?.Invoke(x.Augment.Id) == true;
+            var twin = best.Values.FirstOrDefault(o => o.Augment.Id != h.Augment.Id && o.Augment.Rarity == others[0].Key
+                && Math.Abs(o.Similarity - h.Similarity) < 1e-9 && Overlaps(o.Bounds, h.Bounds) && (Known(o) || !Known(h)));
+            if (twin is not null) hits[i] = twin;
         }
         return hits.OrderByDescending(h => h.Similarity).Take(4).OrderBy(h => h.Bounds.X).ToList();
     }

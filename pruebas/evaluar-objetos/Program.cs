@@ -94,7 +94,9 @@ foreach (var m in matches.Values)
         var finals = p.Items.Where(Final).Distinct().ToList();
         if (finals.Count < given + 2 || data.Champion(p.Champion) is null) continue;
         var owned = finals.Take(given).Concat(p.Items.Where(id => data.Item(id)?.IsBoots == true).Take(1)).ToList();
-        var actual = finals.Skip(given).ToHashSet();
+        // Lo que se compró, no en lo que se convirtió: el Abrazo del Serafín cuenta como el Báculo del Arcángel que recomienda la app
+        // (antes un Arcángel bien recomendado contaba como fallo), igual que Muramana y Fimbulwinter.
+        var actual = finals.Skip(given).Select(id => id switch { 3040 => 3003, 3042 => 3004, 3121 => 3119, _ => id }).ToHashSet();
         var augments = p.Augments.Select(catalog.Get).OfType<Augment>().ToList();
         var enemies = m.Players.Where(e => e.Team != p.Team).Select(e => (e.Champion, (IReadOnlyList<int>)e.Items)).ToList();
 

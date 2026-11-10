@@ -20,10 +20,11 @@ public sealed record SkillOrder(string Order, int Games, double WinRate);
 /// </summary>
 /// <param name="FromItems">Si el estilo lo dicen tus objetos (no tus aumentos): los que lo deciden, para el texto ("" = aún sin objetos).</param>
 /// <param name="Generic">El campeón no tiene ese estilo en sus datos: sale de la media de todos los campeones.</param>
+/// <param name="Mixed">Tus objetos aún no dejan claro el estilo: <paramref name="Items"/> mezcla lo de cada estilo según lo probable que es.</param>
 /// <param name="Locked">Lo elegiste tú en el panel (selector de build): manda sobre lo que dicen tus objetos y aumentos.</param>
 public sealed record StylePick(string Key, string Usual, double Share, double WinRate, double UsualWinRate, int Games,
                                int AugmentId, IReadOnlyDictionary<int, double> Items, string? FromItems = null, bool Generic = false,
-                               bool Locked = false)
+                               bool Locked = false, bool Mixed = false)
 {
     public bool Changed => Key != Usual;
 }
@@ -182,16 +183,23 @@ public sealed class AugmentBuilds
     /// con poca probabilidad de partida (más si su kit va con ese estilo, ver <paramref name="kitFits"/>).
     /// Null sin objetos o sin datos.
     /// </summary>
-    public (BuildStyle Style, double Probability, bool Generic)? StyleFromItems(string alias, IReadOnlyCollection<int> items, Func<string, bool>? kitFits = null)
+    public (BuildStyle Style, double Probability, bool Generic)? StyleFromItems(string alias, IReadOnlyCollection<int> items, Func<string, bool>? kitFits = null) =>
+        StylesFromItems(alias, items, kitFits) is { Count: > 0 } all ? all[0] : null;
+
+    /// <summary>
+    /// Todos los estilos posibles con tus objetos terminados y lo probable que es cada uno (suman 1), del más probable al menos
+    /// (ver <see cref="StyleFromItems"/>). Vacío sin objetos o sin datos.
+    /// </summary>
+    public IReadOnlyList<(BuildStyle Style, double Probability, bool Generic)> StylesFromItems(string alias, IReadOnlyCollection<int> items, Func<string, bool>? kitFits = null)
     {
-        if (items.Count == 0 || _generic.Count == 0) return null;
+        if (items.Count == 0 || _generic.Count == 0) return [];
         var own = Styles(alias);
         int total = own.Sum(s => s.Games);
         var options = own.Select(s => (Style: s, Prior: (double)s.Games / Math.Max(1, total), Generic: false)).ToList();
         foreach (var key in GenericStyles)
             if (own.All(s => s.Key != key) && _generic.TryGetValue(key, out var generic))
                 options.Add((generic, GenericPrior * (kitFits?.Invoke(key) == true ? 3 : 1), true));
-        if (options.Count == 0) return null;
+        if (options.Count == 0) return [];
 
         // Las listas de aramkit solo traen los objetos más comprados de cada estilo: un objeto que no sale en la del campeón
         // (Bailarín Espectral o Navori con Vayne) cuenta con la mitad de lo que sale en ese estilo con todos los campeones.
@@ -202,8 +210,7 @@ public sealed class AugmentBuilds
             Log: Math.Log(o.Prior) + items.Sum(id => Math.Log(Math.Clamp(Share(o.Style, id), MissingShare, 0.98))))).ToList();
         double max = scored.Max(s => s.Log);
         double sum = scored.Sum(s => Math.Exp(s.Log - max));
-        var best = scored.MaxBy(s => s.Log);
-        return (best.Style, 1 / sum, best.Generic);
+        return scored.Select(s => (s.Style, Math.Exp(s.Log - max) / sum, s.Generic)).OrderByDescending(s => s.Item2).ToList();
     }
 
     static IReadOnlyList<BuildStyle> ReadStyles(List<JsonElement[]>? rows)

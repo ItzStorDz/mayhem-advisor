@@ -101,7 +101,7 @@ public partial class App : System.Windows.Application
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
             _tray.Text = "Mayhem Advisor (cargando datos…)";
             _catalog = await AugmentCatalog.LoadAsync(http);
-            _matcher = new AugmentMatcher(_catalog);
+            _matcher = new AugmentMatcher(_catalog, id => _augmentTable.HasAugment(id));
             _data = await GameData.LoadAsync(http);
             // Portugués, francés, alemán o vietnamita: los nombres de objetos y campeones en ese idioma (los de los aumentos
             // vienen en el catálogo).
@@ -1393,7 +1393,7 @@ public partial class App : System.Windows.Application
             _augmentTable = augments;
             _stats.AugmentTable = augments;
             _catalog = _catalog.WithExtraDescriptions(augments.Descriptions);
-            _matcher = new AugmentMatcher(_catalog);
+            _matcher = new AugmentMatcher(_catalog, id => _augmentTable.HasAugment(id));
             linksStale = true;
             Log.Write($"Aumentos de mayhemmeta.com: {augments.Descriptions.Count} descripciones, {augments.PairCount} combinaciones");
         }
