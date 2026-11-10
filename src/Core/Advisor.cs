@@ -918,7 +918,9 @@ public sealed partial class Advisor(StatsStore stats)
     /// Lo que pierde un objeto de crítico con el crítico al tope (Wakka, 2026-10-31: le recomendaba El Coleccionista a una
     /// Vayne con el 100 %). El Filo del Infinito no: su fuerza es el daño crítico.
     /// </summary>
-    const double CritCappedPenalty = -0.2;
+    // −0,4 desde la 1.8.9 (antes −0,2), a la par que StyleItemsBonus: con −0,2 volvía a salir crítico al 100 % con 9 de 65
+    // campeones; con −0,4, con ninguno (pruebas/auditar-campeones; antes de todo esto eran 2: Twitch y Sivir con Lord Dominik).
+    const double CritCappedPenalty = -0.4;
     const int InfinityEdge = 3031;
 
     /// <summary>True durante <see cref="Build"/> si tu build es de tanque (ver <see cref="TankShare"/>).</summary>
@@ -1288,7 +1290,10 @@ public sealed partial class Advisor(StatsStore stats)
     /// con 0,06 / −0,05 acertaba el 37,5 % de lo que compraron después; con 0,15 / −0,12, el 43 %; más ya no mejora y
     /// taparía al equipo enemigo y a tus aumentos.
     /// </summary>
-    const double StyleItemsBonus = 0.15;
+    // 0,30 desde la 1.8.9 (antes 0,15): lo que más se compra en tu build pesa el doble frente al % de victorias y a lo
+    // del equipo enemigo. Con pruebas/evaluar-objetos (727 partidas), acierto de la build con 0 / 1 / 2 / 3 objetos:
+    // 52,0 / 50,1 / 47,6 / 42,6 → 52,6 / 50,9 / 48,5 / 43,7 (con 0,22 algo menos; con 0,40 casi igual que con 0,30).
+    const double StyleItemsBonus = 0.30;
     const double StyleItemsPenalty = -0.12;
 
     /// <summary>
@@ -1337,7 +1342,9 @@ public sealed partial class Advisor(StatsStore stats)
         @"(per\W+100|of\W+your)\W+(maximum\W+|max\W+)?mana|\d%\W+(maximum|max)\W+mana|(seg[uú]n|de)\W+tu\W+man[aá]\W+m[aá]ximo", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
     /// <summary>Objeto que un aumento tuyo necesita para funcionar: por encima de cualquier otra cosa.</summary>
-    const double RequiredBonus = 0.25;
+    // 0,45 desde la 1.8.9 (antes 0,25), a la par que StyleItemsBonus: con 0,25 el objeto que pide un aumento volvía a
+    // quedarse fuera de la build (Ultra Hidra con 50 campeones, Caída de Icathia con 34; pruebas/auditar-objetos, apartado C).
+    const double RequiredBonus = 0.45;
     const double SellRatio = 0.7;
     /// <summary>Cuánto mejor tiene que ser el objeto nuevo para que valga la pena vender (evita cambios por nada).</summary>
     const double SwapMargin = 0.03;
@@ -1418,7 +1425,11 @@ public sealed partial class Advisor(StatsStore stats)
         _style is not null ? _style.Items.GetValueOrDefault(itemId) : stats.AramkitBuilds.Styles(champion).FirstOrDefault()?.Items.GetValueOrDefault(itemId) ?? 0,
         anyBuild ? stats.AramkitBuilds.Styles(champion).Select(s => s.Items.GetValueOrDefault(itemId)).DefaultIfEmpty(0).Max() : 0),
         (stats.GlobalItem(champion, itemId)?.PickRate ?? 0) / 100);
-    const double CounterMinShare = 0.05, CounterFullShare = 0.15;
+    // CounterMinShare 0,15 desde la 1.8.9 (antes 0,05): un objeto «contra el enemigo» solo se mete a la fuerza en la build si
+    // lo compra al menos el 15 % con tu campeón (el Presagio de Randuin se recomendaba 401 veces y se compraba el 22 %).
+    // Sigue sumando en la nota y sale en «Adaptar». Con los dos cambios juntos: 52,9 / 51,4 / 49,5 / 45,3 (con 0,25 o sin
+    // forzar nunca, 0,1-0,4 más; se deja en 0,15 para que el objeto contra curaciones o críticos siga saliendo donde se compra).
+    const double CounterMinShare = 0.15, CounterFullShare = 0.15;
 
     /// <summary>Lo que el enemigo tiene muy marcado (mucha curación, escudos, críticos o velocidad de ataque) y qué lo contrarresta.</summary>
     static (bool Strong, Func<ItemInfo, bool> Counters)[] StrongNeeds(EnemyProfile profile) =>
@@ -1610,7 +1621,10 @@ public sealed partial class Advisor(StatsStore stats)
             augBonus += amount;
             matches.Add((aug.DisplayName, amount));
         }
-        var named = matches.OrderByDescending(m => m.Amount).Take(2).Select(m => English ? $"“{m.Name}”" : $"«{m.Name}»").ToList();
+        var named = matches.OrderByDescending(m => m.Amount).Take(2).Select(m => Code switch
+        {
+            "es" => $"«{m.Name}»", "fr" => $"« {m.Name} »", "de" => $"„{m.Name}“", _ => $"“{m.Name}”",
+        }).ToList();
         // También según lo que se compra con tu campeón: «Goliat da vida» subía cualquier objeto con vida (Presagio de Randuin
         // a Yasuo, Cho'Gath, Leona…; se compraba el 2 % de las veces). Lo que se compra con tus aumentos ya lo trae tu build.
         double augFit = Math.Min(1, ChampionShare(champion, item.Id, anyBuild: true) / CounterFullShare);
