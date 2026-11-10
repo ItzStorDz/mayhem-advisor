@@ -130,11 +130,11 @@ public sealed partial class Advisor
         string name = Data.ChampionName(champion);
         string? warning = kind switch
         {
-            BuildKind.AP when usualAp < 0.3 => L($"Ojo: {name} suele ir de AD; este camino es poco habitual.", $"Heads up: {name} usually goes AD; this path is unusual."),
-            BuildKind.AD when usualAp > 0.7 => L($"Ojo: {name} suele ir de AP; este camino es poco habitual.", $"Heads up: {name} usually goes AP; this path is unusual."),
+            BuildKind.AP when usualAp < 0.3 => LF($"Ojo: {name} suele ir de AD; este camino es poco habitual.", $"Heads up: {name} usually goes AD; this path is unusual."),
+            BuildKind.AD when usualAp > 0.7 => LF($"Ojo: {name} suele ir de AP; este camino es poco habitual.", $"Heads up: {name} usually goes AP; this path is unusual."),
             // Tanques (Alistar, Leona, Sejuani…): un aumento de daño no los convierte en AD/AP sin avisar.
             BuildKind.AD or BuildKind.AP or BuildKind.HybridAdAp when TankShare(champion, [], []) >= 0.6 =>
-                L($"Ojo: {name} suele ir de tanque; este camino es poco habitual.", $"Heads up: {name} usually goes tank; this path is unusual."),
+                LF($"Ojo: {name} suele ir de tanque; este camino es poco habitual.", $"Heads up: {name} usually goes tank; this path is unusual."),
             _ => null,
         };
 

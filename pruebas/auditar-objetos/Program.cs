@@ -48,11 +48,15 @@ var teams = new (string Name, (string, IReadOnlyList<int>)[] Enemies)[]
 // Fallos (algo imposible o incoherente) y avisos (raro, para mirar a mano): tipo → caso → cuántas veces.
 var problems = new SortedDictionary<string, Dictionary<string, int>>();
 var checks = new Dictionary<string, int>();
-void Bad(string kind, string what)
+var examples = new Dictionary<string, string>(); // con «detalle»: la primera situación en la que salió cada caso
+void Bad(string kind, string what, string? example = null)
 {
     if (!problems.TryGetValue(kind, out var list)) problems[kind] = list = [];
     list[what] = list.GetValueOrDefault(what) + 1;
+    if (example is not null) examples.TryAdd(kind + "|" + what, example);
 }
+// Yuumi: casi nadie compra botas con ella (3,7 % en su página) y la app no se las recomienda (6 objetos).
+bool NoBoots(string champion) => (stats.Global.For(champion)?.Boots.Sum(b => b.PickRate ?? 0) ?? 100) < 15;
 void Checked(string kind) => checks[kind] = checks.GetValueOrDefault(kind) + 1;
 
 // Los objetos propios de ARAM llevan el id 12xxxx (Hubris es 126697); los 77xxxx son de otro modo de juego y no están en la tienda.
@@ -116,7 +120,7 @@ void Check(string who, string champion, IReadOnlyList<int> items, IReadOnlyList<
     // 3. Botas y siguiente compra.
     if (!ownBoots && !full)
     {
-        if (advice.Boots is null) Bad("FALLO sin botas recomendadas", who);
+        if (advice.Boots is null) { if (!NoBoots(champion)) Bad("FALLO sin botas recomendadas", who); }
         else if (!advice.Boots.Item.IsBoots || advice.Boots.Item.PriceTotal > 1300 || !Buyable(advice.Boots.Item)) Bad("FALLO botas raras", $"{advice.Boots.Item.NameEn}");
     }
     if (ownBoots && advice.Boots is not null) Bad("FALLO recomienda botas teniendo botas", who);
@@ -130,7 +134,8 @@ void Check(string who, string champion, IReadOnlyList<int> items, IReadOnlyList<
             bool known = advice.Items.Any(a => a.Item.Id == advice.Next.Item.Id) || advice.Boots?.Item.Id == advice.Next.Item.Id;
             if (!known) Bad("FALLO la siguiente compra no es ninguna de las opciones", $"{who}: {advice.Next.Item.NameEn}");
             if (advice.FullBuild is { } fb && !advice.Next.Item.IsBoots && fb.All(s => s.Item.Item.Id != advice.Next.Item.Id))
-                Bad("aviso: la siguiente compra no está en la build completa", $"{champion}: {advice.Next.Item.NameEn}");
+                Bad("aviso: la siguiente compra no está en la build completa", $"{champion}: {advice.Next.Item.NameEn}",
+                    $"{who}: tienes [{Names(owned)}] → siguiente {advice.Next.Item.NameEn} ({advice.Items.FirstOrDefault(a => a.Item.Id == advice.Next.Item.Id)?.Score:0.000}) · build {Names(fb.Select(s => s.Item.Item.Id))}");
         }
     }
     // 4. El cambio (vender X, comprar Y).
@@ -230,7 +235,7 @@ foreach (var c in champions)
             if (advice is null) continue;
             games++;
             if (items.Count < 6) { unfinished++; Bad("FALLO la partida no llega a 6 objetos siguiendo a la app", $"{who}: {Names(items)}"); continue; }
-            if (items.Count(id => data.Item(id)?.IsBoots == true) != 1) Bad("FALLO build final sin botas o con dos", $"{who}: {Names(items)}");
+            if (items.Count(id => data.Item(id)?.IsBoots == true) != (NoBoots(c) ? 0 : 1)) Bad("FALLO build final sin botas o con dos", $"{who}: {Names(items)}");
             // Con la build que ella misma te dio, ¿manda vender algo?
             if (advice.Swap is { } swap) { sellsOwnAdvice++; flips.Add($"{who}: vende {swap.Sell.NameEn} por {swap.Buy.Item.NameEn} · {swap.SellReason}"); }
             // ¿Cuánto de la build que enseñó al principio acabó comprándose? (si cambia de idea por el camino, confunde)
@@ -343,5 +348,9 @@ Console.WriteLine($"\nConsejos comprobados: {checks.GetValueOrDefault("consejos"
 foreach (var (kind, list) in problems.OrderBy(kv => kv.Key.StartsWith("FALLO") ? 0 : 1).ThenBy(kv => kv.Key))
 {
     Console.WriteLine($"\n== {kind}: {list.Values.Sum()} veces, {list.Count} casos distintos");
-    foreach (var (what, n) in list.OrderByDescending(kv => kv.Value).Take(detail ? 60 : 10)) Console.WriteLine($"   {n,5}× {what}");
+    foreach (var (what, n) in list.OrderByDescending(kv => kv.Value).Take(detail ? 60 : 10))
+    {
+        Console.WriteLine($"   {n,5}× {what}");
+        if (detail && examples.TryGetValue(kind + "|" + what, out var ex)) Console.WriteLine($"          p. ej. {ex}");
+    }
 }

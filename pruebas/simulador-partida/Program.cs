@@ -228,7 +228,7 @@ static class P
             if (!await WaitLog("Overlay Electron conectado", 30_000)) Note("FALLO: Electron no se conectó");
             await Front();
             // La primera lista de botones llega vacía (el panel aún no se dibujó): se espera a la que trae botones.
-            if (!await WaitLog("DEBUG botones: minimize", 20_000)) { Note("FALLO: el panel no publicó sus botones"); Shot("00-sin-panel"); return; }
+            if (!await WaitLog(" minimize:@", 20_000)) // (desde el botón ⊟ «compacto», minimize ya no es el primero de la lista) { Note("FALLO: el panel no publicó sus botones"); Shot("00-sin-panel"); return; }
             await Task.Delay(1500);
             if (Environment.GetEnvironmentVariable("FG_SHOWCASE") is { Length: > 0 } showcase)
             {

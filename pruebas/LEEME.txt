@@ -100,6 +100,10 @@ validar-ajustes\    ¿Los ajustes de la nota de las cartas aciertan? Compara cad
                     800+ partidas en mayhemmeta) frente a lo que la app estimaría sin ellas (2026-11-03: ninguno acertaba).
                       dotnet run --project pruebas\validar-ajustes -c Release
 
+Traducciones       ¿Están en portugués, francés, alemán y vietnamita todos los textos que genera la app (los porqués,
+                    los consejos)? Dice cuáles faltan en src\Core\LangTexts.cs y si alguna traducción pierde un hueco ({0}…):
+                      node herramientas\traducciones\comprobar.js
+
 medir-dano-enemigo.py  Compara, con tus partidas guardadas, formas de calcular el % de daño mágico del equipo enemigo
                     contra el daño real.  python pruebas\medir-dano-enemigo.py "%LOCALAPPDATA%\MayhemAdvisor"
 

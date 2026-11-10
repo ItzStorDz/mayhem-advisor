@@ -93,13 +93,13 @@ public sealed record EnemyProfile(double MagicShare, DamageMix Mix, int Tanks, i
     /// lo que más condiciona la build. Null si no hay nada que destaque.
     /// </summary>
     public string? Fact() =>
-        Fed is { } f ? (f.MagicShare >= 0.6 ? L($"{f.Name} va alimentado ({f.Kills}/{f.Deaths}): hace daño mágico", $"{f.Name} is fed ({f.Kills}/{f.Deaths}): magic damage")
-                      : f.MagicShare <= 0.4 ? L($"{f.Name} va alimentado ({f.Kills}/{f.Deaths}): hace daño físico", $"{f.Name} is fed ({f.Kills}/{f.Deaths}): physical damage")
-                      : L($"{f.Name} va alimentado ({f.Kills}/{f.Deaths})", $"{f.Name} is fed ({f.Kills}/{f.Deaths})"))
-        : MagicChampions >= 3 ? L($"{MagicChampions} campeones AP enfrente", $"{MagicChampions} AP champions on the enemy team")
-        : PhysicalChampions >= 3 ? L($"{PhysicalChampions} campeones AD enfrente", $"{PhysicalChampions} AD champions on the enemy team")
-        : Tanks >= 2 ? L($"{Tanks} tanques enfrente", $"{Tanks} tanks on the enemy team")
-        : Healers >= 3 ? L($"{Healers} enemigos con curación", $"{Healers} enemies with healing")
+        Fed is { } f ? (f.MagicShare >= 0.6 ? LF($"{f.Name} va alimentado ({f.Kills}/{f.Deaths}): hace daño mágico", $"{f.Name} is fed ({f.Kills}/{f.Deaths}): magic damage")
+                      : f.MagicShare <= 0.4 ? LF($"{f.Name} va alimentado ({f.Kills}/{f.Deaths}): hace daño físico", $"{f.Name} is fed ({f.Kills}/{f.Deaths}): physical damage")
+                      : LF($"{f.Name} va alimentado ({f.Kills}/{f.Deaths})", $"{f.Name} is fed ({f.Kills}/{f.Deaths})"))
+        : MagicChampions >= 3 ? LF($"{MagicChampions} campeones AP enfrente", $"{MagicChampions} AP champions on the enemy team")
+        : PhysicalChampions >= 3 ? LF($"{PhysicalChampions} campeones AD enfrente", $"{PhysicalChampions} AD champions on the enemy team")
+        : Tanks >= 2 ? LF($"{Tanks} tanques enfrente", $"{Tanks} tanks on the enemy team")
+        : Healers >= 3 ? LF($"{Healers} enemigos con curación", $"{Healers} enemies with healing")
         : null;
 
     public string Describe()
@@ -108,20 +108,20 @@ public sealed record EnemyProfile(double MagicShare, DamageMix Mix, int Tanks, i
         {
             Mix switch
             {
-                DamageMix.Magic => L($"Mucho daño mágico ({MagicShare:P0})", $"Lots of magic damage ({MagicShare:P0})"),
-                DamageMix.Physical => L($"Mucho daño físico ({1 - MagicShare:P0})", $"Lots of physical damage ({1 - MagicShare:P0})"),
+                DamageMix.Magic => LF($"Mucho daño mágico ({MagicShare:P0})", $"Lots of magic damage ({MagicShare:P0})"),
+                DamageMix.Physical => LF($"Mucho daño físico ({1 - MagicShare:P0})", $"Lots of physical damage ({1 - MagicShare:P0})"),
                 _ => T("Daño mixto", "Mixed damage", "Dano misto", "Dégâts mixtes", "Gemischter Schaden", "Sát thương hỗn hợp"),
             },
         };
-        if (Tanks >= 2) parts.Add(L($"{Tanks} tanques", $"{Tanks} tanks"));
-        if (Healers >= 2) parts.Add(L($"{Healers} con curación", $"{Healers} healers"));
-        if (ArmorItems >= 3) parts.Add(L($"compran armadura ({ArmorItems})", $"buying armor ({ArmorItems})"));
-        if (MagicResistItems >= 3) parts.Add(L($"compran resist. mágica ({MagicResistItems})", $"buying magic resist ({MagicResistItems})"));
-        if (CritItems >= 3) parts.Add(L($"van de crítico ({CritItems})", $"going crit ({CritItems})"));
-        if (AttackSpeedItems >= 3) parts.Add(L($"mucha velocidad de ataque ({AttackSpeedItems})", $"lots of attack speed ({AttackSpeedItems})"));
-        if (Shields >= 2) parts.Add(L($"escudos ({Shields})", $"shields ({Shields})"));
-        if (HealthItems >= 6) parts.Add(L($"mucha vida ({HealthItems})", $"lots of health ({HealthItems})"));
-        if (AugmentsSeen > 0) parts.Add(L($"{AugmentsSeen} aumentos enemigos vistos", $"{AugmentsSeen} enemy augments seen"));
+        if (Tanks >= 2) parts.Add(LF($"{Tanks} tanques", $"{Tanks} tanks"));
+        if (Healers >= 2) parts.Add(LF($"{Healers} con curación", $"{Healers} healers"));
+        if (ArmorItems >= 3) parts.Add(LF($"compran armadura ({ArmorItems})", $"buying armor ({ArmorItems})"));
+        if (MagicResistItems >= 3) parts.Add(LF($"compran resist. mágica ({MagicResistItems})", $"buying magic resist ({MagicResistItems})"));
+        if (CritItems >= 3) parts.Add(LF($"van de crítico ({CritItems})", $"going crit ({CritItems})"));
+        if (AttackSpeedItems >= 3) parts.Add(LF($"mucha velocidad de ataque ({AttackSpeedItems})", $"lots of attack speed ({AttackSpeedItems})"));
+        if (Shields >= 2) parts.Add(LF($"escudos ({Shields})", $"shields ({Shields})"));
+        if (HealthItems >= 6) parts.Add(LF($"mucha vida ({HealthItems})", $"lots of health ({HealthItems})"));
+        if (AugmentsSeen > 0) parts.Add(LF($"{AugmentsSeen} aumentos enemigos vistos", $"{AugmentsSeen} enemy augments seen"));
         return string.Join(" · ", parts);
     }
 }
@@ -390,7 +390,7 @@ public sealed partial class Advisor(StatsStore stats)
             if (items.Count > 3) items.RemoveAt(items.Count - 1);
         }
 
-        var boots = ownBoots ? null : BestBoots(myChampion, profile, myAugments, iAmMagic, myItems);
+        var boots = ownBoots || SkipsBoots(myChampion) ? null : BestBoots(myChampion, profile, myAugments, iAmMagic, myItems);
         if (full && boots is { InProgress: false }) boots = null; // no caben unas botas nuevas
 
         var swap = full ? BestSwap(myChampion, myItems, ranked, profile, myAugments, iAmMagic, gold, keep) : null;
@@ -402,6 +402,19 @@ public sealed partial class Advisor(StatsStore stats)
         // las compra en toda la partida.
         bool firstItemDone = myItems.Any(id => Data.Item(id) is { IsFinal: true, IsBoots: false, PriceTotal: >= FirstItemGold } i
                                                && !i.Has("Consumable") && !i.Has("Trinket"));
+        var fullBuild = FullBuild(myChampion, myItems, ranked, boots, profile, myAugments, iAmMagic, swap?.Sell);
+        // La primera opción tiene que ser de tu build completa. Con una casilla libre y un objeto contra el enemigo que hace
+        // falta (Presagio de Randuin contra 4+ objetos de crítico), la build ponía el Presagio y la siguiente compra decía
+        // Corazón de Acero (61 casos en pruebas/auditar-objetos, casi todos tanques con 4 objetos).
+        if (!full && commit is null && items.FirstOrDefault() is { Item.IsBoots: false } top
+            && fullBuild.Where(s => !s.Owned && !s.Item.Item.IsBoots).Select(s => s.Item).ToList() is { Count: > 0 } toBuy
+            && toBuy.All(a => a.Item.Id != top.Item.Id))
+        {
+            var planned = items.FirstOrDefault(a => toBuy.Any(b => b.Item.Id == a.Item.Id)) ?? toBuy[0];
+            items.Remove(planned);
+            items.Insert(0, planned);
+            if (items.Count > 3) items.RemoveAt(items.Count - 1);
+        }
         var nextItem = commit?.Item
                        ?? (firstItemDone && boots is { InProgress: true } ? boots.Item : null)
                        ?? (full ? items.FirstOrDefault()?.Item
@@ -411,7 +424,6 @@ public sealed partial class Advisor(StatsStore stats)
             ? new NextBuy(nextItem, Data.RemainingCost(nextItem, myItems), Math.Max(0, Data.RemainingCost(nextItem, myItems) - (int)gold))
             : swap is not null ? new NextBuy(swap.Buy.Item, swap.Cost - swap.SellGold, swap.GoldMissing) : null;
 
-        var fullBuild = FullBuild(myChampion, myItems, ranked, boots, profile, myAugments, iAmMagic, swap?.Sell);
         // El orden de maximizar habilidades: el que más se juega con el campeón en Caos (aramkit); sin eso, el de tus partidas.
         var skills = CommonSkills(myChampion) ?? (stats.BestSkills(myChampion) is { } s ? new SkillAdvice(s.MaxOrder, s.Start, s.Rate, s.Games) : null);
         // Objetos empezados que no son la siguiente compra: el overlay ofrece "me quedo con este".
@@ -491,21 +503,23 @@ public sealed partial class Advisor(StatsStore stats)
         string Names(Func<EnemyThreat, bool> which) => string.Join(", ", threats.Where(which).Select(t => t.Name).Take(3));
         string With(string names) => names == "" ? "" : $" ({names})";
         int apCount = threats.Count(t => t.MagicShare >= 0.6), adCount = threats.Count(t => t.MagicShare <= 0.4);
+        string magicWho = apCount >= 2 ? LF($"{apCount} hacen daño mágico", $"{apCount} deal magic damage") : L("Mucho daño mágico", "Lots of magic damage");
+        string physicalWho = adCount >= 2 ? LF($"{adCount} hacen daño físico", $"{adCount} deal physical damage") : L("Mucho daño físico", "Lots of physical damage");
 
         // Lo que pide la partida, de más a menos importante.
         var needs = new List<(string Title, string Why, double Weight, Func<ItemInfo, bool> Counters)>();
         double lean = profile.MagicShare - 0.5;
         if (lean > 0.03) needs.Add((T("RESISTENCIA MÁGICA", "MAGIC RESIST", "RESISTÊNCIA MÁGICA", "RÉSISTANCE MAGIQUE", "MAGIERESISTENZ", "KHÁNG PHÉP"),
-            L($"{(apCount >= 2 ? $"{apCount} hacen daño mágico" : "Mucho daño mágico")}: el {profile.MagicShare:P0} del daño", $"{(apCount >= 2 ? $"{apCount} deal magic damage" : "Lots of magic damage")}: {profile.MagicShare:P0} of the damage") + With(Names(t => t.MagicShare >= 0.6)), lean, i => i.Has("SpellBlock")));
+            LF($"{magicWho}: el {profile.MagicShare:P0} del daño", $"{magicWho}: {profile.MagicShare:P0} of the damage") + With(Names(t => t.MagicShare >= 0.6)), lean, i => i.Has("SpellBlock")));
         if (lean < -0.03) needs.Add((T("ARMADURA", "ARMOR", "ARMADURA", "ARMURE", "RÜSTUNG", "GIÁP"),
-            L($"{(adCount >= 2 ? $"{adCount} hacen daño físico" : "Mucho daño físico")}: el {1 - profile.MagicShare:P0} del daño", $"{(adCount >= 2 ? $"{adCount} deal physical damage" : "Lots of physical damage")}: {1 - profile.MagicShare:P0} of the damage") + With(Names(t => t.MagicShare <= 0.4)), -lean, i => i.Has("Armor")));
-        if (profile.Healers >= 2) needs.Add((T("HERIDAS GRAVES", "GRIEVOUS WOUNDS", "FERIDAS DOLOROSAS", "BLESSURES GRAVES", "KLAFFENDE WUNDEN", "VẾT THƯƠNG SÂU"), L($"{profile.Healers} enemigos se curan mucho", $"{profile.Healers} enemies heal a lot"), 0.03 * profile.Healers, i => i.AppliesWounds));
-        if (profile.Shields >= 2) needs.Add((T("ANTIESCUDOS", "ANTI-SHIELD", "ANTIESCUDO", "ANTI-BOUCLIER", "ANTI-SCHILD", "PHÁ LÁ CHẮN"), L($"{profile.Shields} escudos en el equipo enemigo", $"{profile.Shields} shields on the enemy team"), 0.025 * profile.Shields, i => i.Is(ItemCounters.AntiShield)));
-        if (profile.CritItems >= 3) needs.Add((T("ANTICRÍTICO", "ANTI-CRIT", "ANTICRÍTICO", "ANTI-CRITIQUE", "ANTI-KRIT", "CHỐNG CHÍ MẠNG"), L($"Llevan {profile.CritItems} objetos de crítico", $"They have {profile.CritItems} crit items"), 0.02 * profile.CritItems, i => i.Is(ItemCounters.AntiCrit)));
-        if (profile.AttackSpeedItems >= 3) needs.Add((T("CONTRA VELOCIDAD DE ATAQUE", "ANTI-ATTACK SPEED", "CONTRA VELOCIDADE DE ATAQUE", "CONTRE LA VITESSE D'ATTAQUE", "GEGEN ANGRIFFSTEMPO", "CHỐNG TỐC ĐỘ ĐÁNH"), L($"Llevan {profile.AttackSpeedItems} objetos de velocidad de ataque", $"They have {profile.AttackSpeedItems} attack speed items"), 0.02 * profile.AttackSpeedItems, i => i.Is(ItemCounters.AntiAttackSpeed)));
-        if (profile.Tanks >= 2 || profile.HealthItems >= 6) needs.Add((T("DAÑO POR % DE VIDA", "% HEALTH DAMAGE", "DANO POR % DE VIDA", "DÉGÂTS EN % DES PV", "SCHADEN NACH % LEBEN", "SÁT THƯƠNG THEO % MÁU"), profile.Tanks >= 2 ? L($"{profile.Tanks} tanques", $"{profile.Tanks} tanks") : L("Compran mucha vida", "They stack health"), 0.06, i => i.Is(ItemCounters.PercentHealth)));
-        if (!_tankBuild && !iAmMagic && (profile.Tanks >= 2 || profile.ArmorItems >= 3)) needs.Add((T("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION", "PENETRAÇÃO DE ARMADURA", "PÉNÉTRATION D'ARMURE", "RÜSTUNGSDURCHDRINGUNG", "XUYÊN GIÁP"), L($"Compran armadura ({profile.ArmorItems} objetos)", $"They buy armor ({profile.ArmorItems} items)"), 0.05, i => i.Has("ArmorPenetration")));
-        if (!_tankBuild && iAmMagic && (profile.Tanks >= 2 || profile.MagicResistItems >= 3)) needs.Add((T("PENETRACIÓN MÁGICA", "MAGIC PENETRATION", "PENETRAÇÃO MÁGICA", "PÉNÉTRATION MAGIQUE", "MAGIEDURCHDRINGUNG", "XUYÊN KHÁNG PHÉP"), L($"Compran resist. mágica ({profile.MagicResistItems} objetos)", $"They buy magic resist ({profile.MagicResistItems} items)"), 0.05, i => i.Has("MagicPenetration")));
+            LF($"{physicalWho}: el {1 - profile.MagicShare:P0} del daño", $"{physicalWho}: {1 - profile.MagicShare:P0} of the damage") + With(Names(t => t.MagicShare <= 0.4)), -lean, i => i.Has("Armor")));
+        if (profile.Healers >= 2) needs.Add((T("HERIDAS GRAVES", "GRIEVOUS WOUNDS", "FERIDAS DOLOROSAS", "BLESSURES GRAVES", "KLAFFENDE WUNDEN", "VẾT THƯƠNG SÂU"), LF($"{profile.Healers} enemigos se curan mucho", $"{profile.Healers} enemies heal a lot"), 0.03 * profile.Healers, i => i.AppliesWounds));
+        if (profile.Shields >= 2) needs.Add((T("ANTIESCUDOS", "ANTI-SHIELD", "ANTIESCUDO", "ANTI-BOUCLIER", "ANTI-SCHILD", "PHÁ LÁ CHẮN"), LF($"{profile.Shields} escudos en el equipo enemigo", $"{profile.Shields} shields on the enemy team"), 0.025 * profile.Shields, i => i.Is(ItemCounters.AntiShield)));
+        if (profile.CritItems >= 3) needs.Add((T("ANTICRÍTICO", "ANTI-CRIT", "ANTICRÍTICO", "ANTI-CRITIQUE", "ANTI-KRIT", "CHỐNG CHÍ MẠNG"), LF($"Llevan {profile.CritItems} objetos de crítico", $"They have {profile.CritItems} crit items"), 0.02 * profile.CritItems, i => i.Is(ItemCounters.AntiCrit)));
+        if (profile.AttackSpeedItems >= 3) needs.Add((T("CONTRA VELOCIDAD DE ATAQUE", "ANTI-ATTACK SPEED", "CONTRA VELOCIDADE DE ATAQUE", "CONTRE LA VITESSE D'ATTAQUE", "GEGEN ANGRIFFSTEMPO", "CHỐNG TỐC ĐỘ ĐÁNH"), LF($"Llevan {profile.AttackSpeedItems} objetos de velocidad de ataque", $"They have {profile.AttackSpeedItems} attack speed items"), 0.02 * profile.AttackSpeedItems, i => i.Is(ItemCounters.AntiAttackSpeed)));
+        if (profile.Tanks >= 2 || profile.HealthItems >= 6) needs.Add((T("DAÑO POR % DE VIDA", "% HEALTH DAMAGE", "DANO POR % DE VIDA", "DÉGÂTS EN % DES PV", "SCHADEN NACH % LEBEN", "SÁT THƯƠNG THEO % MÁU"), profile.Tanks >= 2 ? LF($"{profile.Tanks} tanques", $"{profile.Tanks} tanks") : L("Compran mucha vida", "They stack health"), 0.06, i => i.Is(ItemCounters.PercentHealth)));
+        if (!_tankBuild && !iAmMagic && (profile.Tanks >= 2 || profile.ArmorItems >= 3)) needs.Add((T("PENETRACIÓN DE ARMADURA", "ARMOR PENETRATION", "PENETRAÇÃO DE ARMADURA", "PÉNÉTRATION D'ARMURE", "RÜSTUNGSDURCHDRINGUNG", "XUYÊN GIÁP"), LF($"Compran armadura ({profile.ArmorItems} objetos)", $"They buy armor ({profile.ArmorItems} items)"), 0.05, i => i.Has("ArmorPenetration")));
+        if (!_tankBuild && iAmMagic && (profile.Tanks >= 2 || profile.MagicResistItems >= 3)) needs.Add((T("PENETRACIÓN MÁGICA", "MAGIC PENETRATION", "PENETRAÇÃO MÁGICA", "PÉNÉTRATION MAGIQUE", "MAGIEDURCHDRINGUNG", "XUYÊN KHÁNG PHÉP"), LF($"Compran resist. mágica ({profile.MagicResistItems} objetos)", $"They buy magic resist ({profile.MagicResistItems} items)"), 0.05, i => i.Has("MagicPenetration")));
         needs = needs.OrderByDescending(n => n.Weight).ToList();
         // Las de aprovechar al rival (no aguantar): para enseñarlas también aunque pese más una defensiva.
         var offensiveTitles = new HashSet<string> { T("HERIDAS GRAVES", "GRIEVOUS WOUNDS", "FERIDAS DOLOROSAS", "BLESSURES GRAVES", "KLAFFENDE WUNDEN", "VẾT THƯƠNG SÂU"), T("ANTIESCUDOS", "ANTI-SHIELD", "ANTIESCUDO", "ANTI-BOUCLIER", "ANTI-SCHILD", "PHÁ LÁ CHẮN"),
@@ -554,9 +568,9 @@ public sealed partial class Advisor(StatsStore stats)
             if (replace < 0) continue;
             // No puede chocar con lo que se queda en la build (p. ej. Recordatorio Mortal con Lord Dominik).
             if (build.Where((slot, i) => i != replace).Any(slot => Clash(slot.Item.Item.Id, pick.Item.Id))) continue;
-            string reason = L($"cubre {category.Title.ToLowerInvariant()}", $"covers {category.Title.ToLowerInvariant()}")
-                            + (pick.WinRate is { } wr ? L($" ({wr:P1} de victorias con tu campeón)", $" ({wr:P1} win rate with your champion)") : "")
-                            + (pick.Augment is not null ? L($" · va con tu aumento «{pick.Augment}»", $" · fits your augment “{pick.Augment}”") : "");
+            string reason = LF($"cubre {category.Title.ToLowerInvariant()}", $"covers {category.Title.ToLowerInvariant()}")
+                            + (pick.WinRate is { } wr ? LF($" ({wr:P1} de victorias con tu campeón)", $" ({wr:P1} win rate with your champion)") : "")
+                            + (pick.Augment is not null ? LF($" · va con tu aumento «{pick.Augment}»", $" · fits your augment “{pick.Augment}”") : "");
             replaced[pick.Item.Id] = build[replace].Item.Item;
             build[replace] = new BuildSlot(new ItemAdvice(pick.Item, 0, pick.Games, reason), false);
             changed.Add(pick.Item.Id);
@@ -579,9 +593,9 @@ public sealed partial class Advisor(StatsStore stats)
             bool apItem = ApItem.Any(item.Has) && !AdItem.Any(item.Has), adItem = AdItem.Any(item.Has) && !ApItem.Any(item.Has);
             bool attackItem = AttackItem.Any(item.Has) && !AbilityItem.Any(item.Has);
             if (_critCapped && item.Has("CriticalStrike") && item.Id != InfinityEdge) why = L("da crítico y ya tienes el 100 % (el de más solo se convierte en un poco de daño)", "it gives crit and you are already at 100% (extra crit only turns into a little damage)");
-            else if (item.IsBoots && armorOnly && lean > 0.05) why = L($"botas de armadura y el {profile.MagicShare:P0} del daño enemigo es mágico: mejor Botas de Mercurio", $"armor boots but {profile.MagicShare:P0} of enemy damage is magic: get Mercury's Treads");
-            else if (armorOnly && lean > 0.07) why = L($"da armadura y el {profile.MagicShare:P0} del daño enemigo es mágico", $"gives armor but {profile.MagicShare:P0} of enemy damage is magic");
-            else if (mrOnly && lean < -0.07) why = L($"da resist. mágica y el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"gives magic resist but {1 - profile.MagicShare:P0} of enemy damage is physical");
+            else if (item.IsBoots && armorOnly && lean > 0.05) why = LF($"botas de armadura y el {profile.MagicShare:P0} del daño enemigo es mágico: mejor Botas de Mercurio", $"armor boots but {profile.MagicShare:P0} of enemy damage is magic: get Mercury's Treads");
+            else if (armorOnly && lean > 0.07) why = LF($"da armadura y el {profile.MagicShare:P0} del daño enemigo es mágico", $"gives armor but {profile.MagicShare:P0} of enemy damage is magic");
+            else if (mrOnly && lean < -0.07) why = LF($"da resist. mágica y el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"gives magic resist but {1 - profile.MagicShare:P0} of enemy damage is physical");
             else if (apItem && apShare < 0.3) why = L("es de AP y tu build (objetos y aumentos) va de AD", "it is AP and your build (items and augments) is AD");
             else if (adItem && apShare > 0.7) why = L("es de AD y tu build (objetos y aumentos) va de AP", "it is AD and your build (items and augments) is AP");
             else if (attackItem && abilityShare > 0.75) why = L("es de ataques básicos y tu build va de habilidades", "it is for basic attacks and your build uses abilities");
@@ -615,7 +629,7 @@ public sealed partial class Advisor(StatsStore stats)
         {
             Score = a.Score + progress * ProgressBonus,
             InProgress = true,
-            Reason = L($"ya lo estás haciendo (te faltan {missing} de oro)", $"you are already building it ({missing} gold to go)") + $" · {a.Reason}",
+            Reason = LF($"ya lo estás haciendo (te faltan {missing} de oro)", $"you are already building it ({missing} gold to go)") + $" · {a.Reason}",
         };
     }
 
@@ -663,8 +677,10 @@ public sealed partial class Advisor(StatsStore stats)
         var kept = owned.Where(i => !i.IsBoots && i.Id != sell?.Id).Select(ScoreOwned).OrderByDescending(a => a.Score).ToList();
         var candidates = kept
             .Concat(ranked.Where(a => !ownedIds.Contains(a.Item.Id)).OrderByDescending(a => a.Score)).ToList();
-        var picks = TakeWithinLimit(candidates, InventorySlots - 1, MaxArmorPenItems);
-        if (kept.Count < InventorySlots - 1)
+        // Con un campeón que no compra botas (Yuumi), 6 objetos.
+        int itemSlots = InventorySlots - (owned.Any(i => i.IsBoots) || !SkipsBoots(champion) ? 1 : 0);
+        var picks = TakeWithinLimit(candidates, itemSlots, MaxArmorPenItems);
+        if (kept.Count < itemSlots)
             EnsureCounter(champion, picks, candidates, profile, MaxArmorPenItems, []); // aquí tus objetos ya van entre los candidatos (y primero)
 
         var slots = new List<BuildSlot>();
@@ -699,10 +715,10 @@ public sealed partial class Advisor(StatsStore stats)
     static AugmentSynergy? Combo(Augment candidate, Augment mine)
     {
         if (candidate.NeedsUltimate && mine.NeedsUltimate)
-            return new AugmentSynergy(UltComboBonus, L($"combo con «{mine.DisplayName}»: los dos giran en torno a tu definitiva",
+            return new AugmentSynergy(UltComboBonus, LF($"combo con «{mine.DisplayName}»: los dos giran en torno a tu definitiva",
                                                         $"combo with “{mine.DisplayName}”: both revolve around your ultimate"));
         if (StatTags.TriggersOnImmobilize(candidate) && StatTags.TriggersOnImmobilize(mine))
-            return new AugmentSynergy(ImmobilizeComboBonus, L($"combo con «{mine.DisplayName}»: al inmovilizar se activan los dos",
+            return new AugmentSynergy(ImmobilizeComboBonus, LF($"combo con «{mine.DisplayName}»: al inmovilizar se activan los dos",
                                                                $"combo with “{mine.DisplayName}”: immobilizing triggers both"));
         return null;
     }
@@ -730,8 +746,8 @@ public sealed partial class Advisor(StatsStore stats)
         // los dos no hace nada. Casi nadie los junta, así que no hay partidas que lo midan: va siempre al fondo.
         if (mine.FirstOrDefault(m => candidate.SealsUltimate ? m.NeedsUltimate : candidate.NeedsUltimate && m.SealsUltimate) is { } clash)
             return new AugmentSynergy(-0.12, candidate.SealsUltimate
-                ? L($"Sella tu definitiva, y «{clash.DisplayName}» la necesita", $"Seals your ultimate, which “{clash.DisplayName}” needs")
-                : L($"Necesita tu definitiva, y «{clash.DisplayName}» la sella", $"Needs your ultimate, which “{clash.DisplayName}” seals"));
+                ? LF($"Sella tu definitiva, y «{clash.DisplayName}» la necesita", $"Seals your ultimate, which “{clash.DisplayName}” needs")
+                : LF($"Necesita tu definitiva, y «{clash.DisplayName}» la sella", $"Needs your ultimate, which “{clash.DisplayName}” seals"));
         bool magic = PlaysMagic(champion, myItems ?? [], mine);
         var rec = stats.Rate(champion, candidate.Id);
         bool champData = rec.Global && rec.EvidenceGames >= ChampionDataGames;
@@ -753,18 +769,19 @@ public sealed partial class Advisor(StatsStore stats)
                 double lift = global.ShrunkSynergy / 100;
                 if (Math.Abs(lift) >= 0.01)
                     Add(Math.Clamp(lift, -0.06, 0.06), lift > 0
-                        ? L($"{(lift >= 0.03 ? "combina muy bien" : "combina bien")} con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"{(lift >= 0.03 ? "great combo" : "good combo")} with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)")
-                        : L($"no combina bien con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"bad combo with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)"));
+                        ? lift >= 0.03 ? LF($"combina muy bien con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"great combo with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)")
+                                       : LF($"combina bien con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"good combo with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)")
+                        : LF($"no combina bien con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"bad combo with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)"));
             }
             else if (stats.AugmentPairLift(candidate.Id, m.Id) is { } pair && Math.Abs(pair.Lift) >= 0.02)
                 Add(Math.Clamp(pair.Lift, -0.05, 0.05), pair.Lift > 0
-                    ? L($"combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"good combo with “{m.DisplayName}” in your games ({pair.Games})")
-                    : L($"no combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"bad combo with “{m.DisplayName}” in your games ({pair.Games})"));
+                    ? LF($"combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"good combo with “{m.DisplayName}” in your games ({pair.Games})")
+                    : LF($"no combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"bad combo with “{m.DisplayName}” in your games ({pair.Games})"));
             else if (Combo(candidate, m) is { } combo)
                 Add(combo.Bonus, combo.Reason);
 
             var sharedItems = needs.Intersect(stats.Links.RequiredBy(m.Id)).Select(Data.Item).OfType<ItemInfo>().ToList();
-            if (sharedItems.Count > 0) Add(0.04, L($"va con «{m.DisplayName}»: los dos piden {sharedItems[0].DisplayName}", $"fits “{m.DisplayName}”: both want {sharedItems[0].DisplayName}"));
+            if (sharedItems.Count > 0) Add(0.04, LF($"va con «{m.DisplayName}»: los dos piden {sharedItems[0].DisplayName}", $"fits “{m.DisplayName}”: both want {sharedItems[0].DisplayName}"));
         }
 
         // La build de esta partida (la que dicen tus objetos o la que fijaste en el panel): lo que gana el aumento con el
@@ -774,9 +791,9 @@ public sealed partial class Advisor(StatsStore stats)
         if (styleFx is { } fx && fx.Weight * (fx.Delta / 100 - AugmentScale.Evidence(rec)) is var styleShift && Math.Abs(styleShift) >= 0.005)
             // Sin números de victorias (Riot no deja enseñar el % de los aumentos): solo si le va mejor o peor así.
             Add(styleShift, styleShift > 0
-                ? L($"con tu build {StyleName(styleNow!)}, a {Data.ChampionName(champion)} le va mejor con él (~{fx.Games:N0} partidas así)",
+                ? LF($"con tu build {StyleName(styleNow!)}, a {Data.ChampionName(champion)} le va mejor con él (~{fx.Games:N0} partidas así)",
                     $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} does better with it (~{fx.Games:N0} games like that)")
-                : L($"con tu build {StyleName(styleNow!)}, a {Data.ChampionName(champion)} le va peor con él (~{fx.Games:N0} partidas así)",
+                : LF($"con tu build {StyleName(styleNow!)}, a {Data.ChampionName(champion)} le va peor con él (~{fx.Games:N0} partidas así)",
                     $"with your {StyleName(styleNow!)} build, {Data.ChampionName(champion)} does worse with it (~{fx.Games:N0} games like that)"));
 
         // Con el 100 % de crítico, el crítico que da el aumento se pierde (Absorción de Alma salía con nota alta: Wakka, Jhin).
@@ -789,9 +806,9 @@ public sealed partial class Advisor(StatsStore stats)
         // objeto no es para tu build, o no se puede llevar con lo que ya tienes, el aumento casi no te sirve.
         var needed = needs.Select(Data.Item).OfType<ItemInfo>().Where(i => i.IsFinal).ToList();
         if (heuristics && needed.Count > 0 && needed.All(i => WrongDamageFor(i, magic)))
-            Add(-0.08, L($"Pide {needed[0].DisplayName}, que no es para tu build de {(magic ? "AP" : "AD")}", $"Wants {needed[0].DisplayName}, which doesn't fit your {(magic ? "AP" : "AD")} build"));
+            Add(-0.08, LF($"Pide {needed[0].DisplayName}, que no es para tu build de {(magic ? "AP" : "AD")}", $"Wants {needed[0].DisplayName}, which doesn't fit your {(magic ? "AP" : "AD")} build"));
         else if (needed.Count > 0 && myItems is not null && needed.All(i => !Owns(myItems, i.Id) && ConflictsWithOwned(i, myItems)))
-            Add(-0.08, L($"Pide {needed[0].DisplayName}, que no se puede llevar con lo que ya tienes", $"Wants {needed[0].DisplayName}, which can't be combined with your items"));
+            Add(-0.08, LF($"Pide {needed[0].DisplayName}, que no se puede llevar con lo que ya tienes", $"Wants {needed[0].DisplayName}, which can't be combined with your items"));
 
         if (reason is null) return null;
         return new AugmentSynergy(Math.Clamp(total, -0.12, 0.10), reason);
@@ -980,30 +997,29 @@ public sealed partial class Advisor(StatsStore stats)
     string? StyleSource(string champion, IReadOnlyList<Augment> mine) => _style switch
     {
         { Mixed: true } => L("tus objetos aún no deciden la build", "your items don't settle the build yet"),
-        null or { FromItems: "" } => L($"lo habitual con {Data.ChampionName(champion)}", $"the usual {Data.ChampionName(champion)} build"),
+        null or { FromItems: "" } => LF($"lo habitual con {Data.ChampionName(champion)}", $"the usual {Data.ChampionName(champion)} build"),
         { Locked: true } => L("la elegiste tú · púlsala otra vez para que elija la app", "your pick · tap it again to let the app choose"),
-        { FromItems: { } decisive } => L($"por tus objetos: {decisive}", $"from your items: {decisive}"),
+        { FromItems: { } decisive } => LF($"por tus objetos: {decisive}", $"from your items: {decisive}"),
         _ => mine.FirstOrDefault(a => a.Id == _style.AugmentId) is { } aug
-            ? L($"por tu aumento «{aug.DisplayName}»", $"from your augment “{aug.DisplayName}”") : null,
+            ? LF($"por tu aumento «{aug.DisplayName}»", $"from your augment “{aug.DisplayName}”") : null,
     };
 
     /// <summary>
-    /// El estilo que dicen tus objetos terminados (ver <see cref="AugmentBuilds.StyleFromItems"/>). Con él se recomienda lo
-    /// que se compra en ESE estilo y no la mezcla de todas las builds del campeón (los Yi de crítico y los on-hit juntos).
-    /// Si es el mismo que piden tus aumentos, se queda el de tus aumentos (trae lo que se compra con ellos). Si el campeón
-    /// no tiene ese estilo en sus datos (Twitch on-hit), los objetos salen de la media de todos los campeones (mezclarlo
-    /// con lo suyo colaba lo de su estilo habitual: Filo del Infinito a un Twitch on-hit, Piedra Lunar a una Lulu on-hit). Sin objetos terminados, el estilo habitual del campeón. Null si no está claro.
-    /// </summary>
-    /// <summary>
-    /// Al estilo habitual del campeón le suma lo que dice su página de mayhemmeta. aramkit solo trae los objetos más
-    /// repetidos de cada estilo y se queda corto con el resto: a Amumu no le daba la Máscara Abisal (la lleva el 30 % y
-    /// gana 2,6 puntos más), ni el Umbral del Invierno (36 %), y la Égida de Fuego Solar le salía con un 12 % (la lleva el
-    /// 42 %; en las partidas guardadas, 22 de 40). Cada objeto cuenta lo que diga la fuente que más le da. No se toca:
-    /// lo que aramkit pone en otro estilo del campeón (Maldad con Amumu es de los que van de AP), ni lo que es solo de AP en
-    /// un estilo de AD o al revés (Descarga Tormentosa a Shaco, Bailarín Espectral a Ashe AP: salía y luego mandaba venderlo).
-    /// Con pruebas/evaluar-objetos (727 partidas): acierto de la build 51,2 → 52,1 % sin objetos, 49,4 → 50,1 % con uno,
-    /// 47,0 → 47,4 % con dos y 42,5 → 42,9 % con tres. Solo los objetos que aramkit no trae (sin subir los que sí) bajaba el
-    /// acierto; contar la página a medias o de más (×0,7, ×1,4), también; y en los estilos que no son el habitual no sumaba.
+    /// Al estilo habitual del campeón le suma lo que dice su página de mayhemmeta (lo que se compra de verdad con él).
+    /// aramkit solo trae los objetos más repetidos de cada estilo y con el resto se queda corto: a Amumu no le daba la
+    /// Máscara Abisal (la lleva el 30 % y gana 2,6 puntos más), ni el Umbral del Invierno (36 %), y la Égida de Fuego Solar le
+    /// salía con un 12 % (la lleva el 42 %; en las partidas guardadas, 22 de 40). Cada objeto cuenta lo que diga la fuente
+    /// que más le da. No se toca: lo que aramkit pone en otro estilo del campeón (Maldad con Amumu es de los
+    /// que van de AP), ni lo que es solo de AP en un estilo de AD o al revés (Descarga Tormentosa a Shaco, Bailarín
+    /// Espectral a Ashe AP: salía y luego mandaba venderlo).
+    /// Medido con 7.569 builds reales (2026-11-09): de los 5 objetos que más da cada fuente, la página acierta el 62,9 %,
+    /// AramHex (China, 800.000 partidas por campeón, otra forma de comprar) el 60,9 % y aramkit el 55,7 %.
+    /// Con pruebas/evaluar-objetos, acierto de la build sin objetos / con 1 / 2 / 3: 1.8.5 51,2 / 49,1 / 46,8 / 42,1;
+    /// así 52,2 / 50,1 / 47,4 / 42,9. Con la página MANDANDO sobre aramkit (lo de aramkit que la página no trae al 0-70 %)
+    /// subía a 52,4 / 50,2 / 47,6 / 43,2, pero la build del principio pasaba a ser una mezcla de estilos (Volibear tanque con
+    /// Crepúsculo y Alba) y la app cambiaba de idea: partidas con 2+ cambios de plan 26 → 47 y 6 de «vende lo que te
+    /// recomendó» (pruebas/auditar-objetos). No compensa. Peor o igual: solo los objetos que aramkit no trae, la página a
+    /// medias o de más (×0,7, ×1,4), la página en los estilos que no son el habitual, sumar AramHex.
     /// </summary>
     StylePick WithPage(string champion, StylePick style)
     {
@@ -1028,6 +1044,13 @@ public sealed partial class Advisor(StatsStore stats)
         return style with { Items = items };
     }
 
+    /// <summary>
+    /// El estilo que dicen tus objetos terminados (ver <see cref="AugmentBuilds.StyleFromItems"/>). Con él se recomienda lo
+    /// que se compra en ESE estilo y no la mezcla de todas las builds del campeón (los Yi de crítico y los on-hit juntos).
+    /// Si es el mismo que piden tus aumentos, se queda el de tus aumentos (trae lo que se compra con ellos). Si el campeón
+    /// no tiene ese estilo en sus datos (Twitch on-hit), los objetos salen de la media de todos los campeones (mezclarlo
+    /// con lo suyo colaba lo de su estilo habitual: Filo del Infinito a un Twitch on-hit, Piedra Lunar a una Lulu on-hit). Sin objetos terminados, el estilo habitual del campeón. Null si no está claro.
+    /// </summary>
     public StylePick? StyleFromItems(string champion, IReadOnlyList<int> myItems)
     {
         var finals = myItems.Distinct().Where(id => Data.Item(id) is { IsFinal: true, IsBoots: false, PriceTotal: > 0 } i
@@ -1120,14 +1143,14 @@ public sealed partial class Advisor(StatsStore stats)
         if (needsAttacks && !needsAbilities) checks.Add((1 - abilityShare, L("ataques básicos", "basic attacks"), L("de habilidades", "abilities"), L("de ataques básicos", "basic attacks")));
         var worst = checks.MinBy(c => c.Fit);
 
-        string whose = fromItems ? L("tu build va", "your build is") : L($"con {Data.ChampionName(champion)} se suele ir", $"{Data.ChampionName(champion)} usually goes");
+        string whose = fromItems ? L("tu build va", "your build is") : LF($"con {Data.ChampionName(champion)} se suele ir", $"{Data.ChampionName(champion)} usually goes");
         if (worst.Fit < 0.5)
         {
             double penalty = (worst.Fit - 0.5) * 0.2; // hasta −0,10 si no encaja nada
-            return penalty <= -0.02 ? new AugmentSynergy(penalty, L($"Pide {worst.Wants}, y {whose} {worst.Have}", $"Wants {worst.Wants}, and {whose} {worst.Have}")) : null;
+            return penalty <= -0.02 ? new AugmentSynergy(penalty, LF($"Pide {worst.Wants}, y {whose} {worst.Have}", $"Wants {worst.Wants}, and {whose} {worst.Have}")) : null;
         }
         return worst.Fit >= 0.75
-            ? new AugmentSynergy(0.02, fromItems ? L($"Encaja con tu build {worst.Fits}", $"Fits your {worst.Fits} build") : L($"Encaja con la build habitual de {Data.ChampionName(champion)} ({worst.Fits})", $"Fits the usual {Data.ChampionName(champion)} build ({worst.Fits})"))
+            ? new AugmentSynergy(0.02, fromItems ? LF($"Encaja con tu build {worst.Fits}", $"Fits your {worst.Fits} build") : LF($"Encaja con la build habitual de {Data.ChampionName(champion)} ({worst.Fits})", $"Fits the usual {Data.ChampionName(champion)} build ({worst.Fits})"))
             : null;
     }
 
@@ -1169,7 +1192,7 @@ public sealed partial class Advisor(StatsStore stats)
                 bool needed = required.Contains(c.Item.Id);
                 double score = (needed ? 1 : 0) + match * 0.03 + (lift?.Lift ?? 0) + (c.Rate - 0.5) * 0.5;
                 string reason = needed ? L("lo necesita este aumento", "this augment needs it")
-                              : lift is { Lift: > 0.02 } l ? L($"rinde mejor con este aumento ({l.Games} partidas)", $"does better with this augment ({l.Games} games)")
+                              : lift is { Lift: > 0.02 } l ? LF($"rinde mejor con este aumento ({l.Games} partidas)", $"does better with this augment ({l.Games} games)")
                               : match > 0 ? L("potencia lo mismo que el aumento", "boosts the same as the augment") : "";
                 return new ItemAdvice(c.Item, score, c.Games, reason);
             })
@@ -1358,6 +1381,7 @@ public sealed partial class Advisor(StatsStore stats)
             bool wrongResist = profile.Mix == DamageMix.Physical && sell.Item.Has("SpellBlock") && !sell.Item.Has("Armor")
                                || profile.Mix == DamageMix.Magic && sell.Item.Has("Armor") && !sell.Item.Has("SpellBlock");
             if (sell.Item.IsFinal && !wrongResist && ChampionShare(champion, sell.Item.Id, anyBuild: true) >= UsualShare) continue;
+            if (sell.Item.IsFinal && OnlyCounter(profile, sell.Item, myItems)) continue;
 
             int sellGold = (int)(sell.Item.PriceTotal * SellRatio);
             int cost = Data.RemainingCost(buy.Item, rest);
@@ -1366,18 +1390,14 @@ public sealed partial class Advisor(StatsStore stats)
                 : profile.Mix == DamageMix.Physical && sell.Item.Has("SpellBlock") && !sell.Item.Has("Armor") ? L("resist. mágica contra un equipo de daño físico", "magic resist against a physical team")
                 : profile.Mix == DamageMix.Magic && sell.Item.Has("Armor") && !sell.Item.Has("SpellBlock") ? L("armadura contra un equipo de daño mágico", "armor against a magic team")
                 // Con datos de todos los jugadores, su % real; si no, el de tus partidas.
-                : stats.GlobalItem(champion, sell.Item.Id) is { WinRate: { } globalRate } ? L($"rinde poco con tu campeón: {globalRate:0.#} % de victorias (~{games:N0} partidas en Mayhem)", $"weak on your champion: {globalRate:0.#}% win rate (~{games:N0} Mayhem games)")
-                : games >= 5 ? L($"solo {rate:P0} de victorias en tus partidas ({games})", $"only {rate:P0} win rate in your games ({games})")
+                : stats.GlobalItem(champion, sell.Item.Id) is { WinRate: { } globalRate } ? LF($"rinde poco con tu campeón: {globalRate:0.#} % de victorias (~{games:N0} partidas en Mayhem)", $"weak on your champion: {globalRate:0.#}% win rate (~{games:N0} Mayhem games)")
+                : games >= 5 ? LF($"solo {rate:P0} de victorias en tus partidas ({games})", $"only {rate:P0} win rate in your games ({games})")
                 : L("es el que menos te aporta en esta partida", "it helps you the least this game");
             return new SwapAdvice(sell.Item, sellGold, why, buy, cost, Math.Max(0, cost - sellGold - (int)gold));
         }
         return null;
     }
 
-    /// <summary>
-    /// Si el enemigo tiene algo muy marcado (mucha curación, escudos, críticos o velocidad de ataque) y ninguno
-    /// de los 3 objetos lo contrarresta, el tercero se cambia por el mejor objeto que sí lo hace.
-    /// </summary>
     /// <summary>
     /// Lo que se compra un objeto con este campeón (0-1): lo más alto entre su build de ahora, sus builds en aramkit y la
     /// página de mayhemmeta. Para los objetos «contra el enemigo»: solo los que se compran con tu campeón (al menos
@@ -1393,16 +1413,31 @@ public sealed partial class Advisor(StatsStore stats)
         (stats.GlobalItem(champion, itemId)?.PickRate ?? 0) / 100);
     const double CounterMinShare = 0.05, CounterFullShare = 0.15;
 
+    /// <summary>Lo que el enemigo tiene muy marcado (mucha curación, escudos, críticos o velocidad de ataque) y qué lo contrarresta.</summary>
+    static (bool Strong, Func<ItemInfo, bool> Counters)[] StrongNeeds(EnemyProfile profile) =>
+    [
+        (profile.Healers >= 3, i => i.AppliesWounds),
+        (profile.Shields >= 3, i => i.Is(ItemCounters.AntiShield)),
+        (profile.CritItems >= 4, i => i.Is(ItemCounters.AntiCrit)),
+        (profile.AttackSpeedItems >= 4, i => i.Is(ItemCounters.AntiAttackSpeed)),
+    ];
+
+    /// <summary>
+    /// ¿Es tu único objeto contra algo muy marcado del enemigo? (el que la propia app metió en tu build con
+    /// <see cref="EnsureCounter"/>). Ese no se manda vender: con el inventario lleno, la app pedía vender el Presagio de
+    /// Randuin que acababa de recomendar contra 4 objetos de crítico (15 partidas en pruebas/auditar-objetos).
+    /// </summary>
+    bool OnlyCounter(EnemyProfile profile, ItemInfo item, IReadOnlyList<int> myItems) =>
+        StrongNeeds(profile).Any(n => n.Strong && n.Counters(item)
+                                      && myItems.Count(id => Data.Item(id) is { } own && n.Counters(own)) == 1);
+
+    /// <summary>
+    /// Si el enemigo tiene algo muy marcado (mucha curación, escudos, críticos o velocidad de ataque) y ninguno
+    /// de los 3 objetos lo contrarresta, el tercero se cambia por el mejor objeto que sí lo hace.
+    /// </summary>
     void EnsureCounter(string champion, List<ItemAdvice> items, List<ItemAdvice> ranked, EnemyProfile profile, int penSlots, IReadOnlyList<int> myItems)
     {
-        (bool Strong, Func<ItemInfo, bool> Counters)[] needs =
-        [
-            (profile.Healers >= 3, i => i.AppliesWounds),
-            (profile.Shields >= 3, i => i.Is(ItemCounters.AntiShield)),
-            (profile.CritItems >= 4, i => i.Is(ItemCounters.AntiCrit)),
-            (profile.AttackSpeedItems >= 4, i => i.Is(ItemCounters.AntiAttackSpeed)),
-        ];
-        foreach (var (strong, counters) in needs)
+        foreach (var (strong, counters) in StrongNeeds(profile))
         {
             // Si ya llevas uno (Recordatorio Mortal contra curaciones…), no hace falta otro.
             if (!strong || items.Any(a => counters(a.Item)) || myItems.Any(id => Data.Item(id) is { } own && counters(own))) continue;
@@ -1447,8 +1482,8 @@ public sealed partial class Advisor(StatsStore stats)
 
     /// <summary>"62 % de victorias en Mayhem (25.800 partidas)" con datos de todos; con los tuyos, tu %; sin datos, null.</summary>
     string? WinRateReason(string champion, int itemId, double rate, int games) =>
-        stats.GlobalItem(champion, itemId) is { WinRate: { } wr } ? L($"{wr / 100:P0} de victorias en Mayhem ({games:N0} partidas)", $"{wr / 100:P0} win rate in Mayhem ({games:N0} games)")
-        : games > 0 ? L($"{rate:P0} de victorias en {games} partidas", $"{rate:P0} win rate in {games} games") : null;
+        stats.GlobalItem(champion, itemId) is { WinRate: { } wr } ? LF($"{wr / 100:P0} de victorias en Mayhem ({games:N0} partidas)", $"{wr / 100:P0} win rate in Mayhem ({games:N0} games)")
+        : games > 0 ? LF($"{rate:P0} de victorias en {games} partidas", $"{rate:P0} win rate in {games} games") : null;
 
     ItemAdvice Score(ItemInfo item, double rate, int games, string champion, EnemyProfile profile, IReadOnlyList<Augment> myAugments, bool iAmMagic)
     {
@@ -1470,23 +1505,23 @@ public sealed partial class Advisor(StatsStore stats)
             double share = _style.Items.GetValueOrDefault(item.Id);
             string? aug = myAugments.FirstOrDefault(a => a.Id == _style.AugmentId)?.DisplayName;
             if (_style.Locked)
-                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : LF(
                     $"tu build {StyleName(_style.Key)} (la elegiste tú): lo compra el {share:P0} de los que van así",
                     $"your {StyleName(_style.Key)} build (your pick): {share:P0} of those builds have it"));
             else if (_style.Mixed)
-                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : LF(
                     $"con lo que llevas, lo compra el {share:P0} de los {Data.ChampionName(champion)}",
                     $"with your items, {share:P0} of {Data.ChampionName(champion)} players buy it"));
             else if (_style.FromItems == "")
-                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : LF(
                     $"build habitual de {Data.ChampionName(champion)} ({StyleName(_style.Key)}): lo compra el {share:P0}",
                     $"standard {Data.ChampionName(champion)} build ({StyleName(_style.Key)}): {share:P0} buy it"));
             else if (_style.FromItems is { } decisive)
-                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
-                    $"tu build va {StyleName(_style.Key)} ({decisive}): lo compra el {share:P0} de los que van así{(_style.Generic ? " (con cualquier campeón)" : "")}",
-                    $"your build is {StyleName(_style.Key)} ({decisive}): {share:P0} of those builds have it{(_style.Generic ? " (any champion)" : "")}"));
+                Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : LF(
+                    $"tu build va {StyleName(_style.Key)} ({decisive}): lo compra el {share:P0} de los que van así{(_style.Generic ? L(" (con cualquier campeón)", " (any champion)") : "")}",
+                    $"your build is {StyleName(_style.Key)} ({decisive}): {share:P0} of those builds have it{(_style.Generic ? L(" (con cualquier campeón)", " (any champion)") : "")}"));
             else
-            Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : L(
+            Bonus(true, PopularBonus(champion, item.Id), share < 0.2 ? "" : LF(
                 $"con «{aug}» el {_style.Share:P0} va de {StyleName(_style.Key)} y gana más ({_style.WinRate:0.#} % frente a {_style.UsualWinRate:0.#} % de {StyleName(_style.Usual)}): lo compra el {share:P0}",
                 $"with “{aug}” {_style.Share:P0} go {StyleName(_style.Key)} and win more ({_style.WinRate:0.#}% vs {_style.UsualWinRate:0.#}% {StyleName(_style.Usual)}): {share:P0} buy it"));
             // Con el crítico al tope, lo que no da crítico y se compra con el campeón (Danza de la Muerte, Rey Arruinado con
@@ -1500,7 +1535,7 @@ public sealed partial class Advisor(StatsStore stats)
         else
         {
             if (stats.GlobalItem(champion, item.Id) is { PickRate: >= 20 and var pick })
-                Bonus(true, PopularBonus(champion, item.Id), L($"build habitual: lo compra el {pick:0} % con {Data.ChampionName(champion)} en Mayhem", $"standard build: {pick:0}% of {Data.ChampionName(champion)} players buy it in Mayhem"));
+                Bonus(true, PopularBonus(champion, item.Id), LF($"build habitual: lo compra el {pick:0} % con {Data.ChampionName(champion)} en Mayhem", $"standard build: {pick:0}% of {Data.ChampionName(champion)} players buy it in Mayhem"));
             else Bonus(true, PopularBonus(champion, item.Id), "");
             // Objeto que no sale en las tablas de tu campeón (ni entre los más comprados ni entre los que más ganan): casi nadie
             // lo lleva con él. Contra tanques sumaba igual que el Rey Arruinado y colaba la Cicloespada Voltaica a Jax.
@@ -1511,17 +1546,17 @@ public sealed partial class Advisor(StatsStore stats)
         // Randuin a un campeón que casi nunca lo lleva salía 247 veces de 3.382 jugadores y se compraba el 2 %.
         // Y si gana claramente menos que tu campeón, menos aún (Randuin: 43,3 % con Cho'Gath, 43,5 % con Braum).
         double fit = Math.Min(1, ChampionShare(champion, item.Id) / CounterFullShare) * WinFactor(champion, item.Id);
-        Bonus(profile.CritItems >= 3 && item.Is(ItemCounters.AntiCrit), 0.045 * fit, L($"menos daño de críticos: llevan {profile.CritItems} objetos/aumentos de crítico", $"less crit damage: they have {profile.CritItems} crit items/augments"));
-        Bonus(profile.AttackSpeedItems >= 3 && item.Is(ItemCounters.AntiAttackSpeed), 0.04 * fit, L($"frena su velocidad de ataque ({profile.AttackSpeedItems} objetos/aumentos)", $"slows their attack speed ({profile.AttackSpeedItems} items/augments)"));
-        Bonus(profile.Shields >= 2 && item.Is(ItemCounters.AntiShield), 0.04 * fit, L($"rompe escudos: {profile.Shields} escudos enemigos", $"breaks shields: {profile.Shields} enemy shields"));
+        Bonus(profile.CritItems >= 3 && item.Is(ItemCounters.AntiCrit), 0.045 * fit, LF($"menos daño de críticos: llevan {profile.CritItems} objetos/aumentos de crítico", $"less crit damage: they have {profile.CritItems} crit items/augments"));
+        Bonus(profile.AttackSpeedItems >= 3 && item.Is(ItemCounters.AntiAttackSpeed), 0.04 * fit, LF($"frena su velocidad de ataque ({profile.AttackSpeedItems} objetos/aumentos)", $"slows their attack speed ({profile.AttackSpeedItems} items/augments)"));
+        Bonus(profile.Shields >= 2 && item.Is(ItemCounters.AntiShield), 0.04 * fit, LF($"rompe escudos: {profile.Shields} escudos enemigos", $"breaks shields: {profile.Shields} enemy shields"));
         Bonus((profile.Tanks >= 2 || profile.HealthItems >= 6) && item.Is(ItemCounters.PercentHealth), 0.035 * fit,
-            profile.Tanks >= 2 ? L($"daño por % de vida contra {profile.Tanks} tanques", $"% health damage vs {profile.Tanks} tanks") : L($"daño por % de vida: compran mucha vida ({profile.HealthItems})", $"% health damage: they stack health ({profile.HealthItems})"));
+            profile.Tanks >= 2 ? LF($"daño por % de vida contra {profile.Tanks} tanques", $"% health damage vs {profile.Tanks} tanks") : LF($"daño por % de vida: compran mucha vida ({profile.HealthItems})", $"% health damage: they stack health ({profile.HealthItems})"));
         // Resistencias según cuánto se inclina el daño enemigo (58 % mágico ya pide algo de resist. mágica).
         double magicLean = profile.MagicShare - 0.5;
         Bonus(magicLean > 0.03 && item.Has("SpellBlock"), Math.Min(0.05, magicLean * 0.2 + 0.01),
-            L($"resist. mágica: el {profile.MagicShare:P0} del daño enemigo es mágico", $"magic resist: {profile.MagicShare:P0} of enemy damage is magic"));
+            LF($"resist. mágica: el {profile.MagicShare:P0} del daño enemigo es mágico", $"magic resist: {profile.MagicShare:P0} of enemy damage is magic"));
         Bonus(magicLean < -0.03 && item.Has("Armor"), Math.Min(0.05, -magicLean * 0.2 + 0.01),
-            L($"armadura: el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"armor: {1 - profile.MagicShare:P0} of enemy damage is physical"));
+            LF($"armadura: el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"armor: {1 - profile.MagicShare:P0} of enemy damage is physical"));
         Bonus(profile.Healers >= 2 && item.AppliesWounds, 0.04 * fit, L("heridas graves: el enemigo se cura mucho", "grievous wounds: the enemy heals a lot"));
         // La penetración también según lo que se compra con tu campeón: sin eso, la Cicloespada Voltaica le salía a Ezreal y a
         // Kai'Sa contra tanques (no la compra ni el 1 %) y Florescencia Críptica a Miss Fortune.
@@ -1549,7 +1584,7 @@ public sealed partial class Advisor(StatsStore stats)
 
         // Un aumento que necesita este objeto para funcionar (misiones, "Mejorar X"…): va primero.
         foreach (var aug in myAugments)
-            Bonus(stats.Links.RequiredBy(aug.Id).Contains(item.Id) && !WrongDamageFor(item, iAmMagic), RequiredBonus, L($"lo necesita tu aumento «{aug.DisplayName}»", $"your augment “{aug.DisplayName}” needs it"));
+            Bonus(stats.Links.RequiredBy(aug.Id).Contains(item.Id) && !WrongDamageFor(item, iAmMagic), RequiredBonus, LF($"lo necesita tu aumento «{aug.DisplayName}»", $"your augment “{aug.DisplayName}” needs it"));
 
         // Sinergia con los aumentos que ya elegiste: es lo que más pesa al elegir entre objetos parecidos.
         // Se suma la de todos tus aumentos (con tope, para que no tape todo lo demás) y se nombran los que encajan.
@@ -1573,15 +1608,23 @@ public sealed partial class Advisor(StatsStore stats)
         // a Yasuo, Cho'Gath, Leona…; se compraba el 2 % de las veces). Lo que se compra con tus aumentos ya lo trae tu build.
         double augFit = Math.Min(1, ChampionShare(champion, item.Id, anyBuild: true) / CounterFullShare);
         Bonus(augBonus > 0, Math.Min(augBonus, MaxAugmentBonus) * augFit,
-            named.Count == 1 ? L($"va con tu aumento {named[0]}", $"fits your augment {named[0]}") : L($"va con tus aumentos {string.Join(" y ", named)}", $"fits your augments {string.Join(" and ", named)}"));
+            named.Count == 1 ? LF($"va con tu aumento {named[0]}", $"fits your augment {named[0]}") : LF($"va con tus aumentos {string.Join(" y ", named)}", $"fits your augments {string.Join(L(" y ", " and "), named)}"));
         // Un aumento que crece con tu maná máximo (Sobrecarga, A Tope, Paso Redoblado) pide objetos con maná. Va aparte del
         // tope: con 3-4 aumentos de AP todos los objetos de AP llegan al tope y la Vara de las Edades no se distinguía.
         if (item.Has("Mana") && myAugments.FirstOrDefault(ScalesWithMana) is { } manaAug)
-            Bonus(true, ManaScalingBonus, L($"«{manaAug.DisplayName}» crece con tu maná máximo", $"“{manaAug.DisplayName}” scales with your max mana"));
+            Bonus(true, ManaScalingBonus, LF($"«{manaAug.DisplayName}» crece con tu maná máximo", $"“{manaAug.DisplayName}” scales with your max mana"));
 
         reason ??= WinRateReason(champion, item.Id, rate, games) ?? L("encaja con tu campeón", "fits your champion");
         return new ItemAdvice(item, score, games, reason);
     }
+
+    /// <summary>
+    /// ¿Casi nadie compra botas con este campeón? Yuumi va pegada a un aliado: según su página de mayhemmeta, botas el
+    /// 3,7 % (la siguiente, Karthus, el 42 %). La app le recomendaba Botas del Hechicero mejoradas o Grebas del Berserker.
+    /// </summary>
+    bool SkipsBoots(string champion) =>
+        stats.Global.For(champion) is { Boots.Count: > 0 } page && page.Boots.Sum(b => b.PickRate ?? 0) < NoBootsPickRate;
+    const double NoBootsPickRate = 15;
 
     ItemAdvice? BestBoots(string champion, EnemyProfile profile, IReadOnlyList<Augment> myAugments, bool iAmMagic, IReadOnlyList<int> myItems)
     {
@@ -1601,8 +1644,8 @@ public sealed partial class Advisor(StatsStore stats)
                 void Bonus(bool when, double amount, string why) { if (when) { score += amount; reason ??= why; } }
 
                 double lean = profile.MagicShare - 0.5;
-                Bonus(lean < -0.03 && i.Has("Armor"), Math.Min(0.05, -lean * 0.2 + 0.01), L($"armadura: el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"armor: {1 - profile.MagicShare:P0} of enemy damage is physical"));
-                Bonus(lean > 0.03 && i.Has("SpellBlock"), Math.Min(0.05, lean * 0.2 + 0.01), L($"resist. mágica y tenacidad: el {profile.MagicShare:P0} del daño enemigo es mágico", $"magic resist and tenacity: {profile.MagicShare:P0} of enemy damage is magic"));
+                Bonus(lean < -0.03 && i.Has("Armor"), Math.Min(0.05, -lean * 0.2 + 0.01), LF($"armadura: el {1 - profile.MagicShare:P0} del daño enemigo es físico", $"armor: {1 - profile.MagicShare:P0} of enemy damage is physical"));
+                Bonus(lean > 0.03 && i.Has("SpellBlock"), Math.Min(0.05, lean * 0.2 + 0.01), LF($"resist. mágica y tenacidad: el {profile.MagicShare:P0} del daño enemigo es mágico", $"magic resist and tenacity: {profile.MagicShare:P0} of enemy damage is magic"));
                 Bonus(lean > 0.05 && i.Has("Armor") && !i.Has("SpellBlock"), -0.03, "");
                 Bonus(lean < -0.05 && i.Has("SpellBlock") && !i.Has("Armor"), -0.03, "");
                 Bonus(iAmMagic && !_tankBuild && i.Has("MagicPenetration"), 0.025, L("penetración mágica para tu daño", "magic penetration for your damage"));
@@ -1614,7 +1657,7 @@ public sealed partial class Advisor(StatsStore stats)
                 Bonus(marksman && i.Has("AttackSpeed"), 0.025, L("velocidad de ataque para tu campeón", "attack speed for your champion"));
                 // Como mucho una vez: con dos aumentos de velocidad de ataque, Darius acababa con Grebas del Berserker (0,3 % en la página).
                 if (myAugments.FirstOrDefault(aug => StatTags.ItemCategories(aug.StatList, iAmMagic).Any(i.Has)) is { } fitAug)
-                    Bonus(true, AugmentMatchBonus, L($"va con tu aumento «{fitAug.DisplayName}»", $"fits your augment “{fitAug.DisplayName}”"));
+                    Bonus(true, AugmentMatchBonus, LF($"va con tu aumento «{fitAug.DisplayName}»", $"fits your augment “{fitAug.DisplayName}”"));
 
                 return new ItemAdvice(i, score, games, reason ?? WinRateReason(champion, i.Id, rate, games) ?? L("opción estándar", "standard pick"));
             })

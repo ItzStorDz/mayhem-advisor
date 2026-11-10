@@ -16,7 +16,8 @@ public sealed record GameSnapshot(
     double RespawnTimer = 0,
     IReadOnlyDictionary<string, (int Kills, int Deaths)>? EnemyScores = null,
     double CritChance = 0,
-    string? UnknownChampion = null);
+    string? UnknownChampion = null,
+    int Level = 0);
 
 /// <summary>
 /// Habla con la API oficial de Riot que el juego abre en tu PC durante la partida (127.0.0.1:2999).
@@ -85,7 +86,8 @@ public sealed class LiveClient : IDisposable
             var champion = Champion(mine);
             // Campeón que no reconocemos: los nombres que dio el juego, para el registro (y no se recomienda a ciegas).
             string? unknown = Resolve is { } check && check(champion) is null ? RawNames(mine) : null;
-            return new GameSnapshot(champion, gold, Items(mine), enemies, myAugs, enemyAugs, gameTime, dead, respawn, enemyScores, crit, unknown);
+            int level = active.TryGetProperty("level", out var lv) && lv.ValueKind == JsonValueKind.Number ? lv.GetInt32() : 0;
+            return new GameSnapshot(champion, gold, Items(mine), enemies, myAugs, enemyAugs, gameTime, dead, respawn, enemyScores, crit, unknown, level);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException)
         {

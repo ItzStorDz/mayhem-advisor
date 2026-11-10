@@ -8,7 +8,8 @@ public sealed record AppLanguage(string Code, string Name, string Culture, strin
 /// alemán y vietnamita (un jugador lo pidió el 2026-11-08). La interfaz (ventana, panel, selección de campeón, bandeja) va en
 /// los 6, y los nombres de objetos, campeones y aumentos salen del juego en cada idioma. Los textos que genera la app (los
 /// porqués, los consejos) se escriben en español y en inglés donde se generan, <c>L("Mucho daño mágico", "Lots of magic
-/// damage")</c>: con portugués, francés, alemán o vietnamita salen en inglés.
+/// damage")</c> (con huecos, <c>LF($"…", $"…")</c>); en portugués, francés, alemán y vietnamita salen de
+/// <see cref="LangTexts"/> (desde la 1.8.7; antes, en inglés).
 /// </summary>
 public static class Lang
 {
@@ -58,7 +59,39 @@ public static class Lang
     /// </summary>
     public static LocalizedNames? Names { get; set; }
 
-    public static string L(string es, string en) => English ? en : es;
+    public static string L(string es, string en) => Code switch
+    {
+        "es" => es,
+        "en" => en,
+        _ => Translate(en, null) ?? en,
+    };
+
+    /// <summary>
+    /// Como <see cref="L(string, string)"/> para los textos con huecos (<c>LF($"Llevan {n} objetos de crítico", $"They have
+    /// {n} crit items")</c>): en los otros idiomas se busca la plantilla en inglés ("They have {0} crit items") y se rellenan
+    /// sus huecos. (Con <c>L</c> los huecos ya vendrían rellenos y no se podría buscar la frase.)
+    /// </summary>
+    public static string LF(FormattableString es, FormattableString en) => Code switch
+    {
+        "es" => es.ToString(),
+        "en" => en.ToString(),
+        _ => Translate(en.Format, en.GetArguments()) ?? en.ToString(),
+    };
+
+    static readonly System.Text.RegularExpressions.Regex Holes = new(@"\{(\d+)(,[^:}]*)?(:[^}]*)?\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> HoleKeys = new();
+
+    /// <summary>El texto en el idioma elegido (portugués, francés, alemán, vietnamita) o null si no está en <see cref="LangTexts"/>.</summary>
+    static string? Translate(string en, object?[]? args)
+    {
+        int column = Code switch { "pt" => 0, "fr" => 1, "de" => 2, "vi" => 3, _ => -1 };
+        if (column < 0) return null;
+        string key = args is null ? en : HoleKeys.GetOrAdd(en, f => Holes.Replace(f, "{$1}"));
+        if (!LangTexts.All.TryGetValue(key, out var texts)) return null;
+        if (args is null) return texts[column];
+        try { return string.Format(System.Globalization.CultureInfo.CurrentCulture, texts[column], args); }
+        catch (FormatException) { return null; } // una traducción mal escrita no puede tumbar la app: sale en inglés
+    }
 
     /// <summary>Un texto fijo en los 6 idiomas (para el menú de la bandeja y poco más); sin traducción, el inglés.</summary>
     public static string T(string es, string en, string pt, string fr, string de, string vi) => Code switch

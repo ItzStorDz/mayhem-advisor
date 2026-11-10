@@ -113,7 +113,7 @@ public partial class App
         }
         if (total <= 0) return null;
         var top = pairs.Values.MaxBy(p => p.Games);
-        return L($"La pareja de hechizos más usada en Caos es {SummonerSpells.PairName(top.Keys)}: la lleva el {top.Games / total:P0} de los jugadores (mayhemmeta). En la selección de campeón, el panel te dice cuál gana más con tu campeón.",
+        return LF($"La pareja de hechizos más usada en Caos es {SummonerSpells.PairName(top.Keys)}: la lleva el {top.Games / total:P0} de los jugadores (mayhemmeta). En la selección de campeón, el panel te dice cuál gana más con tu campeón.",
                  $"The most used summoner spell pair in Mayhem is {SummonerSpells.PairName(top.Keys)}: {top.Games / total:P0} of players take it (mayhemmeta). In champion select, the panel tells you which wins more on your champion.");
     }
 
@@ -136,7 +136,7 @@ public partial class App
         var tips = new List<string>();
         string name = _data.ChampionName(alias);
         if (meta is { WinRate: { } wr } && _mayhem.RankOf(alias) is var rank and > 0)
-            tips.Add(L($"Es el n.º {rank} de {_mayhem.Champions.Count} campeones en Caos: gana el {wr:0.#} % de sus partidas (tier {meta.Tier}).",
+            tips.Add(LF($"Es el n.º {rank} de {_mayhem.Champions.Count} campeones en Caos: gana el {wr:0.#} % de sus partidas (tier {meta.Tier}).",
                        $"It's #{rank} of {_mayhem.Champions.Count} champions in Mayhem: it wins {wr:0.#}% of its games ({meta.Tier} tier)."));
         int styleGames = styles.Sum(st => st.Games);
         if (styles.Count > 0 && styleGames > 0)
@@ -144,27 +144,27 @@ public partial class App
             var first = styles[0];
             var better = styles.Skip(1).FirstOrDefault(st => st.Games >= styleGames * 0.1 && st.WinRate - first.WinRate >= 1);
             tips.Add(better is null
-                ? L($"La mayoría va de {Advisor.StyleName(first.Key)}: el {(double)first.Games / styleGames:P0} de las partidas (aramkit).",
+                ? LF($"La mayoría va de {Advisor.StyleName(first.Key)}: el {(double)first.Games / styleGames:P0} de las partidas (aramkit).",
                     $"Most players go {Advisor.StyleName(first.Key)}: {(double)first.Games / styleGames:P0} of games (aramkit).")
-                : L($"La mayoría va de {Advisor.StyleName(first.Key)} ({(double)first.Games / styleGames:P0}), pero la build de {Advisor.StyleName(better.Key)} ({(double)better.Games / styleGames:P0}) gana más: {better.WinRate:0.#} % frente a {first.WinRate:0.#} %. En la partida puedes fijarla en «TIPO DE BUILD».",
+                : LF($"La mayoría va de {Advisor.StyleName(first.Key)} ({(double)first.Games / styleGames:P0}), pero la build de {Advisor.StyleName(better.Key)} ({(double)better.Games / styleGames:P0}) gana más: {better.WinRate:0.#} % frente a {first.WinRate:0.#} %. En la partida puedes fijarla en «TIPO DE BUILD».",
                     $"Most players go {Advisor.StyleName(first.Key)} ({(double)first.Games / styleGames:P0}), but the {Advisor.StyleName(better.Key)} build ({(double)better.Games / styleGames:P0}) wins more: {better.WinRate:0.#}% vs {first.WinRate:0.#}%. In game you can lock it in “BUILD TYPE”."));
         }
         if (SummonerSpells.Recommend(build) is { } spells)
-            tips.Add(L($"Hechizos: {string.Join(" + ", spells.Names)} ({spells.Reason}).", $"Spells: {string.Join(" + ", spells.Names)} ({spells.Reason})."));
+            tips.Add(LF($"Hechizos: {string.Join(" + ", spells.Names)} ({spells.Reason}).", $"Spells: {string.Join(" + ", spells.Names)} ({spells.Reason})."));
         if (new Advisor(_stats).CommonSkills(alias) is { } skills)
-            tips.Add(L($"Habilidades: el {skills.Share:P0} maximiza {string.Join(" › ", skills.MaxOrder.ToCharArray())} (aramkit).",
+            tips.Add(LF($"Habilidades: el {skills.Share:P0} maximiza {string.Join(" › ", skills.MaxOrder.ToCharArray())} (aramkit).",
                        $"Skills: {skills.Share:P0} max {string.Join(" › ", skills.MaxOrder.ToCharArray())} (aramkit)."));
         if (build is { WinRate: { } champWr } && build.ItemsBest.Concat(build.ItemsCommon)
                 .Where(i => i.WinRate.HasValue && i.PickRate >= 5 && build.GamesWith(i) >= 300 && _data.Item(i.Id) is { IsBoots: false, InStore: true })
                 .MaxBy(i => i.WinRate) is { } bestItem && bestItem.WinRate > champWr + 1)
-            tips.Add(L($"De lo que se compra con {name}, lo que más gana es {_data.Item(bestItem.Id)!.DisplayName}: {bestItem.WinRate:0.#} % en ~{build.GamesWith(bestItem):N0} partidas (lo compra el {bestItem.PickRate:0} %).",
+            tips.Add(LF($"De lo que se compra con {name}, lo que más gana es {_data.Item(bestItem.Id)!.DisplayName}: {bestItem.WinRate:0.#} % en ~{build.GamesWith(bestItem):N0} partidas (lo compra el {bestItem.PickRate:0} %).",
                        $"Of what {name} players buy, {_data.Item(bestItem.Id)!.DisplayName} wins the most: {bestItem.WinRate:0.#}% in ~{build.GamesWith(bestItem):N0} games ({bestItem.PickRate:0}% buy it)."));
         if (kit?.Late >= 2)
             tips.Add(kit.Late >= 3
                 ? L("Escala sin límite (cargas que no paran de crecer): cuanto más dure la partida, más fuerte es.", "Scales without limit (stacks that keep growing): the longer the game, the stronger it gets.")
                 : L("Es fuerte en partida larga: no te desesperes si el principio va lento.", "Strong in long games: don't despair if the start is slow."));
         if (build?.Boots.Where(b => b.PickRate.HasValue).MaxBy(b => b.PickRate) is { } boots && _data.Item(boots.Id) is { } bootsItem)
-            tips.Add(L($"Botas más usadas: {bootsItem.DisplayName} (el {boots.PickRate:0} %), después del primer objeto.",
+            tips.Add(LF($"Botas más usadas: {bootsItem.DisplayName} (el {boots.PickRate:0} %), después del primer objeto.",
                        $"Most used boots: {bootsItem.DisplayName} ({boots.PickRate:0}%), after the first item."));
         return tips.Take(6).ToList();
     }

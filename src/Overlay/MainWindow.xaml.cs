@@ -111,8 +111,8 @@ public partial class MainWindow : Window
                 Muted, FontWeights.Normal, new Thickness(4, 3, 0, 0)));
             panel.Children.Add(top);
             // Todas las partidas que respaldan la nota (mayhemmeta + AramHex/aramkit), como en el overlay de Electron (1.8.1).
-            panel.Children.Add(Label(card.Rec.Global ? L($"~{card.Rec.EvidenceGames:N0} partidas en Mayhem (todos)", $"~{card.Rec.EvidenceGames:N0} Mayhem games (everyone)")
-                : card.Rec.Games > 0 ? L($"{card.Rec.Games} partidas con tu campeón", $"{card.Rec.Games} games on your champion") : L("sin partidas con tu campeón aún", "no games on your champion yet"),
+            panel.Children.Add(Label(card.Rec.Global ? LF($"~{card.Rec.EvidenceGames:N0} partidas en Mayhem (todos)", $"~{card.Rec.EvidenceGames:N0} Mayhem games (everyone)")
+                : card.Rec.Games > 0 ? LF($"{card.Rec.Games} partidas con tu campeón", $"{card.Rec.Games} games on your champion") : L("sin partidas con tu campeón aún", "no games on your champion yet"),
                 11, Muted, FontWeights.Normal, new Thickness(0, 2, 0, 0)));
 
             if (card.Hit.Augment.StatList.Length > 0)
@@ -187,7 +187,7 @@ public partial class MainWindow : Window
             row.Children.Add(icon);
             var info = new StackPanel();
             info.Children.Add(Label(next.Item.DisplayName, 14, GoldBright, FontWeights.SemiBold, new Thickness(0)));
-            info.Children.Add(Label(next.GoldMissing == 0 ? L("¡Ya te alcanza!", "You can afford it!") : L($"Te faltan {next.GoldMissing} de oro (cuesta {next.Cost})", $"{next.GoldMissing} gold to go (costs {next.Cost})"),
+            info.Children.Add(Label(next.GoldMissing == 0 ? L("¡Ya te alcanza!", "You can afford it!") : LF($"Te faltan {next.GoldMissing} de oro (cuesta {next.Cost})", $"{next.GoldMissing} gold to go (costs {next.Cost})"),
                 11.5, next.GoldMissing == 0 ? Green : Muted, FontWeights.Normal, new Thickness(0, 1, 0, 4)));
             info.Children.Add(new ProgressBar
             {
@@ -206,8 +206,8 @@ public partial class MainWindow : Window
             icons.Children.Add(Label("→", 20, GoldBright, FontWeights.Bold, new Thickness(10, 2, 10, 0)));
             icons.Children.Add(ItemIcon(swap.Buy.Item, 32, new Thickness(0)));
             c.Add(icons);
-            c.Add(Label(L($"Vende {swap.Sell.DisplayName} (+{swap.SellGold} oro): {swap.SellReason}", $"Sell {swap.Sell.DisplayName} (+{swap.SellGold} gold): {swap.SellReason}"), 11.5, Red, FontWeights.Normal, new Thickness(0, 0, 0, 2), wrap: true));
-            c.Add(Label(L($"Compra {swap.Buy.Item.DisplayName}: {swap.Buy.Reason}", $"Buy {swap.Buy.Item.DisplayName}: {swap.Buy.Reason}"), 11.5, Green, FontWeights.Normal, new Thickness(0), wrap: true));
+            c.Add(Label(LF($"Vende {swap.Sell.DisplayName} (+{swap.SellGold} oro): {swap.SellReason}", $"Sell {swap.Sell.DisplayName} (+{swap.SellGold} gold): {swap.SellReason}"), 11.5, Red, FontWeights.Normal, new Thickness(0, 0, 0, 2), wrap: true));
+            c.Add(Label(LF($"Compra {swap.Buy.Item.DisplayName}: {swap.Buy.Reason}", $"Buy {swap.Buy.Item.DisplayName}: {swap.Buy.Reason}"), 11.5, Green, FontWeights.Normal, new Thickness(0), wrap: true));
         }
 
         if (advice.Boots is { } boots)
@@ -240,7 +240,7 @@ public partial class MainWindow : Window
         if (advice.Skills is { } s)
         {
             c.Add(Section(L("HABILIDADES", "SKILLS")));
-            c.Add(Label(L($"Maximiza {string.Join(" > ", s.MaxOrder.ToCharArray())}  ·  {s.WinRate:P0} en {s.Games} partidas", $"Max {string.Join(" > ", s.MaxOrder.ToCharArray())}  ·  {s.WinRate:P0} in {s.Games} games"), 12.5, Text, FontWeights.Normal, new Thickness(0)));
+            c.Add(Label(LF($"Maximiza {string.Join(" > ", s.MaxOrder.ToCharArray())}  ·  {s.WinRate:P0} en {s.Games} partidas", $"Max {string.Join(" > ", s.MaxOrder.ToCharArray())}  ·  {s.WinRate:P0} in {s.Games} games"), 12.5, Text, FontWeights.Normal, new Thickness(0)));
         }
 
         if (advice.FullBuild is { Count: > 0 } build)
@@ -290,7 +290,7 @@ public partial class MainWindow : Window
             {
                 var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 1, 0, 0) };
                 line.Children.Add(Label(m.Tier, 11.5, new SolidColorBrush(TierColor(m.Tier)), FontWeights.Bold, new Thickness(0, 0, 6, 0)));
-                line.Children.Add(Label(L($"{o.BestWinRate:P1} de victorias · {m.Games ?? 0:N0} partidas", $"{o.BestWinRate:P1} win rate · {m.Games ?? 0:N0} games"), 11.5, Text, FontWeights.Normal, new Thickness(0)));
+                line.Children.Add(Label(LF($"{o.BestWinRate:P1} de victorias · {m.Games ?? 0:N0} partidas", $"{o.BestWinRate:P1} win rate · {m.Games ?? 0:N0} games"), 11.5, Text, FontWeights.Normal, new Thickness(0)));
                 info.Children.Add(line);
             }
             if (o.Spells is { } sp)
@@ -300,7 +300,7 @@ public partial class MainWindow : Window
                 spells.Children.Add(Label($" {string.Join(" + ", sp.Names)} · {sp.WinRate:P1}", 11, Text, FontWeights.SemiBold, new Thickness(0, 1, 0, 0)));
                 info.Children.Add(spells);
             }
-            info.Children.Add(Label(o.Games > 0 ? L($"{(o.Mayhem is null ? "" : "Tú: ")}{o.WinRate:P0} de victorias · {o.Games} partidas", $"{(o.Mayhem is null ? "" : "You: ")}{o.WinRate:P0} win rate · {o.Games} games") : L("sin partidas tuyas aún", "no games of yours yet"),
+            info.Children.Add(Label(o.Games > 0 ? LF($"{(o.Mayhem is null ? "" : "Tú: ")}{o.WinRate:P0} de victorias · {o.Games} partidas", $"{(o.Mayhem is null ? "" : L("Tú: ", "You: "))}{o.WinRate:P0} win rate · {o.Games} games") : L("sin partidas tuyas aún", "no games of yours yet"),
                 o.Mayhem is null ? 11.5 : 10.5, o.Mayhem is null && o.Games >= 3 ? Text : Muted, FontWeights.Normal, new Thickness(0, 1, 0, 0)));
             row.Children.Add(info);
             c.Add(row);

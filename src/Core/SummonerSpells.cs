@@ -49,8 +49,8 @@ public static class SummonerSpells
         var best = combos.MaxBy(Trust);
         if (Trust(best) - popular.Rate < MinGain) best = popular;
         string reason = best.Combo == popular.Combo
-            ? L($"la que lleva casi todo el mundo ({best.Combo.PickRate:0} %); ninguna otra gana claramente más", $"what almost everyone takes ({best.Combo.PickRate:0}%); nothing else clearly wins more")
-            : L($"gana {best.Rate - popular.Rate:+0.0%;-0.0%} más que {Pair(popular.Combo)}, la más usada ({popular.Combo.PickRate:0} %)", $"wins {best.Rate - popular.Rate:+0.0%;-0.0%} more than {Pair(popular.Combo)}, the most used ({popular.Combo.PickRate:0}%)");
+            ? LF($"la que lleva casi todo el mundo ({best.Combo.PickRate:0} %); ninguna otra gana claramente más", $"what almost everyone takes ({best.Combo.PickRate:0}%); nothing else clearly wins more")
+            : LF($"gana {best.Rate - popular.Rate:+0.0%;-0.0%} más que {Pair(popular.Combo)}, la más usada ({popular.Combo.PickRate:0} %)", $"wins {best.Rate - popular.Rate:+0.0%;-0.0%} more than {Pair(popular.Combo)}, the most used ({popular.Combo.PickRate:0}%)");
 
         return new SpellAdvice(
             best.Combo.Spells.Select(SpellName).ToList(),

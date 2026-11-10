@@ -126,7 +126,7 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             Log.Write($"No pude cargar los datos del juego: {ex}");
-            Forms.MessageBox.Show(L($"No pude cargar los datos del juego:\n{ex.Message}", $"Couldn't load the game data:\n{ex.Message}"), "Mayhem Advisor");
+            Forms.MessageBox.Show(LF($"No pude cargar los datos del juego:\n{ex.Message}", $"Couldn't load the game data:\n{ex.Message}"), "Mayhem Advisor");
             Quit();
             return;
         }
@@ -273,13 +273,14 @@ public partial class App : System.Windows.Application
                 _journal = new GameJournal { StartedUtc = DateTime.UtcNow, Lang = Lang.TextCode, Champion = _data.Champion(game.Champion)?.Alias ?? game.Champion };
                 lastContext = null;
                 _myAugments.Clear();
+                _augmentChoices = 0;
                 _keepItems.Clear();
                 _lockedStyle = null;
                 _nameRowRel = null;
                 _pendingPick = null;
                 ReloadStats(); // por si se añadieron partidas desde la última vez
-                ShowStatus($"Mayhem Advisor · {_data.ChampionName(game.Champion)} · " + L($"{_stats.MatchCount} partidas{(_stats.Patch is null ? "" : $" (parche {_stats.Patch})")}",
-                    $"{_stats.MatchCount} games{(_stats.Patch is null ? "" : $" (patch {_stats.Patch})")}"));
+                ShowStatus($"Mayhem Advisor · {_data.ChampionName(game.Champion)} · " + LF($"{_stats.MatchCount} partidas{(_stats.Patch is null ? "" : $" (parche {_stats.Patch})")}",
+                    $"{_stats.MatchCount} games{(_stats.Patch is null ? "" : LF($" (parche {_stats.Patch})", $" (patch {_stats.Patch})"))}"));
             }
 
             // Si el juego nos dice tus aumentos, son más fiables que adivinarlos por el clic.
@@ -307,6 +308,7 @@ public partial class App : System.Windows.Application
             if (!game.IsDead && _wasDead && _journal is { Deaths.Count: > 0 } jd && jd.Deaths[^1] is { Left: null } lastDeath)
                 jd.Deaths[^1] = lastDeath with { Left = (int)game.Gold };
             _gameMinutes = game.GameTime / 60;
+            _level = game.Level;
             _lastMyItems = game.MyItems;
             _lastPhase = gamePhase;
             _wasDead = game.IsDead;
@@ -339,8 +341,12 @@ public partial class App : System.Windows.Application
             }
 
             bool cardsChanged = false;
+            // Sin cartas ni elección pendiente, la pantalla se lee una vez por segundo (ver AugmentPending).
+            bool idle = _cards.Count == 0 && _singleHit is null && _pendingPick is null && !AugmentPending;
+            if (!idle || DateTime.UtcNow >= _nextIdleRead)
             try
             {
+                if (idle) _nextIdleRead = DateTime.UtcNow.AddSeconds(1);
                 // Solo la ventana del juego (en modo ventana no ocupa toda la pantalla); si no se encuentra, la pantalla principal.
                 var screen = _gameArea = ScreenReader.GameArea();
                 var scanWatch = System.Diagnostics.Stopwatch.StartNew();
@@ -427,7 +433,7 @@ public partial class App : System.Windows.Application
             if (cardsChanged || DateTime.UtcNow >= nextSlowTick)
             {
                 nextSlowTick = DateTime.UtcNow.AddSeconds(1);
-                if (advice is not null) PushLive("ingame", L($"En partida · {_myAugments.Count} aumento(s)", $"In game · {_myAugments.Count} augment(s)"), game: (game, advice));
+                if (advice is not null) PushLive("ingame", LF($"En partida · {_myAugments.Count} aumento(s)", $"In game · {_myAugments.Count} augment(s)"), game: (game, advice));
             }
             await Delay(ScanDelay, ct);
           }
@@ -455,6 +461,19 @@ public partial class App : System.Windows.Application
     /// (hasta 0,35 s), para no quitarle más de ~la mitad de un núcleo al juego. Con cartas en pantalla, lo mínimo.
     /// </summary>
     int ScanDelay => _cards.Count > 0 ? ScanIntervalMs : (int)Math.Clamp(_scanEma, ScanIntervalMs, 350);
+
+    /// <summary>
+    /// ¿Te toca elegir aumento? Salen al empezar (nivel 3) y en los niveles 7, 11 y 15 (ver ModeTips). Si ya elegiste los que
+    /// tocan por tu nivel, no puede salir ninguna carta hasta el siguiente: la pantalla se lee una vez por segundo (por si
+    /// acaso) en vez de ~5. En tus partidas del 2026-11-09 cada lectura tardaba ~110 ms y en pelea casi nunca se podía
+    /// reutilizar (la imagen siempre cambia): el lector se llevaba ~la mitad de un núcleo toda la partida; así, ~un décimo
+    /// la mayor parte del tiempo. Si la app no vio alguna elección (la abriste a mitad de partida…), lee como siempre.
+    /// Los yunques se compran en cualquier momento: salen como mucho 1 s más tarde.
+    /// </summary>
+    bool AugmentPending => _level <= 0 || _augmentChoices < AugmentLevels.Count(l => _level >= l);
+    static readonly int[] AugmentLevels = [3, 7, 11, 15];
+    int _level, _augmentChoices;
+    DateTime _nextIdleRead;
 
     /// <summary>Altura de la fila de nombres (fracción del alto del juego) medida al ver 2+ cartas en esta partida.</summary>
     double? _nameRowRel;
@@ -935,6 +954,7 @@ public partial class App : System.Windows.Application
     {
         if (_pendingPick is not { } p) return;
         _pendingPick = null;
+        _augmentChoices++; // también si no se vio cuál (RegisterPick no apunta los yunques)
         if (p.Augment is null)
         {
             Log.Write("Aumento elegido: no se vio cuál (se sabrá al acabar, con tu historial)");
@@ -945,7 +965,7 @@ public partial class App : System.Windows.Application
         _myAugments.Add(p.Augment); // al cambiar la lista, las compras se recalculan en la siguiente vuelta
         Log.Write($"Aumento elegido: {p.Augment.Name}");
         _journal?.Picks.Add(new JournalPick(Math.Round(_gameMinutes, 1), p.Offered ?? [], p.Augment.Id));
-        ShowStatus(L($"Aumento elegido: {p.Augment.DisplayName}", $"Augment picked: {p.Augment.DisplayName}"));
+        ShowStatus(LF($"Aumento elegido: {p.Augment.DisplayName}", $"Augment picked: {p.Augment.DisplayName}"));
     }
 
     delegate void WinEventProc(IntPtr hook, uint evt, IntPtr hwnd, int idObject, int idChild, uint thread, uint time);
@@ -1322,8 +1342,11 @@ public partial class App : System.Windows.Application
                     _balloonGame = last.Id;
                     _balloonUpdate = false;
                     _tray.ShowBalloonTip(5000, "Mayhem Advisor",
-                        L($"{(last.Win ? "Victoria" : "Derrota")} con {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Pulsa aquí para ver el resumen.",
-                          $"{(last.Win ? "Victory" : "Defeat")} with {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Click to see the summary."),
+                        last.Win
+                            ? LF($"Victoria con {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Pulsa aquí para ver el resumen.",
+                                $"Victory with {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Click to see the summary.")
+                            : LF($"Derrota con {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Pulsa aquí para ver el resumen.",
+                                $"Defeat with {_data.ChampionName(last.Champion)} ({last.Kills}/{last.Deaths}/{last.Assists}). Click to see the summary."),
                         Forms.ToolTipIcon.Info);
                 }
                 _dashboard?.Push(new { type = "games", data = Reports().List() });
@@ -1475,7 +1498,7 @@ public partial class App : System.Windows.Application
         menu.Items.Add(new Forms.ToolStripLabel("Mayhem Advisor") { Font = new System.Drawing.Font(menu.Font, System.Drawing.FontStyle.Bold) });
         menu.Items.Add(new Forms.ToolStripSeparator());
         if (_update is { } update && _updateState is "available" or "ingame" or "error")
-            menu.Items.Add(new Forms.ToolStripMenuItem(L($"Instalar la versión {update.Version.ToString(3)}", $"Install version {update.Version.ToString(3)}"),
+            menu.Items.Add(new Forms.ToolStripMenuItem(LF($"Instalar la versión {update.Version.ToString(3)}", $"Install version {update.Version.ToString(3)}"),
                 null, (_, _) => OpenDashboard("actualizar")) { Font = new System.Drawing.Font(menu.Font, System.Drawing.FontStyle.Bold) });
         menu.Items.Add(Lang.T("Abrir Mayhem Advisor", "Open Mayhem Advisor", "Abrir o Mayhem Advisor", "Ouvrir Mayhem Advisor", "Mayhem Advisor öffnen", "Mở Mayhem Advisor"),
             null, (_, _) => OpenDashboard());

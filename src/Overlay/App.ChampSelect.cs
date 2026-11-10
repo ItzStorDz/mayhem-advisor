@@ -104,8 +104,8 @@ public partial class App
                 var name = _data.ChampionsById.GetValueOrDefault(championId)?.DisplayName ?? championId.ToString();
                 _lcuActions.Enqueue(async (lcu, ct) =>
                     Notice(await ChampSelect.SwapWithBenchAsync(lcu, championId, ct)
-                        ? L($"Has cogido a {name}", $"You took {name}")
-                        : L($"No se pudo coger a {name} (puede que el banco aún esté bloqueado)", $"Couldn't take {name} (the bench may still be locked)")));
+                        ? LF($"Has cogido a {name}", $"You took {name}")
+                        : LF($"No se pudo coger a {name} (puede que el banco aún esté bloqueado)", $"Couldn't take {name} (the bench may still be locked)")));
                 break;
             case "trade" when msg.TryGetProperty("id", out var tid) && tid.TryGetInt64(out var tradeId):
                 bool accept = msg.TryGetProperty("accept", out var a) && a.ValueKind == JsonValueKind.True;

@@ -248,20 +248,20 @@ public sealed partial class GameReports(GameData data, AugmentCatalog catalog, S
         // Con el oro que te quedó al reaparecer (desde la 1.8.3): el de al morir no vale, muerto se compra.
         var spent = deaths.Where(x => x.Left is >= 1300).ToList();
         if (spent.Count >= 2)
-            tips.Add(L($"Volviste a la partida {spent.Count} veces con más de 1.300 de oro sin gastar (de media {(int)spent.Average(x => x.Left!.Value):N0}). Muerto estás en la tienda: compra antes de reaparecer.",
+            tips.Add(LF($"Volviste a la partida {spent.Count} veces con más de 1.300 de oro sin gastar (de media {(int)spent.Average(x => x.Left!.Value):N0}). Muerto estás en la tienda: compra antes de reaparecer.",
                        $"You respawned {spent.Count} times with 1,300+ unspent gold (avg {(int)spent.Average(x => x.Left!.Value):N0}). When dead you're in the shop: buy before you respawn."));
         foreach (var a in augs)
             if (a.Offered is { Count: > 0 } off && off.MaxBy(o => o.Score) is var top && top.Score >= a.Score + 20)
             {
-                tips.Add(L($"Min {a.Minute:0}: elegiste «{a.Name}» ({a.Grade}) teniendo «{top.Name}» ({top.Grade}). Si no buscabas algo concreto, la otra rendía más con tu campeón.",
+                tips.Add(LF($"Min {a.Minute:0}: elegiste «{a.Name}» ({a.Grade}) teniendo «{top.Name}» ({top.Grade}). Si no buscabas algo concreto, la otra rendía más con tu campeón.",
                            $"Min {a.Minute:0}: you took “{a.Name}” ({a.Grade}) over “{top.Name}” ({top.Grade}). Unless you had a plan, the other one performs better on your champion."));
                 break;
             }
         if (ranks["tank"] == 1 && tips.Count < 3) tips.Add(L("Fuiste el que más daño aguantó de la partida: tu equipo pudo pegar detrás de ti.", "You tanked the most damage in the game: your team could hit from behind you."));
         if (ranks["dmg"] >= 8 && ranks["tank"] > 3 && tips.Count < 3)
-            tips.Add(L($"Hiciste poco daño (puesto {ranks["dmg"]} de 10) y tampoco aguantaste mucho: revisa tu build en «Adaptar» del panel durante la partida.",
+            tips.Add(LF($"Hiciste poco daño (puesto {ranks["dmg"]} de 10) y tampoco aguantaste mucho: revisa tu build en «Adaptar» del panel durante la partida.",
                        $"Low damage (#{ranks["dmg"]} of 10) and not much tanking either: check the “Adapt” tab of the panel during the game."));
-        if (me.D >= 10 && tips.Count < 3) tips.Add(L($"Moriste {me.D} veces: en Mayhem cada muerte da mucho oro al rival; elige peleas con tu equipo cerca.",
+        if (me.D >= 10 && tips.Count < 3) tips.Add(LF($"Moriste {me.D} veces: en Mayhem cada muerte da mucho oro al rival; elige peleas con tu equipo cerca.",
                                                      $"You died {me.D} times: each death feeds the enemy a lot of gold; pick fights with your team nearby."));
         return tips.Take(3).ToList();
     }

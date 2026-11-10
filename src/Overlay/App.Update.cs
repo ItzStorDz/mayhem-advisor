@@ -53,7 +53,7 @@ public partial class App
                     _updateNotified = u.Version;
                     _balloonUpdate = true;
                     _tray.ShowBalloonTip(8000, "Mayhem Advisor",
-                        L($"Hay una versión nueva: {u.Version.ToString(3)}. Pulsa aquí para instalarla.",
+                        LF($"Hay una versión nueva: {u.Version.ToString(3)}. Pulsa aquí para instalarla.",
                           $"A new version is available: {u.Version.ToString(3)}. Click here to install it."), Forms.ToolTipIcon.Info);
                 }
             }
