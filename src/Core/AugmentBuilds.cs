@@ -190,7 +190,8 @@ public sealed class AugmentBuilds
     /// Todos los estilos posibles con tus objetos terminados y lo probable que es cada uno (suman 1), del más probable al menos
     /// (ver <see cref="StyleFromItems"/>). Vacío sin objetos o sin datos.
     /// </summary>
-    public IReadOnlyList<(BuildStyle Style, double Probability, bool Generic)> StylesFromItems(string alias, IReadOnlyCollection<int> items, Func<string, bool>? kitFits = null)
+    public IReadOnlyList<(BuildStyle Style, double Probability, bool Generic)> StylesFromItems(string alias, IReadOnlyCollection<int> items, Func<string, bool>? kitFits = null,
+                                                                                               IReadOnlyDictionary<int, double>? usualItems = null)
     {
         if (items.Count == 0 || _generic.Count == 0) return [];
         var own = Styles(alias);
@@ -204,8 +205,11 @@ public sealed class AugmentBuilds
         // Las listas de aramkit solo traen los objetos más comprados de cada estilo: un objeto que no sale en la del campeón
         // (Bailarín Espectral o Navori con Vayne) cuenta con la mitad de lo que sale en ese estilo con todos los campeones.
         // Si no, con Filo + Bailarín + Navori no se sabía si Vayne iba de crítico (los dos últimos no salían en ningún estilo).
+        // En el estilo habitual del campeón, lo que diga su página si es más (usualItems; ver Advisor.WithPage): aramkit le
+        // daba a la Apariencia Espiritual un 5 % con los Sylas de AP (la lleva el 38 %) y, nada más comprarla, lo tomaba por tanque.
         double Share(BuildStyle style, int id) =>
-            style.Items.TryGetValue(id, out var own) ? own : 0.5 * (_generic.GetValueOrDefault(style.Key)?.Items.GetValueOrDefault(id) ?? 0);
+            usualItems is not null && own.Count > 0 && ReferenceEquals(style, own[0]) && usualItems.TryGetValue(id, out var usual) ? usual
+            : style.Items.TryGetValue(id, out var share) ? share : 0.5 * (_generic.GetValueOrDefault(style.Key)?.Items.GetValueOrDefault(id) ?? 0);
         var scored = options.Select(o => (o.Style, o.Generic,
             Log: Math.Log(o.Prior) + items.Sum(id => Math.Log(Math.Clamp(Share(o.Style, id), MissingShare, 0.98))))).ToList();
         double max = scored.Max(s => s.Log);

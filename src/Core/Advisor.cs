@@ -1069,7 +1069,13 @@ public sealed partial class Advisor(StatsStore stats)
             "crit" => kit is { HasCrit: true } || marksman,
             _ => false,
         };
-        var posterior = stats.AramkitBuilds.StylesFromItems(champion, finals, KitFits);
+        // Lo que se compra en el estilo habitual, con lo de la página (lo mismo que se recomienda sin objetos). Sin esto, al
+        // comprar lo primero que la app recomendaba (Apariencia Espiritual con Sylas de AP) el estilo pasaba a «tanque» y el
+        // plan cambiaba entero: partidas con 2+ cambios de plan 27 → 18 (pruebas/auditar-objetos), y el acierto con 2 y 3
+        // objetos sube 0,1 (47,5 → 47,6 % y 39,7 → 39,8 % de lo comprado).
+        var usualItems = styles.Count == 0 ? null
+            : WithPage(champion, new StylePick(styles[0].Key, styles[0].Key, 1, styles[0].WinRate, styles[0].WinRate, styles[0].Games, 0, styles[0].Items, "")).Items;
+        var posterior = stats.AramkitBuilds.StylesFromItems(champion, finals, KitFits, usualItems);
         if (posterior.Count == 0) return null;
         var found = posterior[0];
         if (found.Probability < AugmentBuilds.ItemStyleConfidence)
@@ -1088,7 +1094,8 @@ public sealed partial class Advisor(StatsStore stats)
             if (known <= 0) return null;
             var mix = new Dictionary<int, double>();
             foreach (var (style, p, _) in own)
-                foreach (var (id, share) in style.Items) mix[id] = mix.GetValueOrDefault(id) + p / known * share;
+                foreach (var (id, share) in usualItems is not null && style.Key == styles[0].Key ? usualItems : style.Items)
+                    mix[id] = mix.GetValueOrDefault(id) + p / known * share;
             return new StylePick(own[0].Style.Key, styles[0].Key, own[0].Probability / known, own[0].Style.WinRate,
                 styles[0].WinRate, own[0].Style.Games, 0, mix, "", Mixed: true);
         }

@@ -22,6 +22,11 @@ public sealed class ExternalAugments
     /// (mayhemmeta), y luego las partidas del campeón en mayhemmeta pesan contra <see cref="ShrinkGames"/>.
     /// Medido el 2026-10-27 con 2.112 combinaciones de mayhemmeta con 800+ partidas como verdad (error con 100 partidas
     /// en mayhemmeta / sin datos): media sola 2,05 / 2,24 · aramkit 1,50 / 1,57 · AramHex 1,43 / 1,49.
+    /// Vuelto a medir el 2026-11-10 con AramHex de 19,8 millones de partidas y 4.492 filas de mayhemmeta (300+ partidas,
+    /// validación cruzada por campeón): los pesos que salen son 0,72-0,85 y 0,25, o sea los mismos; aramkit encima no suma
+    /// (peso negativo); y la banda «casual» de AramHex acierta más que el total (1,651 → 1,633; con 800+, 1,544 → 1,512),
+    /// así que herramientas/actualizar-aramhex.mjs baja esa banda. Separar «media del aumento» y «desvío del campeón» o
+    /// suavizar AramHex (k = 300-10.000) no mejora más de un 1 %: el resto del error es ruido de la propia verdad.
     /// </summary>
     public const double Weight = 0.75;
     public const double ShrinkGames = 1000;
