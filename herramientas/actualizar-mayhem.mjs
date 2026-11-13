@@ -16,6 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { championSummary } from "./campeones.mjs";
 
 // Los datos viven en la carpeta "datos" del repo: se compilan junto al .exe y funcionan offline.
 const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "datos");
@@ -172,7 +173,7 @@ if (list.length < 100) {
 
 // ---------- 2. Alias de CommunityDragon (los que usa la app) ----------
 // { name, key, id } sin "Ninguno" ni las copias de modos especiales ("Jade_Aatrox", id 60266).
-const cd = await get("https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-summary.json", "json");
+const cd = await championSummary();
 const meta = cd.filter((m) => m.id > 0 && !m.alias.includes("_")).map((m) => ({ name: m.name, key: m.alias, id: m.id }));
 const aliasById = new Map(meta.map((m) => [m.id, m.key]));
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");

@@ -54,7 +54,6 @@ if (process.argv.includes("--probar")) {
     ["mayhemmeta (portada)", "https://mayhemmeta.com/"],
     ["mayhemmeta (campeón)", "https://mayhemmeta.com/champions/amumu"],
     ["aramkit (web)", "https://aramkit.com/en-US/champions"],
-    ["CommunityDragon", "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-summary.json"],
   ]) {
     try {
       const res = await fetch(url, { headers: ua });
@@ -78,6 +77,21 @@ if (process.argv.includes("--probar")) {
 const gh = (args, opts = {}) => execFileSync(GH, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], ...opts });
 const sha256 = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 const readJson = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
+
+/** ¿Dicen lo mismo dos versiones de un archivo, sin contar cuándo se bajaron? */
+function sameData(a, b) {
+  const strip = (buf) => {
+    const j = JSON.parse(buf.toString("utf8"));
+    delete j.fetchedAt;
+    delete j.generatedAt;
+    return JSON.stringify(j);
+  };
+  try {
+    return strip(a) === strip(b);
+  } catch {
+    return false;
+  }
+}
 
 /** ¿Se puede publicar este archivo? Devuelve por qué no, o null si está bien. */
 function problem(name, file, previousSize) {
@@ -155,6 +169,8 @@ for (const source of ["aramhex", "mayhem", "aramkit"]) {
     for (const n of names) if (backup[n]) fs.writeFileSync(path.join(DIR, n), backup[n]);
     continue;
   }
+  // Mismos datos que antes y solo cambia la hora de descarga: se deja el archivo anterior, para que nadie lo baje otra vez.
+  for (const n of names) if (backup[n] && sameData(backup[n], fs.readFileSync(path.join(DIR, n)))) fs.writeFileSync(path.join(DIR, n), backup[n]);
   sources[source] = { fetchedAt: now.toISOString(), ...(source === "aramkit" ? { dataVersion: aramkitVersion } : {}) };
 }
 

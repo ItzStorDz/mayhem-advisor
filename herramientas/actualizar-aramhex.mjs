@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { championSummary } from "./campeones.mjs";
 
 const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "datos");
 const FILE = "aramhex-augments.json";
@@ -57,7 +58,7 @@ const band = latest.files?.[`${BAND}/hero_augments.json`]
   ? { heroes: await file(latest, `${BAND}/heroes.json`), augments: await file(latest, `${BAND}/hero_augments.json`) } : null;
 const MIN_BAND_GAMES = 100;
 // Los ids de campeón son los de Riot; el alias (el que usa la app) sale de CommunityDragon.
-const summary = JSON.parse(await get("https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-summary.json"));
+const summary = await championSummary();
 const alias = Object.fromEntries(summary.filter((c) => c.id > 0).map((c) => [String(c.id), c.alias]));
 
 const champions = {};
