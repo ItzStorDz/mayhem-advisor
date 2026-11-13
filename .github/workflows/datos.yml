@@ -1,0 +1,34 @@
+# Una vez al día: baja los datos nuevos de las fuentes y los deja en la Release «datos», de donde se los baja la app sola
+# (herramientas/publicar-datos.mjs explica el ritmo de cada fuente). También se puede lanzar a mano en la pestaña Actions.
+name: Datos
+
+on:
+  schedule:
+    - cron: "17 9 * * *" # 09:17 UTC
+  workflow_dispatch:
+    inputs:
+      probar:
+        description: "Solo mirar si las fuentes responden desde GitHub (no publica nada)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: datos
+  cancel-in-progress: false
+
+jobs:
+  datos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bajar y publicar los datos
+        run: node herramientas/publicar-datos.mjs ${{ inputs.probar && '--probar' || '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}

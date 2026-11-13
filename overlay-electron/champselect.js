@@ -6,7 +6,10 @@ const sideEl = document.getElementById('side');
 // La ventana deja pasar el ratón al cliente de LoL salvo encima de un botón.
 let overButton = false;
 document.addEventListener('mousemove', e => {
-  const over = !!e.target.closest('button');
+  // …o encima de la lista cuando no cabe entera (banco lleno, ventana del cliente pequeña): ahí la rueda la desplaza.
+  // Antes no se podía bajar para ver los últimos campeones (opinión de un jugador, 2026-11-12).
+  const list = e.target.closest('.cs-list');
+  const over = !!e.target.closest('button') || (!!list && list.scrollHeight > list.clientHeight + 1);
   if (over !== overButton) { overButton = over; window.mayhem.setChampMouse?.(over); }
 });
 document.addEventListener('click', e => {

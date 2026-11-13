@@ -23,6 +23,28 @@ public partial class App
 
     static bool GameRunning() => System.Diagnostics.Process.GetProcessesByName("League of Legends").Length > 0;
 
+    /// <summary>
+    /// Los datos (notas de aumentos, builds, % de cada campeón) se actualizan solos desde GitHub, sin versión nueva: al
+    /// abrir la app y cada 6 horas (ver <see cref="MayhemAdvisor.Core.DataUpdater"/>). En partida no se baja nada: se
+    /// vuelve a mirar media hora después. Lo nuevo se empieza a usar en la siguiente partida o al abrir la ventana.
+    /// </summary>
+    async Task DataLoopAsync(CancellationToken ct)
+    {
+        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("MayhemAdvisor/" + Updater.Current.ToString(3));
+        string? lastProblem = null;
+        await Delay(25_000, ct); // primero, que cargue lo demás
+        while (!ct.IsCancellationRequested)
+        {
+            if (GameRunning()) { await Delay(30 * 60 * 1000, ct); continue; }
+            var result = await MayhemAdvisor.Core.DataUpdater.CheckAsync(http, ct);
+            if (result.Updated.Count > 0) Log.Write("Datos actualizados solos: " + string.Join(", ", result.Updated));
+            else if (result.Problem is not null && result.Problem != lastProblem) Log.Write("Datos: no pude mirar si hay nuevos (" + result.Problem + ")");
+            lastProblem = result.Problem;
+            await Delay(6 * 3600 * 1000, ct);
+        }
+    }
+
     async Task UpdateLoopAsync(CancellationToken ct)
     {
         Updater.CleanUp();

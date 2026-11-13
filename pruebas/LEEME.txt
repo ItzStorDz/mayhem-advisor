@@ -100,6 +100,11 @@ validar-ajustes\    ¿Los ajustes de la nota de las cartas aciertan? Compara cad
                     800+ partidas en mayhemmeta) frente a lo que la app estimaría sin ellas (2026-11-03: ninguno acertaba).
                       dotnet run --project pruebas\validar-ajustes -c Release
 
+datos-solos\        ¿Se bajan solos los datos? Llama a DataUpdater (lo que hace la app al abrirse y cada 6 horas) en una carpeta de
+                    prueba: dice qué archivos bajó de la Release «datos» de GitHub; la segunda vuelta no debe bajar nada.
+                      $env:MAYHEM_DATA_DIR = "<carpeta vacía>"; dotnet run --project pruebas\datos-solos -c Release
+                    Los datos los publica GitHub una vez al día: herramientas\publicar-datos.mjs (.github\workflows\datos.yml).
+
 Traducciones       ¿Están en portugués, francés, alemán y vietnamita todos los textos que genera la app (los porqués,
                     los consejos)? Dice cuáles faltan en src\Core\LangTexts.cs y si alguna traducción pierde un hueco ({0}…):
                       node herramientas\traducciones\comprobar.js

@@ -38,6 +38,13 @@ so it can't be used to look the game up.
 The window after a game shows up at most once a day, and never again once you've sent feedback or pressed
 "Don't ask again".
 
+## What the app downloads by itself
+
+So that its numbers stay fresh without a new version every few days, the app checks GitHub when it starts and every
+6 hours for newer **data files** (champion, item and augment statistics) and downloads them. Nothing about you is sent
+for this: it is a plain download from this repository's releases, and it works the same with data sharing turned off.
+The app also checks there for new versions of itself, and only installs one when you click it.
+
 ## What is never sent
 
 Your name, Riot ID, account, e-mail, chat, friends, screenshots, other programs, or anything from outside

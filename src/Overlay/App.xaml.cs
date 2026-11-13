@@ -144,6 +144,7 @@ public partial class App : System.Windows.Application
         // MAYHEM_OPEN: solo para las pruebas (abre la ventana en una pestaña, p. ej. "partida:LA1_123").
         if (System.Diagnostics.Process.GetProcessesByName("League of Legends").Length == 0) OpenDashboard(Environment.GetEnvironmentVariable("MAYHEM_OPEN"));
         _ = UpdateLoopAsync(_cts.Token);
+        _ = DataLoopAsync(_cts.Token);
         _ = CloudLoopAsync(_cts.Token);
         await RunLoopAsync(reader, _cts.Token);
     }
@@ -1395,6 +1396,9 @@ public partial class App : System.Windows.Application
     /// </summary>
     void ReloadMayhem()
     {
+        // La ventana principal puede pedir sus datos antes de que termine de cargarse el catálogo de aumentos (arranque con
+        // internet lento): sin catálogo aún no hay nada que recargar. (NullReferenceException en un informe del 2026-11-12.)
+        if (_catalog is null) return;
         if (ReloadIfChanged("mayhem-champions.json", ref _mayhemLoadedFrom, MayhemChampions.Load, c => c.IsEmpty) is { } champions)
         {
             _mayhem = champions;
