@@ -119,6 +119,7 @@ public partial class App : System.Windows.Application
             LiveClient.Resolve = n => byName.GetValueOrDefault(n) ?? byName.GetValueOrDefault(Compact(n));
             await SyncHistoryAsync();
             ReloadStats();
+            _loaded.TrySetResult();
             _tray.Text = "Mayhem Advisor";
             // Los archivos de datos descargados ya no hacen falta en memoria: devolvemos esa RAM a Windows.
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
@@ -997,8 +998,16 @@ public partial class App : System.Windows.Application
         _dashboard.Show();
     }
 
+    /// <summary>
+    /// Se completa cuando terminó de cargarse lo del juego (catálogo de aumentos, objetos, campeones). La ventana principal
+    /// espera a esto antes de pedir nada: si se abría antes (arranque lento y otro clic en el icono), saltaba un
+    /// NullReferenceException en HomeMessage o en el resumen de partidas (48 en un día con la 1.9.0, 5 usuarios).
+    /// </summary>
+    readonly TaskCompletionSource _loaded = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     async Task<object?> OnDashboardMessage(JsonElement msg)
     {
+        if (!_loaded.Task.IsCompleted) await _loaded.Task;
         switch (msg.GetProperty("type").GetString())
         {
             case "settings":

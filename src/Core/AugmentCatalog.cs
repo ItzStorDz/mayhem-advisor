@@ -49,7 +49,15 @@ public sealed record Augment(int Id, string ApiName, string Rarity, Dictionary<s
 /// </summary>
 public sealed class AugmentCatalog
 {
-    const string Base = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global";
+    // MAYHEM_CDRAGON_URL: solo para las pruebas (otra dirección, p. ej. una que no responde).
+    static readonly string Base = Environment.GetEnvironmentVariable("MAYHEM_CDRAGON_URL") is { Length: > 0 } test ? test
+        : "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global";
+
+    /// <summary>
+    /// Copia del catálogo que viaja con la app (datos/semilla-augments.json, con el formato de <see cref="Paths.CatalogCache"/>:
+    /// si el formato cambia, hay que renovarla): para una instalación nueva cuando CommunityDragon no responde.
+    /// </summary>
+    static string Seed => Path.Combine(AppContext.BaseDirectory, "datos", "semilla-augments.json");
     const string StringTable = "https://raw.communitydragon.org/latest/game/es_mx/data/menu/en_us/lol.stringtable.json";
     // También los nombres en portugués, francés, alemán y vietnamita (1.8.5): para enseñarlos en ese idioma y para reconocer
     // las cartas con el juego en cualquiera de ellos (el lector compara con todos los nombres).
@@ -105,9 +113,17 @@ public sealed class AugmentCatalog
             && await ReadCache(cache) is { } cached)
             return new AugmentCatalog(cached);
 
+        // Con algo con lo que arrancar (caché caducada o la copia de la app), a CommunityDragon se le espera poco.
+        var download = forceRefresh ? null : DownloadAsync(http);
+        if (download is not null && OfflineCache(cache) is { } slowPath && await Task.WhenAny(download, Task.Delay(GameData.SlowSourceMs)) != download
+            && await ReadCache(slowPath) is { } slow)
+        {
+            _ = download.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+            return new AugmentCatalog(slow);
+        }
         try
         {
-            var list = await DownloadAsync(http);
+            var list = await (download ?? DownloadAsync(http));
             Directory.CreateDirectory(Paths.DataDir);
             await File.WriteAllTextAsync(cache + ".tmp", JsonSerializer.Serialize(list));
             File.Move(cache + ".tmp", cache, overwrite: true);
@@ -130,8 +146,8 @@ public sealed class AugmentCatalog
     /// <summary>La caché de aumentos que haya: la actual o, si aún no existe, la más nueva de versiones anteriores (augments-v6…).</summary>
     static string? OfflineCache(string current) =>
         File.Exists(current) ? current
-        : Directory.Exists(Paths.DataDir) ? Directory.GetFiles(Paths.DataDir, "augments-v*.json").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
-        : null;
+        : (Directory.Exists(Paths.DataDir) ? Directory.GetFiles(Paths.DataDir, "augments-v*.json").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault() : null)
+          ?? (File.Exists(Seed) ? Seed : null);
 
     static async Task<List<Augment>> DownloadAsync(HttpClient http)
     {

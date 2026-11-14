@@ -27,7 +27,19 @@ public sealed record ChampionInfo(int Id, string Alias, string Name, string[] Ro
 /// </summary>
 public sealed class GameData
 {
-    const string Base = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global";
+    // MAYHEM_CDRAGON_URL: solo para las pruebas (otra dirección, p. ej. una que no responde).
+    static readonly string Base = Environment.GetEnvironmentVariable("MAYHEM_CDRAGON_URL") is { Length: > 0 } test ? test
+        : "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global";
+
+    /// <summary>
+    /// Copia de los objetos y campeones que viaja con la app (datos/semilla-gamedata.json): para una instalación nueva sin
+    /// caché cuando CommunityDragon no responde. Del 12 al 14 de noviembre de 2026 falló a ratos (HTTP 522) y a quien
+    /// instalaba la app esos días le salía «No pude cargar los datos del juego» y se cerraba (8 informes en un día).
+    /// </summary>
+    static string Seed => Path.Combine(AppContext.BaseDirectory, "datos", "semilla-gamedata.json");
+
+    /// <summary>Si hay algo con lo que arrancar (caché vieja o semilla), a CommunityDragon se le espera como mucho esto.</summary>
+    public const int SlowSourceMs = 10_000;
 
     public Dictionary<int, ItemInfo> Items { get; init; } = [];
     public Dictionary<string, ChampionInfo> Champions { get; init; } = new(StringComparer.OrdinalIgnoreCase);
@@ -106,16 +118,28 @@ public sealed class GameData
 
         if (cache is null)
         {
+            // Con lo que arrancar si CommunityDragon falla o tarda: la caché caducada o, si no hay, la copia que trae la app.
+            // Antes se esperaba hasta 60 s por cada archivo (la app tardaba minutos en abrir con la web lenta).
+            var fallback = (File.Exists(path) ? await Read(path) : null) ?? (File.Exists(Seed) ? await Read(Seed) : null);
             try
             {
-                cache = await DownloadAsync(http);
-                Directory.CreateDirectory(Paths.DataDir);
-                await File.WriteAllTextAsync(path + ".tmp", JsonSerializer.Serialize(cache));
-                File.Move(path + ".tmp", path, overwrite: true);
+                var download = DownloadAsync(http);
+                if (fallback is not null && await Task.WhenAny(download, Task.Delay(SlowSourceMs)) != download)
+                {
+                    _ = download.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted); // que no quede sin mirar
+                    cache = fallback;
+                }
+                else
+                {
+                    cache = await download;
+                    Directory.CreateDirectory(Paths.DataDir);
+                    await File.WriteAllTextAsync(path + ".tmp", JsonSerializer.Serialize(cache));
+                    File.Move(path + ".tmp", path, overwrite: true);
+                }
             }
-            catch when (File.Exists(path))
+            catch when (fallback is not null)
             {
-                cache = await Read(path) ?? throw new InvalidDataException("gamedata-v6.json dañado y sin conexión");
+                cache = fallback;
             }
         }
 
