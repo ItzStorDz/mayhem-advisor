@@ -28,6 +28,8 @@ var advisor = new Advisor(stats);
 var text = File.ReadAllText(args[0]);
 using var doc = JsonDocument.Parse(text[text.IndexOf('[')..]);
 var tally = new Dictionary<string, (int Picks, int Top)>();
+double popWeight = double.TryParse(Environment.GetEnvironmentVariable("EVAL_POP"), System.Globalization.CultureInfo.InvariantCulture, out var pw) ? pw : 0;
+int top2 = 0, worst = 0, picksAll = 0;
 foreach (var row in doc.RootElement[0].GetProperty("results").EnumerateArray())
 {
     using var match = JsonDocument.Parse(row.GetProperty("data").GetString()!);
@@ -50,9 +52,17 @@ foreach (var row in doc.RootElement[0].GetProperty("results").EnumerateArray())
         {
             var rec = stats.Rate(champion, a.Id);
             var syn = advisor.SynergyWith(a, mine, champion, items);
-            return scale.Score(AugmentScale.Evidence(rec) + (syn?.Bonus ?? 0), AugmentScale.IsReliable(rec));
+            double score = scale.Score(AugmentScale.Evidence(rec) + (syn?.Bonus ?? 0), AugmentScale.IsReliable(rec));
+            // EVAL_POP=<puntos por cada duplicación>: suma a la nota lo que se elige ese aumento con ese campeón (mayhemmeta),
+            // para ver cuánto subiría «eligieron la mejor puntuada» si la nota mirara la popularidad (no lo hace).
+            if (popWeight != 0) score += popWeight * Math.Log2(Math.Max(0.1, table.For(champion, a.Id)?.PickRate ?? 1));
+            return score;
         }
-        var top = offered.MaxBy(Card)!;
+        var ranked = offered.OrderByDescending(Card).ToList();
+        var top = ranked[0];
+        if (ranked.Take(2).Any(c => c.Id == real[0].Id)) top2++;
+        if (ranked[^1].Id == real[0].Id) worst++;
+        picksAll++;
         // EVAL_LISTA=1: cada elección con la carta mejor puntuada y por qué (para comparar dos versiones de los datos).
         if (Environment.GetEnvironmentVariable("EVAL_LISTA") == "1")
             Console.WriteLine($"{champion}|{string.Join(",", offered.Select(o => o.Id))}|{real[0].Id}|{(win ? "G" : "P")}|{top.Id}|{advisor.SynergyWith(top, mine, champion, items)?.Reason}");
@@ -66,3 +76,4 @@ foreach (var row in doc.RootElement[0].GetProperty("results").EnumerateArray())
 }
 foreach (var (key, t) in tally.OrderBy(kv => kv.Key))
     Console.WriteLine($"{key,-12} {t.Picks,4} elecciones · eligieron la carta mejor puntuada: {(double)t.Top / t.Picks:P1}");
+Console.WriteLine($"la elegida estaba entre las 2 mejor puntuadas: {(double)top2 / picksAll:P1} · era la peor puntuada: {(double)worst / picksAll:P1}");

@@ -100,6 +100,10 @@ validar-ajustes\    ¿Los ajustes de la nota de las cartas aciertan? Compara cad
                     800+ partidas en mayhemmeta) frente a lo que la app estimaría sin ellas (2026-11-03: ninguno acertaba).
                       dotnet run --project pruebas\validar-ajustes -c Release
 
+(evaluar-cartas dice también cuántas veces la carta elegida estaba entre las 2 mejor puntuadas; evaluar-objetos con
+ $env:EVAL_PASOS = "1" mide la partida paso a paso: si el objeto que compró después era la 1.ª opción, una de las 3, o
+ estaba en lo que enseña la app.)
+
 validar-senales\    ¿Lo que la app puntúa alto se corresponde con GANAR? Con las partidas guardadas (los 10 jugadores) parte a los
                     jugadores en tres grupos por cada señal (aumento con campeón, cartas entre sí, objetos de la build de la app)
                     y enseña el % de victorias de cada grupo y la correlación (±: lo que saldría por azar).

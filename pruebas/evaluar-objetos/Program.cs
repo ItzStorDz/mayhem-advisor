@@ -90,6 +90,11 @@ var perItem = new Dictionary<int, (int Shown, int Bought, int Missed)>();
 var whyItem = new List<string>();
 var detection = new Dictionary<string, (int Players, int Right, int Changed, int Usual)>();
 var misses = new List<string>();
+// EVAL_PASOS=1: la partida paso a paso, como la ve el jugador. Antes de cada compra (con los objetos que ya llevaba) se mira
+// si el objeto que compró después era la «siguiente compra» de la app, una de sus 3 opciones, o estaba en lo que enseña
+// (las 3 opciones + lo que falta de la build completa).
+bool stepMode = Environment.GetEnvironmentVariable("EVAL_PASOS") == "1";
+var steps = new SortedDictionary<int, (int N, int First, int Options, int Shown)>();
 foreach (var m in matches.Values)
     foreach (var p in m.Players)
     {
@@ -102,6 +107,23 @@ foreach (var m in matches.Values)
         var actual = finals.Skip(given).Select(id => id switch { 3040 => 3003, 3042 => 3004, 3121 => 3119, _ => id }).ToHashSet();
         var augments = p.Augments.Select(catalog.Get).OfType<Augment>().ToList();
         var enemies = m.Players.Where(e => e.Team != p.Team).Select(e => (e.Champion, (IReadOnlyList<int>)e.Items)).ToList();
+
+        if (stepMode)
+        {
+            var boots = p.Items.Where(id => data.Item(id)?.IsBoots == true).Take(1).ToList();
+            for (int k = 0; k < finals.Count; k++)
+            {
+                var have = finals.Take(k).Concat(k > 0 ? boots : []).ToList();
+                int bought = finals[k] switch { 3040 => 3003, 3042 => 3004, 3121 => 3119, var id => id };
+                var adv = advisor.Build(p.Champion, have, enemies, augments, 0);
+                var options = adv.Items.Select(a => a.Item.Id).ToList();
+                var plan = (adv.FullBuild ?? []).Where(s => !s.Owned && !s.Item.Item.IsBoots).Select(s => s.Item.Item.Id).ToList();
+                var st = steps.GetValueOrDefault(k);
+                steps[k] = (st.N + 1, st.First + (options.Count > 0 && options[0] == bought ? 1 : 0), st.Options + (options.Contains(bought) ? 1 : 0),
+                            st.Shown + (options.Contains(bought) || plan.Contains(bought) ? 1 : 0));
+            }
+            continue;
+        }
 
         var advice = advisor.Build(p.Champion, owned, enemies, augments, 0);
         var predicted = (advice.FullBuild ?? []).Where(s => !s.Owned && !s.Item.Item.IsBoots).Select(s => s.Item.Item.Id).ToList();
@@ -127,6 +149,16 @@ foreach (var m in matches.Values)
         if (detail && Environment.GetEnvironmentVariable("EVAL_TIPO") is { } only && Archetype(p.Champion, finals) == only && buildHits * 2 < actual.Count)
             misses.Add($"{p.Champion,-12} tiene {Names(owned)}{StyleText(p.Champion, owned)}\n   recomienda {Names(predicted)}\n   compró     {Names(actual)}");
     }
+
+if (stepMode)
+{
+    Console.WriteLine($"{matches.Count} partidas · paso a paso (objeto n.º · compras · era la 1.ª opción · una de las 3 opciones · en lo que enseña la app)");
+    foreach (var (k, st) in steps)
+        Console.WriteLine($"  objeto {k + 1}: {st.N,6}  {(double)st.First / st.N,6:P1}  {(double)st.Options / st.N,6:P1}  {(double)st.Shown / st.N,6:P1}");
+    int n2 = steps.Values.Sum(s => s.N);
+    Console.WriteLine($"  todos:    {n2,6}  {(double)steps.Values.Sum(s => s.First) / n2,6:P1}  {(double)steps.Values.Sum(s => s.Options) / n2,6:P1}  {(double)steps.Values.Sum(s => s.Shown) / n2,6:P1}");
+    return;
+}
 
 string StyleText(string champion, List<int> owned)
 {
