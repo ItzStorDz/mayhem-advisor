@@ -12,7 +12,10 @@ int given = int.TryParse(Environment.GetEnvironmentVariable("EVAL_OWNED"), out v
 using var http = new HttpClient();
 var catalog = await AugmentCatalog.LoadAsync(http);
 var data = await GameData.LoadAsync(http);
-var stats = StatsStore.Load(Path.Combine(Paths.DataDir, "no-existe.jsonl"), data);
+// EVAL_STATS=<partidas .jsonl>: las estadísticas propias (lo que la app aprende de las partidas guardadas, p. ej. qué objetos
+// se compran más con cada aumento) salen de ESE archivo, que debe tener OTRAS partidas que las que se evalúan
+// (pruebas/partir-partidas.js parte las partidas en dos mitades). Sin la variable, no se cargan.
+var stats = StatsStore.Load(Environment.GetEnvironmentVariable("EVAL_STATS") is { Length: > 0 } own ? own : Path.Combine(Paths.DataDir, "no-existe.jsonl"), data);
 var builds = MayhemBuilds.Load(DataFiles.Resolve("mayhem-champion-builds.json"));
 var table = MayhemAugments.Load(DataFiles.Resolve("mayhem-augments.json"));
 catalog = catalog.WithExtraDescriptions(table.Descriptions);

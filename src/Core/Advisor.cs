@@ -725,6 +725,15 @@ public sealed partial class Advisor(StatsStore stats)
     const double UltComboBonus = 0.01, ImmobilizeComboBonus = 0.007;
 
     /// <summary>
+    /// Cuánto cuenta «con tu build le va mejor / peor» (<see cref="AugmentBuilds.StyleEffect"/>) en la nota de una carta.
+    /// Entero hasta la 1.9.1. Con 11.773 jugadores de partidas reales (pruebas/validar-senales) ese ajuste predice quién gana
+    /// con un peso de 0,21 ± 0,20 (1 = vale lo que dice): algo hay, pero mucho menos de lo que sumaba. Y la carta mejor
+    /// puntuada era la elegida (evaluar-cartas con los objetos del final): con 1, el 63,2 %; con 0,5, el 65,5 %; con 0,25,
+    /// el 64,8 %; con 0, el 64,5 %. Se deja en 0,3.
+    /// </summary>
+    const double StyleShiftWeight = 0.3;
+
+    /// <summary>
     /// Qué tal combina un aumento que te ofrecen con lo que llevas, solo con lo que miden los datos o con lógica segura:
     /// cómo ganan juntos dos aumentos (mayhemmeta, o tus partidas), los combos medidos (definitiva, inmovilizar), lo que gana
     /// el aumento con tu campeón en tu build de ahora (aramkit), el crítico al 100 %, De Vuelta a lo Básico con aumentos de
@@ -763,22 +772,13 @@ public sealed partial class Advisor(StatsStore stats)
         }
         foreach (var m in mine.Where(m => !m.IsAnvil && m.Id != candidate.Id))
         {
-            // Primero los datos de todos los jugadores (miles de partidas); si no hay, tus partidas guardadas.
-            if (stats.AugmentTable.Pair(candidate.Id, m.Id) is { Games: >= 50 } global)
-            {
-                double lift = global.ShrunkSynergy / 100;
-                if (Math.Abs(lift) >= 0.01)
-                    Add(Math.Clamp(lift, -0.06, 0.06), lift > 0
-                        ? lift >= 0.03 ? LF($"combina muy bien con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"great combo with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)")
-                                       : LF($"combina bien con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"good combo with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)")
-                        : LF($"no combina bien con «{m.DisplayName}» (~{global.Games:N0} partidas en Mayhem)", $"bad combo with “{m.DisplayName}” (~{global.Games:N0} Mayhem games)"));
-            }
-            else if (stats.AugmentPairLift(candidate.Id, m.Id) is { } pair && Math.Abs(pair.Lift) >= 0.02)
-                Add(Math.Clamp(pair.Lift, -0.05, 0.05), pair.Lift > 0
-                    ? LF($"combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"good combo with “{m.DisplayName}” in your games ({pair.Games})")
-                    : LF($"no combina bien con «{m.DisplayName}» en tus partidas ({pair.Games})", $"bad combo with “{m.DisplayName}” in your games ({pair.Games})"));
-            else if (Combo(candidate, m) is { } combo)
-                Add(combo.Bonus, combo.Reason);
+            // Las parejas de cartas «medidas» ya no cuentan (1.9.2). Hasta la 1.9.1 cada pareja de mayhemmeta sumaba o
+            // restaba hasta 0,06 («combina muy bien con…») y, sin ella, las de tus partidas guardadas hasta 0,05. Medido el
+            // 2026-11-15 con 11.773 jugadores de partidas reales (pruebas/validar-senales, VS_PIEZAS=1): lo que suben tus
+            // aumentos con tu campeón predice quién gana con un peso de 0,98 ± 0,09 (1 = vale lo que dice); las parejas de
+            // mayhemmeta, 0,06 ± 0,19: nada (su «sinergia» media es +2,45: está inflada). Y con ellas la carta mejor
+            // puntuada era la elegida el 63,6 % de las veces; sin ellas, el 64,3 %. Quedan los combos de mecánica.
+            if (Combo(candidate, m) is { } combo) Add(combo.Bonus, combo.Reason);
 
             var sharedItems = needs.Intersect(stats.Links.RequiredBy(m.Id)).Select(Data.Item).OfType<ItemInfo>().ToList();
             if (sharedItems.Count > 0) Add(0.04, LF($"va con «{m.DisplayName}»: los dos piden {sharedItems[0].DisplayName}", $"fits “{m.DisplayName}”: both want {sharedItems[0].DisplayName}"));
@@ -788,7 +788,7 @@ public sealed partial class Advisor(StatsStore stats)
         // campeón EN ESA build, frente a la media de todas sus builds (aramkit, ver AugmentBuilds.StyleEffect).
         string? styleNow = lockedStyle ?? (StyleFromItems(champion, myItems ?? []) is { FromItems.Length: > 0, Generic: false } byItems ? byItems.Key : null);
         var styleFx = styleNow is null ? null : stats.AramkitBuilds.StyleEffect(champion, candidate.Id, styleNow);
-        if (styleFx is { } fx && fx.Weight * (fx.Delta / 100 - AugmentScale.Evidence(rec)) is var styleShift && Math.Abs(styleShift) >= 0.005)
+        if (styleFx is { } fx && StyleShiftWeight * fx.Weight * (fx.Delta / 100 - AugmentScale.Evidence(rec)) is var styleShift && Math.Abs(styleShift) >= 0.005)
             // Sin números de victorias (Riot no deja enseñar el % de los aumentos): solo si le va mejor o peor así.
             Add(styleShift, styleShift > 0
                 ? LF($"con tu build {StyleName(styleNow!)}, a {Data.ChampionName(champion)} le va mejor con él (~{fx.Games:N0} partidas así)",
@@ -1197,11 +1197,11 @@ public sealed partial class Advisor(StatsStore stats)
             .Select(c =>
             {
                 var match = c.Item.Categories.Count(wanted.Contains);
-                var lift = stats.AugmentItemLift(augment.Id, c.Item.Id);
+                var pick = stats.AugmentItemPick(augment.Id, c.Item.Id);
                 bool needed = required.Contains(c.Item.Id);
-                double score = (needed ? 1 : 0) + match * 0.03 + (lift?.Lift ?? 0) + (c.Rate - 0.5) * 0.5;
+                double score = (needed ? 1 : 0) + match * 0.03 + PickBonus(pick) + (c.Rate - 0.5) * 0.5;
                 string reason = needed ? L("lo necesita este aumento", "this augment needs it")
-                              : lift is { Lift: > 0.02 } l ? LF($"rinde mejor con este aumento ({l.Games} partidas)", $"does better with this augment ({l.Games} games)")
+                              : PickBonus(pick) > 0 ? LF($"se compra más con este aumento ({pick!.Value.Bought} partidas)", $"bought more often with this augment ({pick!.Value.Bought} games)")
                               : match > 0 ? L("potencia lo mismo que el aumento", "boosts the same as the augment") : "";
                 return new ItemAdvice(c.Item, score, c.Games, reason);
             })
@@ -1281,6 +1281,19 @@ public sealed partial class Advisor(StatsStore stats)
     const int InventorySlots = 6;
     /// <summary>Por cada estadística que pide un aumento tuyo y da el objeto (hasta 2 por aumento).</summary>
     const double AugmentMatchBonus = 0.04;
+
+    /// <summary>
+    /// Lo que suma a un objeto que quienes llevan tu aumento lo compren más de lo normal con sus campeones (ver
+    /// <see cref="StatsStore.AugmentItemPick"/>): nada por debajo de ×1,3 o con menos de 5 compras; ×1,5 → 0,03; ×2 → 0,05;
+    /// tope 0,08. Sustituye (1.9.2) a «cuánto más gana el aumento con el objeto», que con las partidas guardadas era azar.
+    /// Con las estadísticas de una mitad de las partidas y midiendo en la otra (evaluar-objetos, EVAL_STATS): acierto de la
+    /// build con 2 objetos 50,5 → 50,7 % y 50,1 → 50,2 %; sin objetos, igual. Poco, pero a favor y sin riesgo.
+    /// </summary>
+    static double PickBonus((double Ratio, int Bought)? pick)
+    {
+        if (pick is not { Ratio: var ratio, Bought: >= 5 } || ratio < 1.3) return 0;
+        return Math.Min(0.08, 0.05 * Math.Log2(ratio));
+    }
     /// <summary>Lo que suma el objeto que compra la mayoría con tu campeón (el 60 % o más de las partidas: todo).</summary>
     const double MaxPopularBonus = 0.06;
     const double OffMetaPenalty = -0.05;
@@ -1615,8 +1628,7 @@ public sealed partial class Advisor(StatsStore stats)
             if (_tankBuild && !aug.StatList.Any(t => t is "AP" or "AD" or "Adaptive")) wanted.ExceptWith(["SpellDamage", "Damage"]);
             // Aceleración de habilidad y reducción de enfriamiento son la misma estadística: no cuentan dos veces.
             int match = item.Categories.Where(wanted.Contains).Select(c => c == "CooldownReduction" ? "AbilityHaste" : c).Distinct().Count();
-            var lift = stats.AugmentItemLift(aug.Id, item.Id);
-            double amount = Math.Min(match, 2) * AugmentMatchBonus + (lift is { Lift: > 0.02 } l ? l.Lift : 0);
+            double amount = Math.Min(match, 2) * AugmentMatchBonus + PickBonus(stats.AugmentItemPick(aug.Id, item.Id));
             if (amount <= 0) continue;
             augBonus += amount;
             matches.Add((aug.DisplayName, amount));

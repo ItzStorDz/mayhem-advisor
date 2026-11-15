@@ -100,6 +100,15 @@ validar-ajustes\    ¿Los ajustes de la nota de las cartas aciertan? Compara cad
                     800+ partidas en mayhemmeta) frente a lo que la app estimaría sin ellas (2026-11-03: ninguno acertaba).
                       dotnet run --project pruebas\validar-ajustes -c Release
 
+validar-senales\    ¿Lo que la app puntúa alto se corresponde con GANAR? Con las partidas guardadas (los 10 jugadores) parte a los
+                    jugadores en tres grupos por cada señal (aumento con campeón, cartas entre sí, objetos de la build de la app)
+                    y enseña el % de victorias de cada grupo y la correlación (±: lo que saldría por azar).
+                      $env:MAYHEM_DATA_DIR = "<copia de datos>"; dotnet run --project pruebas\validar-senales -c Release
+                    ($env:VS_RAPIDO = "1": solo las señales de las cartas.) El 2026-11-15: aumento con campeón +9,9 puntos entre
+                    el grupo alto y el bajo; las parejas de cartas de mayhemmeta, nada (se quitaron de la nota en la 1.9.2).
+                    evaluar-objetos con $env:EVAL_STATS = "<otras partidas .jsonl>" carga además las estadísticas propias (lo que
+                    la app aprende de las partidas guardadas) de OTRAS partidas que las que se evalúan.
+
 datos-solos\        ¿Se bajan solos los datos? Llama a DataUpdater (lo que hace la app al abrirse y cada 6 horas) en una carpeta de
                     prueba: dice qué archivos bajó de la Release «datos» de GitHub; la segunda vuelta no debe bajar nada.
                       $env:MAYHEM_DATA_DIR = "<carpeta vacía>"; dotnet run --project pruebas\datos-solos -c Release

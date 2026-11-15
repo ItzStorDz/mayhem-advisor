@@ -64,6 +64,10 @@ public sealed class StatsStore
     readonly Dictionary<(string, int, DamageMix), (int g, int w)> _champItemMix = [];
     readonly Dictionary<(string, int), (int g, int w)> _roleItem = [];
     readonly Dictionary<(int, int), (int g, int w)> _augItem = [];
+    /// <summary>Con qué campeones se lleva cada aumento (para saber qué objetos serían «lo normal» en quien lo lleva).</summary>
+    readonly Dictionary<(int Augment, string Champion), int> _augChamp = [];
+    readonly Dictionary<int, Dictionary<int, double>> _augExpected = [];
+    Dictionary<string, List<(int Item, int Games)>>? _itemsByChamp;
     /// <summary>Parejas de aumentos que llevó un mismo jugador (clave con el id menor primero).</summary>
     readonly Dictionary<(int, int), (int g, int w)> _augPair = [];
     readonly HashSet<int> _seenItems = [];
@@ -183,6 +187,7 @@ public sealed class StatsStore
                 for (int y = x + 1; y < augs.Count; y++) Bump(_augPair, (augs[x], augs[y]), w);
             foreach (var a in p.Augments.Distinct())
             {
+                _augChamp[(a, champ)] = _augChamp.GetValueOrDefault((a, champ)) + 1;
                 Bump(_aug, a, w);
                 Bump(_champAug, (champ, a), w);
                 Bump(_champAugMix, (champ, a, mix), w);
@@ -380,6 +385,48 @@ public sealed class StatsStore
         if (s.g < 6) return null;
         double expected = (Smooth(_aug.GetValueOrDefault(a), 0.5, GlobalPrior) + Smooth(_aug.GetValueOrDefault(b), 0.5, GlobalPrior)) / 2;
         return (Smooth(s, expected, 10) - expected, s.g);
+    }
+
+    /// <summary>
+    /// Cuánto MÁS SE COMPRA un objeto entre quienes llevan este aumento que lo normal con sus campeones (1 = igual; 1,6 = un
+    /// 60 % más), en las partidas guardadas (los 10 jugadores), y cuántos lo compraron. Null con menos de 30 jugadores con
+    /// el aumento o si lo normal serían menos de 3 compras. «Lo normal» = lo que compra cada campeón, sumado con los
+    /// campeones que llevan el aumento.
+    /// Medido el 2026-11-14 partiendo 1.185 partidas en dos mitades (la señal con una, la comprobación con la otra): lo que
+    /// salía «×1,5 o más» se compró ×1,66 y ×1,62 en la otra mitad; «×1,2-1,5», ×1,14; «menos de ×0,8», ×0,85. En cambio
+    /// <see cref="AugmentItemLift"/> (cuánto más GANA el aumento con el objeto, 5+ partidas), que era lo que se usaba,
+    /// valía 0,07 y 0,06 de lo que decía: con tan pocas partidas el % de victorias es azar.
+    /// </summary>
+    public (double Ratio, int Bought)? AugmentItemPick(int augmentId, int itemId)
+    {
+        if (_aug.GetValueOrDefault(augmentId).g < 30) return null;
+        Dictionary<int, double>? expected;
+        lock (_augExpected)
+        {
+            if (!_augExpected.TryGetValue(augmentId, out expected))
+            {
+                if (_itemsByChamp is null)
+                {
+                    _itemsByChamp = [];
+                    foreach (var ((champ, item), st) in _champItem)
+                    {
+                        if (!_itemsByChamp.TryGetValue(champ, out var list)) _itemsByChamp[champ] = list = [];
+                        list.Add((item, st.g));
+                    }
+                }
+                expected = [];
+                foreach (var ((aug, champ), holders) in _augChamp)
+                {
+                    if (aug != augmentId || _champ.GetValueOrDefault(champ).g is not (> 0 and var games) || !_itemsByChamp.TryGetValue(champ, out var items)) continue;
+                    foreach (var (item, bought) in items) expected[item] = expected.GetValueOrDefault(item) + holders * (double)bought / games;
+                }
+                _augExpected[augmentId] = expected;
+            }
+        }
+        double usual = expected.GetValueOrDefault(itemId);
+        if (usual < 3) return null;
+        int got = _augItem.GetValueOrDefault((augmentId, itemId)).g;
+        return ((got + 2) / (usual + 2), got);
     }
 
     public (double Lift, int Games)? AugmentItemLift(int augmentId, int itemId)
