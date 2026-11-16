@@ -45,6 +45,10 @@ So that its numbers stay fresh without a new version every few days, the app che
 for this: it is a plain download from this repository's releases, and it works the same with data sharing turned off.
 The app also checks there for new versions of itself, and only installs one when you click it.
 
+The game's pictures (champion, item and augment icons) come with the installer. When one is missing or old, the app
+downloads it from CommunityDragon (a public site with the game's files) and keeps it in its data folder on your PC.
+Again, nothing about you is sent.
+
 ## What is never sent
 
 Your name, Riot ID, account, e-mail, chat, friends, screenshots, other programs, or anything from outside

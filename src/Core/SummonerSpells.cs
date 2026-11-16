@@ -58,6 +58,9 @@ public static class SummonerSpells
             best.Rate, best.Combo.PickRate!.Value / 100, (int)best.Games, reason, best.Combo.Spells);
     }
 
+    /// <summary>Los iconos de todos los hechizos (para guardarlos en el PC, ver <see cref="IconCache"/>).</summary>
+    public static IEnumerable<string> AllIcons => Known.Values.Select(k => GameData.IconUrl(k.Icon));
+
     static string Pair(MayhemSpellCombo c) => string.Join(" + ", c.Spells.Select(SpellName));
 
     /// <summary>"Destello + Marca" en el idioma elegido, a partir de los nombres en inglés de los datos ("Flash", "Mark").</summary>

@@ -7,6 +7,7 @@ const { OverlayController, OVERLAY_WINDOW_OPTS } = require('electron-overlay-win
 const path = require('node:path');
 const net = require('node:net');
 const readline = require('node:readline');
+const iconos = require('./iconos');
 
 const GAME_WINDOW_TITLE = 'League of Legends (TM) Client';
 
@@ -163,6 +164,7 @@ ipcMain.on('to-app', (_e, message) => {
 });
 
 app.whenReady().then(() => {
+  iconos.install(); // las imágenes del juego, del PC
   createOverlay();
   createChampSelect();
 

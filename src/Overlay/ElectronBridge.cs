@@ -129,6 +129,9 @@ public sealed class ElectronBridge : IDisposable
             var info = new ProcessStartInfo(_exe) { WorkingDirectory = _appDir, UseShellExecute = false, CreateNoWindow = true };
             info.ArgumentList.Add(_appDir);
             info.ArgumentList.Add($"--mayhem-pipe={name}");
+            // Las imágenes guardadas en el PC (MayhemAdvisor.Core.IconCache): el panel las lee de ahí.
+            info.Environment["MAYHEM_ICON_DIR"] = MayhemAdvisor.Core.IconCache.Dir;
+            info.Environment["MAYHEM_ICON_SEED"] = MayhemAdvisor.Core.IconCache.SeedDir;
             _process = Process.Start(info);
             Log.Write($"Overlay Electron iniciado (intento {_starts})");
             return Running;

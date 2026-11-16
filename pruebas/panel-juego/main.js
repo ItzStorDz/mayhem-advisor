@@ -8,6 +8,12 @@ const [overlayDir, out] = process.argv.slice(-2);
 fs.mkdirSync(out, { recursive: true });
 // Perfil aparte (localStorage del panel: posición, tamaño, compacto, pista): nunca el de la app de verdad.
 app.setPath('userData', path.join(out, 'perfil'));
+// PANEL_ICONOS: las imágenes guardadas en el PC (overlay-electron/iconos.js, con MAYHEM_ICON_DIR / MAYHEM_ICON_SEED).
+//   "caida": sin internet (un proxy que no existe), como cuando CommunityDragon no responde: solo salen las del PC.
+//   "red":   con internet: las que falten se bajan y se guardan en MAYHEM_ICON_DIR.
+// Al final dice cuántas imágenes del panel se han dibujado.
+const iconMode = process.env.PANEL_ICONOS;
+if (iconMode === 'caida') app.commandLine.appendSwitch('proxy-server', '127.0.0.1:9');
 
 // Los iconos de CommunityDragon (los mismos que usa la app; el overlay solo deja cargar imágenes de ahí).
 const ICONS = { 1043: '1043_base_t2_recurvebow', 2510: '2510_apfightersheen', 3006: '3006_class_t2_berserkersgreaves',
@@ -62,6 +68,7 @@ const live = lang => ({ type: 'live', phase: 'ingame', status: '', lang, panel: 
   area: { x: 0, y: 0, w: 1280, h: 720 }, game: game(lang) });
 
 app.whenReady().then(async () => {
+  if (iconMode) require(path.join(overlayDir, 'iconos.js')).install();
   const win = new BrowserWindow({ width: 1280, height: 720, show: false, backgroundColor: '#20304a',
     webPreferences: { preload: path.join(overlayDir, 'preload.js'), contextIsolation: true } });
   await win.loadFile(path.join(overlayDir, 'overlay.html'));
@@ -71,6 +78,8 @@ app.whenReady().then(async () => {
     fs.writeFileSync(path.join(out, name + '.png'), (await win.webContents.capturePage()).toPNG());
     const box = await win.webContents.executeJavaScript('JSON.stringify(document.getElementById("side").getBoundingClientRect())');
     console.log(name, box);
+    if (iconMode) console.log('  imágenes dibujadas:', await win.webContents.executeJavaScript(
+      '(l => l.filter(i => i.complete && i.naturalWidth > 0).length + " de " + l.length)([...document.images])'));
   };
   // Otros idiomas: PANEL_LANGS=es,en,pt,fr,de,vi (1.8.5). Lo que calcula el programa llega en inglés en pt/fr/de/vi.
   for (const lang of (process.env.PANEL_LANGS || 'es,en').split(',')) {

@@ -25,6 +25,8 @@ pruebas/simulador-partida/fondo-partida.png
 # Datos de terceros que no se pueden redistribuir: se bajan con herramientas/*.mjs
 datos/aramkit-*.json
 datos/mayhem-*.json
+# Imágenes del juego para el instalador: se bajan con pruebas/bajar-iconos
+datos/iconos/
 
 # Historial interno en español (las novedades públicas van en las Releases)
 CAMBIOS.md

@@ -50,6 +50,9 @@ public sealed class GameData
     /// <summary>Nombre del campeón en el idioma elegido.</summary>
     public string ChampionName(string alias) => Champion(alias)?.DisplayName ?? alias;
 
+    /// <summary>"https://raw.communitydragon.org": de donde salen las imágenes (en las pruebas, otra dirección).</summary>
+    public static string IconOrigin => new Uri(Base).GetLeftPart(UriPartial.Authority);
+
     /// <summary>"/lol-game-data/assets/ASSETS/Items/Icons2D/X.png" → URL pública de la imagen.</summary>
     public static string IconUrl(string gamePath) =>
         string.IsNullOrEmpty(gamePath) ? "" : $"{Base}/default/{gamePath.Replace("/lol-game-data/assets/", "").TrimStart('/').ToLowerInvariant()}";

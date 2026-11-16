@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Interop;
@@ -21,6 +22,8 @@ public sealed class DashboardWindow : Window
     readonly string? _startPage;
     readonly string _file;
     bool _ready;
+    // Para las imágenes que aún no están en el PC (ver IconCache).
+    static readonly HttpClient IconHttp = new() { Timeout = TimeSpan.FromSeconds(10) };
 
     /// <param name="onMessage">Responde a lo que pide la página (devuelve el mensaje de respuesta o null).</param>
     /// <param name="startPage">Pestaña con la que se abre (p. ej. "acerca"); null = la primera.</param>
@@ -46,9 +49,10 @@ public sealed class DashboardWindow : Window
 
     async Task InitAsync()
     {
+        CoreWebView2Environment env;
         try
         {
-            var env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Paths.DataDir, "webview2"));
+            env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Paths.DataDir, "webview2"));
             await _web.EnsureCoreWebView2Async(env);
         }
         catch (WebView2RuntimeNotFoundException)
@@ -64,6 +68,22 @@ public sealed class DashboardWindow : Window
         core.Settings.IsStatusBarEnabled = false;
         core.Settings.AreDefaultContextMenusEnabled = false;
         core.SetVirtualHostNameToFolderMapping("mayhem.local", Path.Combine(AppContext.BaseDirectory, "wwwroot"), CoreWebView2HostResourceAccessKind.Allow);
+        // Las imágenes del juego salen del PC (IconCache): la página las pide a CommunityDragon como siempre y aquí se le da
+        // el archivo guardado; si no está, se baja y se guarda. Si tampoco se puede, la pide la página por su cuenta.
+        foreach (var origin in new[] { "https://raw.communitydragon.org", GameData.IconOrigin }.Distinct())
+            core.AddWebResourceRequestedFilter(origin + "/*", CoreWebView2WebResourceContext.Image);
+        core.WebResourceRequested += async (_, e) =>
+        {
+            var deferral = e.GetDeferral();
+            try
+            {
+                if (await IconCache.GetAsync(e.Request.Uri, IconHttp) is { } file)
+                    e.Response = env.CreateWebResourceResponse(new MemoryStream(await File.ReadAllBytesAsync(file)), 200, "OK",
+                        $"Content-Type: {IconCache.Mime(file)}\nCache-Control: max-age=86400");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or COMException) { }
+            finally { deferral.Complete(); }
+        };
         core.WebMessageReceived += async (_, e) =>
         {
             using var doc = JsonDocument.Parse(e.WebMessageAsJson);

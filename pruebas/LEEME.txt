@@ -118,6 +118,15 @@ datos-solos\        ¿Se bajan solos los datos? Llama a DataUpdater (lo que hace
                       $env:MAYHEM_DATA_DIR = "<carpeta vacía>"; dotnet run --project pruebas\datos-solos -c Release
                     Los datos los publica GitHub una vez al día: herramientas\publicar-datos.mjs (.github\workflows\datos.yml).
 
+bajar-iconos\       Las imágenes guardadas en el PC (src\Core\IconCache.cs; 1.9.3). Siempre con MAYHEM_DATA_DIR de pruebas:
+                      dotnet run --project pruebas\bajar-iconos -c Release -- probar      (web de mentira en este PC: se guarda, sale
+                        del PC, no se guardan páginas de error, con la web caída sigue saliendo, se para en partida)
+                      dotnet run --project pruebas\bajar-iconos -c Release -- datos\iconos  (baja de CommunityDragon las que
+                        falten y deja en datos\iconos la copia que lleva el instalador: HACERLO ANTES DE CADA VERSIÓN)
+                    El panel: PANEL_ICONOS=caida (sin internet) o red, con MAYHEM_ICON_SEED / MAYHEM_ICON_DIR, en panel-juego:
+                    dice cuántas imágenes dibuja (sin internet y sin carpeta, 0 de 16; con la copia, 16 de 16).
+                    La ventana: pruebas\ventana-imagenes.js (ver su cabecera): sin internet y con la copia, 1.263 de 1.263.
+
 Traducciones       ¿Están en portugués, francés, alemán y vietnamita todos los textos que genera la app (los porqués,
                     los consejos)? Dice cuáles faltan en src\Core\LangTexts.cs y si alguna traducción pierde un hueco ({0}…):
                       node herramientas\traducciones\comprobar.js

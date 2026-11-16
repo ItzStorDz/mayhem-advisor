@@ -37,12 +37,26 @@ public partial class App
         while (!ct.IsCancellationRequested)
         {
             if (GameRunning()) { await Delay(30 * 60 * 1000, ct); continue; }
+            await FetchIconsAsync(ct);
             var result = await MayhemAdvisor.Core.DataUpdater.CheckAsync(http, ct);
             if (result.Updated.Count > 0) Log.Write("Datos actualizados solos: " + string.Join(", ", result.Updated));
             else if (result.Problem is not null && result.Problem != lastProblem) Log.Write("Datos: no pude mirar si hay nuevos (" + result.Problem + ")");
             lastProblem = result.Problem;
             await Delay(6 * 3600 * 1000, ct);
         }
+    }
+
+    /// <summary>
+    /// Las imágenes del juego que falten en el PC (el instalador ya trae casi todas; aquí entran las de campeones, objetos
+    /// y aumentos nuevos) se bajan fuera de partida, para que el panel no dependa de que CommunityDragon responda.
+    /// </summary>
+    async Task FetchIconsAsync(CancellationToken ct)
+    {
+        if (_data.Champions.Count == 0 || _catalog is null) return;
+        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("MayhemAdvisor/" + Updater.Current.ToString(3));
+        var r = await MayhemAdvisor.Core.IconCache.FetchMissingAsync(MayhemAdvisor.Core.IconCache.AllIcons(_data, _catalog), http, GameRunning, ct);
+        if (r.Wanted > 0) Log.Write($"Imágenes: faltaban {r.Wanted} en el PC, bajadas {r.Downloaded}" + (r.Failed > 0 ? $", {r.Failed} no se pudieron (se reintenta luego)" : ""));
     }
 
     async Task UpdateLoopAsync(CancellationToken ct)

@@ -387,7 +387,7 @@ public partial class MainWindow : Window
         {
             bmp = new BitmapImage();
             bmp.BeginInit();
-            bmp.UriSource = new Uri(url);
+            bmp.UriSource = new Uri(IconCache.Cached(url) ?? url); // del PC si ya está guardada
             bmp.DecodePixelWidth = 64;
             bmp.CacheOption = BitmapCacheOption.OnLoad;
             bmp.EndInit();
