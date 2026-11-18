@@ -21,6 +21,7 @@ public static class Lang
         new("fr", "Français", "fr-FR", "fr_fr"),
         new("de", "Deutsch", "de-DE", "de_de"),
         new("vi", "Tiếng Việt", "vi-VN", "vi_vn"),
+        new("ko", "한국어", "ko-KR", "ko_kr"),
     ];
 
     /// <summary>El idioma elegido ("es", "en", "pt", "fr", "de", "vi").</summary>
@@ -84,7 +85,7 @@ public static class Lang
     /// <summary>El texto en el idioma elegido (portugués, francés, alemán, vietnamita) o null si no está en <see cref="LangTexts"/>.</summary>
     static string? Translate(string en, object?[]? args)
     {
-        int column = Code switch { "pt" => 0, "fr" => 1, "de" => 2, "vi" => 3, _ => -1 };
+        int column = Code switch { "pt" => 0, "fr" => 1, "de" => 2, "vi" => 3, "ko" => 4, _ => -1 };
         if (column < 0) return null;
         string key = args is null ? en : HoleKeys.GetOrAdd(en, f => Holes.Replace(f, "{$1}"));
         if (!LangTexts.All.TryGetValue(key, out var texts)) return null;
@@ -93,9 +94,11 @@ public static class Lang
         catch (FormatException) { return null; } // una traducción mal escrita no puede tumbar la app: sale en inglés
     }
 
-    /// <summary>Un texto fijo en los 6 idiomas (para el menú de la bandeja y poco más); sin traducción, el inglés.</summary>
+    /// <summary>Un texto fijo en los 6 idiomas (para el menú de la bandeja y poco más); sin traducción, el inglés o lo que haya en <see cref="LangTexts"/> para el coreano.</summary>
     public static string T(string es, string en, string pt, string fr, string de, string vi) => Code switch
     {
-        "es" => es, "pt" => pt, "fr" => fr, "de" => de, "vi" => vi, _ => en,
+        "es" => es, "pt" => pt, "fr" => fr, "de" => de, "vi" => vi,
+        "ko" => Translate(en, null) ?? en,
+        _ => en,
     };
 }
