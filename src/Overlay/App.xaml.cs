@@ -23,6 +23,11 @@ public partial class App : System.Windows.Application
     string? _lastScanError;
     DateTime _nextSingleHitLog;
     int _lastSingleHitId;
+    // 4 cartas (Headliner «Maestro», parche 26.23): separación entre cartas, en partes del alto del juego (0 = las 3 de
+    // siempre), y el alto con el que se midió. Ver LearnFourLayout.
+    double _fourGap;
+    int _fourGapHeight;
+    DateTime _nextStrayReread, _nextStrayLog;
     // Cuánto tiempo sin ver las cartas antes de quitarlas: depende de si hiciste clic en una (= elegiste).
     // Sin clic sobre una carta se esperaba hasta 60 s y las tarjetas se quedaban en pantalla con la partida ya en marcha
     // (Wakka, 2026-11-01). Si las cartas vuelven (las ocultaste para mirar el mapa), se leen y se enseñan otra vez.
@@ -100,23 +105,11 @@ public partial class App : System.Windows.Application
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
             _tray.Text = "Mayhem Advisor (cargando datos…)";
-            _catalog = await AugmentCatalog.LoadAsync(http);
-            _matcher = new AugmentMatcher(_catalog, id => _augmentTable.HasAugment(id));
-            _data = await GameData.LoadAsync(http);
+            var catalog = await AugmentCatalog.LoadAsync(http);
+            UseGameData(catalog, await GameData.LoadAsync(http));
             // Portugués, francés, alemán o vietnamita: los nombres de objetos y campeones en ese idioma (los de los aumentos
             // vienen en el catálogo).
             if (Lang.Code is not ("es" or "en")) Lang.Names = await LocalizedNames.LoadAsync(http, Lang.Current.Locale);
-            // Para reconocer tu campeón aunque el juego dé un nombre raro (Seraphine salió como «Name», 2026-11-02): alias o
-            // nombre visible, en español o en inglés, también sin espacios ni apóstrofos («Kog'Maw», «Lee Sin»).
-            var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            string Compact(string n) => new(n.Where(char.IsLetterOrDigit).ToArray());
-            foreach (var c in _data.Champions.Values)
-                foreach (var n in new[] { c.Alias, c.Name, c.NameEn }.OfType<string>().Where(n => n.Length > 1))
-                {
-                    byName.TryAdd(n, c.Alias);
-                    byName.TryAdd(Compact(n), c.Alias);
-                }
-            LiveClient.Resolve = n => byName.GetValueOrDefault(n) ?? byName.GetValueOrDefault(Compact(n));
             await SyncHistoryAsync();
             ReloadStats();
             _loaded.TrySetResult();
@@ -363,16 +356,33 @@ public partial class App : System.Windows.Application
                     _reusedAtLog = reader.Reused;
                     _scanMs = 0; _scans = 0; _nextScanLog = DateTime.UtcNow.AddMinutes(3);
                 }
-                var hits = _matcher.Find(lines).Where(h => OnCardColumn(h.Bounds)).ToList();
-                // Se leyeron 1 o 2 cartas (suelen ser 3): leemos otra vez solo la fila de los nombres, ampliada.
-                if (hits.Count is 1 or 2 && _cards.Count < 3)
+                var raw = _matcher.Find(lines).ToList();
+                LearnFourLayout(raw);
+                var hits = raw.Where(h => OnCardColumn(h.Bounds)).ToList();
+                // Se leyeron menos cartas de las que salen (3, o 4 con «Maestro»): leemos otra vez solo la fila de los nombres,
+                // ampliada. También, como mucho cada 1,5 s, si hay nombres en esa fila fuera de las columnas de 3 cartas: pueden
+                // ser 4 cartas que aún no se han medido.
+                bool strays = _fourGap == 0 && raw.Count >= 2 && hits.Count < raw.Count && DateTime.UtcNow >= _nextStrayReread;
+                if ((hits.Count > 0 && hits.Count < CardSlots && _cards.Count < CardSlots) || strays)
                 {
-                    var row = hits[0].Bounds;
+                    if (strays) _nextStrayReread = DateTime.UtcNow.AddSeconds(1.5);
+                    var row = (hits.Count > 0 ? hits[0] : raw[0]).Bounds;
                     var more = _matcher.Find(await reader.ReadNameRowAsync(screen, row.Y + row.Height / 2, row.Height));
-                    foreach (var h in more.Where(h => OnCardColumn(h.Bounds)))
-                        if (!hits.Any(o => o.Augment.Id == h.Augment.Id || Math.Abs(Center(o.Bounds) - Center(h.Bounds)) < o.Bounds.Width))
-                            hits.Add(h);
-                    hits = hits.OrderBy(h => h.Bounds.X).ToList();
+                    foreach (var h in more)
+                        if (!raw.Any(o => o.Augment.Id == h.Augment.Id || Math.Abs(Center(o.Bounds) - Center(h.Bounds)) < o.Bounds.Width))
+                            raw.Add(h);
+                    raw = raw.OrderBy(h => h.Bounds.X).ToList();
+                    LearnFourLayout(raw);
+                    hits = raw.Where(h => OnCardColumn(h.Bounds)).ToList();
+                }
+                // Para poder ajustar las columnas si el juego cambia cómo pone las cartas: nombres en la fila de las cartas que
+                // no caen en ninguna columna (una vez por minuto).
+                if (raw.Count >= 2 && hits.Count < raw.Count && DateTime.UtcNow >= _nextStrayLog)
+                {
+                    _nextStrayLog = DateTime.UtcNow.AddSeconds(60);
+                    double cx = _gameArea.X + _gameArea.Width / 2.0;
+                    Log.Write($"Nombres en la fila de las cartas fuera de sus columnas: {string.Join(", ", raw.Except(hits).Select(h => $"{h.Augment.Name} ({(Center(h.Bounds) - cx) / Math.Max(1, _gameArea.Height):+0.000;-0.000} del alto desde el centro)"))}" +
+                              $" · juego {_gameArea.Width}x{_gameArea.Height}" + (_fourGap > 0 ? $" · 4 cartas a {_fourGap:0.000}" : ""));
                 }
                 // Yunque de estadísticas o aumentos: nunca salen a la vez, nos quedamos con el tipo mayoritario.
                 bool anvil = hits.Count(h => h.Augment.IsAnvil) * 2 > hits.Count;
@@ -584,6 +594,8 @@ public partial class App : System.Windows.Application
         if (hits.Count == 0 || hits[0].Augment.IsAnvil != _cards[0].Hit.Augment.IsAnvil) return false;
 
         int column = Math.Max(120, screenWidth / 12);
+        // Con 4 cartas van más juntas: la «columna» de una carta nunca llega a la de al lado.
+        if (_fourGap > 0) column = Math.Min(column, (int)(_fourGap * _gameArea.Height * 0.45));
         var merged = _cards.Select(c => c.Hit).ToList();
         bool seen = false, moved = false, replaced = false;
         foreach (var h in hits)
@@ -601,10 +613,10 @@ public partial class App : System.Windows.Application
             // centro, se borraba el clic de elegir y el aumento («Impacto Blindado») se perdía.
             if (!SameRow(h.Bounds, merged)) continue;
             int col = merged.FindIndex(m => Math.Abs(Center(m.Bounds) - Center(h.Bounds)) < column);
-            // Las cartas salen de 3 en 3: con 3 ya leídas, una nueva es el refresco de la más cercana aunque se leyera algo
-            // desplazada (animación). Antes entraba como cuarta y el clic de elegir podía irse a la carta vieja: en la nube,
-            // con 4 cartas la app apuntó mal 6 de 20 elecciones; con 3, 6 de 136.
-            if (col < 0 && merged.Count >= 3)
+            // Las cartas salen de 3 en 3 (de 4 en 4 con «Maestro»): con todas ya leídas, una nueva es el refresco de la más
+            // cercana aunque se leyera algo desplazada (animación). Antes entraba como cuarta y el clic de elegir podía irse a
+            // la carta vieja: en la nube, con 4 cartas la app apuntó mal 6 de 20 elecciones; con 3, 6 de 136.
+            if (col < 0 && merged.Count >= CardSlots)
                 col = merged.Select((m, i) => (i, d: Math.Abs(Center(m.Bounds) - Center(h.Bounds)))).MinBy(x => x.d).i;
             if (col >= 0)
             {
@@ -633,11 +645,29 @@ public partial class App : System.Windows.Application
     /// </summary>
     bool OnCardColumn(Box b)
     {
-        double center = _gameArea.X + _gameArea.Width / 2.0, gap = CardSpacing * _gameArea.Height;
-        double off = new[] { center - gap, center, center + gap }.Min(col => Math.Abs(Center(b) - col));
-        return off <= ColumnTolerance * _gameArea.Height;
+        double h = Math.Max(1, _gameArea.Height), dx = (Center(b) - (_gameArea.X + _gameArea.Width / 2.0)) / h;
+        return CardLayout.OffThree(dx) <= CardLayout.Tolerance || (_fourGap > 0 && CardLayout.OffFour(dx, _fourGap) <= CardLayout.Tolerance);
     }
-    const double CardSpacing = 0.34, ColumnTolerance = 0.03;
+
+    /// <summary>Cuántas cartas salen a la vez: 3, o 4 con el Headliner «Maestro» (parche 26.23).</summary>
+    int CardSlots => _fourGap > 0 ? 4 : 3;
+
+    /// <summary>
+    /// El Headliner «Maestro» (parche 26.23) da a elegir entre 4 aumentos. Las 4 cartas no caen en las columnas de las 3 de
+    /// siempre, y antes se descartaban todas: la app no enseñaba nada. Como no sabemos cuánto las separa el juego, se deduce
+    /// de lo leído (<see cref="CardLayout.FourGap"/>). Se recuerda hasta el final de la partida o si cambia el tamaño de la
+    /// ventana del juego.
+    /// </summary>
+    void LearnFourLayout(IReadOnlyList<AugmentHit> raw)
+    {
+        if (_fourGap > 0 && _fourGapHeight != _gameArea.Height) _fourGap = 0;
+        if (_fourGap > 0 || raw.Count < 3 || _gameArea.Height <= 0) return;
+        double h = _gameArea.Height, center = _gameArea.X + _gameArea.Width / 2.0;
+        if (CardLayout.FourGap(raw.Select(x => (Center(x.Bounds) - center) / h).ToList()) is not { } gap) return;
+        _fourGap = gap;
+        _fourGapHeight = _gameArea.Height;
+        Log.Write($"4 cartas a elegir (Maestro): separadas {gap:0.000} del alto · {string.Join(", ", raw.Select(x => x.Augment.Name))} · juego {_gameArea.Width}x{_gameArea.Height}");
+    }
 
     void SetCards(List<AugmentHit> hits, GameSnapshot game, Advice? advice)
     {
@@ -747,6 +777,7 @@ public partial class App : System.Windows.Application
 
     void EndGame(CancellationToken ct)
     {
+        _fourGap = 0; // «Maestro» es de esa partida: en la siguiente vuelven a ser 3 cartas
         Log.Write($"Partida terminada · aumentos que vio la app: {(_myAugments.Count > 0 ? string.Join(", ", _myAugments.Select(a => a.Name)) : "ninguno")}");
         ConfirmPick(); // una elección aún sin confirmar (6 s) también cuenta
         // Para «Adjuntar mi última partida» en la ventanita de sugerencias (tu historial tarda unos segundos en tenerla).
@@ -1376,6 +1407,25 @@ public partial class App : System.Windows.Application
             if (!quiet) Log.Write($"No pude copiar el historial: {ex.GetType().Name}: {ex.Message}");
             return null;
         }
+    }
+
+    /// <summary>Empieza a usar estos aumentos, objetos y campeones (al arrancar, o con un parche nuevo).</summary>
+    void UseGameData(AugmentCatalog catalog, GameData data)
+    {
+        _catalog = catalog;
+        _matcher = new AugmentMatcher(_catalog, id => _augmentTable.HasAugment(id));
+        _data = data;
+        // Para reconocer tu campeón aunque el juego dé un nombre raro (Seraphine salió como «Name», 2026-11-02): alias o
+        // nombre visible, en español o en inglés, también sin espacios ni apóstrofos («Kog'Maw», «Lee Sin»).
+        var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        static string Compact(string n) => new(n.Where(char.IsLetterOrDigit).ToArray());
+        foreach (var c in _data.Champions.Values)
+            foreach (var n in new[] { c.Alias, c.Name, c.NameEn }.OfType<string>().Where(n => n.Length > 1))
+            {
+                byName.TryAdd(n, c.Alias);
+                byName.TryAdd(Compact(n), c.Alias);
+            }
+        LiveClient.Resolve = n => byName.GetValueOrDefault(n) ?? byName.GetValueOrDefault(Compact(n));
     }
 
     void ReloadStats()

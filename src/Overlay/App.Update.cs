@@ -37,12 +37,48 @@ public partial class App
         while (!ct.IsCancellationRequested)
         {
             if (GameRunning()) { await Delay(30 * 60 * 1000, ct); continue; }
+            await RefreshIfNewPatchAsync(http, ct);
             await FetchIconsAsync(ct);
             var result = await MayhemAdvisor.Core.DataUpdater.CheckAsync(http, ct);
             if (result.Updated.Count > 0) Log.Write("Datos actualizados solos: " + string.Join(", ", result.Updated));
             else if (result.Problem is not null && result.Problem != lastProblem) Log.Write("Datos: no pude mirar si hay nuevos (" + result.Problem + ")");
             lastProblem = result.Problem;
             await Delay(6 * 3600 * 1000, ct);
+        }
+    }
+
+    /// <summary>
+    /// Parche nuevo: en cuanto CommunityDragon publica los datos del parche, se vuelven a bajar los aumentos y los objetos y
+    /// campeones, sin esperar a que caduque la caché (3 días la de los aumentos). Con la 26.23 (4 aumentos nuevos) la app los
+    /// habría reconocido hasta 3 días tarde: sin su nombre, esas cartas no salían. Lo nuevo se usa enseguida (fuera de partida).
+    /// </summary>
+    async Task RefreshIfNewPatchAsync(System.Net.Http.HttpClient http, CancellationToken ct)
+    {
+        if (_catalog is null) return;
+        var remote = await GameData.RemoteVersionAsync(http, ct);
+        if (remote is null) return;
+        string? local = null;
+        try { local = File.Exists(GameData.VersionFile) ? File.ReadAllText(GameData.VersionFile).Trim() : null; } catch (IOException) { }
+        if (local == remote) return;
+        var started = DateTime.UtcNow.AddSeconds(-2);
+        try
+        {
+            var catalog = await AugmentCatalog.LoadAsync(http, forceRefresh: true);
+            // Si no pudo bajarlos, LoadAsync devuelve los de antes: entonces no se apunta la versión y se reintenta luego.
+            if (File.GetLastWriteTimeUtc(Paths.CatalogCache) < started) throw new IOException("CommunityDragon no dio los aumentos");
+            var data = await GameData.LoadAsync(http, forceRefresh: true);
+            int before = _catalog.Augments.Count;
+            UseGameData(catalog, data);
+            _augmentTextsLoadedFrom = default; // vuelve a añadir las descripciones de mayhemmeta al catálogo nuevo
+            ReloadStats();
+            if (Lang.Code is not ("es" or "en")) Lang.Names = await LocalizedNames.LoadAsync(http, Lang.Current.Locale, forceRefresh: true) ?? Lang.Names;
+            File.WriteAllText(GameData.VersionFile, remote);
+            Log.Write($"Datos del juego de la versión {remote} (antes {local ?? "sin apuntar"}): {catalog.Augments.Count} aumentos ({catalog.Augments.Count - before:+0;-0;0}), " +
+                      $"{data.Items.Count} objetos, {data.Champions.Count} campeones");
+        }
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException or IOException or JsonException or InvalidDataException or UnauthorizedAccessException)
+        {
+            Log.Write($"Hay datos del juego nuevos ({remote}) pero no pude bajarlos: {ex.Message} (se reintenta en 6 horas)");
         }
     }
 

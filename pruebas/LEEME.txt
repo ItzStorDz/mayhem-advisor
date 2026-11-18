@@ -127,6 +127,11 @@ bajar-iconos\       Las imágenes guardadas en el PC (src\Core\IconCache.cs; 1.9
                     dice cuántas imágenes dibuja (sin internet y sin carpeta, 0 de 16; con la copia, 16 de 16).
                     La ventana: pruebas\ventana-imagenes.js (ver su cabecera): sin internet y con la copia, 1.263 de 1.263.
 
+cuatro-cartas\      ¿Reconoce la app 4 cartas (Headliner «Maestro», parche 26.23)? Prueba src\Core\CardLayout.cs con posiciones de
+                    mentira: 3 cartas nunca pasan por 4, 4 cartas con separación 0,19-0,38 (también leyendo solo 3), texto suelto.
+                      dotnet run --project pruebas\cuatro-cartas -c Release
+                    El simulador de partida también dibuja 4 cartas (FG_CUATRO=<separación>, 0,27 si no) y elige la de la derecha.
+
 Traducciones       ¿Están en portugués, francés, alemán y vietnamita todos los textos que genera la app (los porqués,
                     los consejos)? Dice cuáles faltan en src\Core\LangTexts.cs y si alguna traducción pierde un hueco ({0}…):
                       node herramientas\traducciones\comprobar.js

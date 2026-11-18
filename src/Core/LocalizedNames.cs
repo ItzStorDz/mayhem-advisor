@@ -21,7 +21,8 @@ public sealed class LocalizedNames
     sealed record Cache(Dictionary<int, string> Items, Dictionary<int, string> Champions);
 
     /// <summary>Los nombres de ese idioma; sin internet ni caché, null (se quedan los de inglés).</summary>
-    public static async Task<LocalizedNames?> LoadAsync(HttpClient http, string locale)
+    /// <param name="forceRefresh">Bajarlos aunque la caché sea reciente (parche nuevo); si no se puede, se usa la que haya.</param>
+    public static async Task<LocalizedNames?> LoadAsync(HttpClient http, string locale, bool forceRefresh = false)
     {
         var path = Path.Combine(Paths.DataDir, $"nombres-{locale}.json");
         Cache? cache = null;
@@ -30,7 +31,7 @@ public sealed class LocalizedNames
             try { return File.Exists(file) ? JsonSerializer.Deserialize<Cache>(await File.ReadAllTextAsync(file)) is { Items.Count: > 0 } c ? c : null : null; }
             catch (Exception ex) when (ex is JsonException or IOException) { return null; }
         }
-        if (File.Exists(path) && File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddDays(-3)) cache = await Read(path);
+        if (!forceRefresh && File.Exists(path) && File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddDays(-3)) cache = await Read(path);
         if (cache is null)
         {
             try

@@ -125,7 +125,8 @@ function place(cards) {
   const sorted = [...centers].sort((a, b) => a - b);
   let gap = Infinity;
   for (let i = 1; i < sorted.length; i++) gap = Math.min(gap, sorted[i] - sorted[i - 1]);
-  const width = Math.round(Math.max(224, Math.min(300, Number.isFinite(gap) ? gap * 0.84 : 260)));
+  // Con 4 cartas («Maestro», 26.23) van más juntas: en pantallas pequeñas la tarjeta no pasa del 95 % de la separación.
+  const width = Math.round(Number.isFinite(gap) ? Math.max(Math.min(224, gap * 0.95), Math.min(300, gap * 0.84)) : 260);
 
   cards.forEach((c, i) => {
     const el = shown.get(c.id)?.el;

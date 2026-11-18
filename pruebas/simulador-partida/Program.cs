@@ -55,8 +55,14 @@ static class P
     /// <summary>Nombres sueltos en la fila de las cartas pero fuera de sus columnas (desplazados desde el centro, en altos de pantalla),
     /// como el texto de otro overlay que con Sylas (2026-11-02) se leía como «Vulnerabilidad + Destellante».</summary>
     static (string Text, float DxH)[]? Loose;
-    /// <summary>Centro de la carta i (0-2): el juego las pone centradas y separadas un 34 % del alto de la pantalla.</summary>
-    static int CardX(Rectangle b, int i) => (int)(b.Width / 2.0 + (i - 1) * 0.34 * b.Height);
+    /// <summary>Centro de la carta i (0-2): el juego las pone centradas y separadas un 34 % del alto de la pantalla. Con 4
+    /// cartas (Headliner «Maestro», 26.23), separadas <see cref="Gap4"/>.</summary>
+    static int CardX(Rectangle b, int i) => Cards?.Length == 4
+        ? (int)(b.Width / 2.0 + (i - 1.5) * Gap4 * b.Height)
+        : (int)(b.Width / 2.0 + (i - 1) * 0.34 * b.Height);
+    /// <summary>Separación de 4 cartas (no la hemos medido en el juego: FG_CUATRO=0.27 por defecto).</summary>
+    static double Gap4 = double.TryParse(Environment.GetEnvironmentVariable("FG_CUATRO"), System.Globalization.NumberStyles.Float,
+        System.Globalization.CultureInfo.InvariantCulture, out var g4) ? g4 : 0.27;
     static string? Stray;   // un nombre suelto más arriba que la fila de las cartas (animación al elegir, como con Rammus)
 
     static void Note(string s) { var line = $"{DateTime.Now:HH:mm:ss.fff}  {s}"; Console.WriteLine(line); Report.AppendLine(line); }
@@ -136,7 +142,7 @@ static class P
             using var border = new Pen(Color.FromArgb(200, 190, 150, 255), 4);
             for (int i = 0; i < Cards.Length; i++)
             {
-                float cx = CardX(screen, i), w = screen.Height * 0.32f, top = screen.Height * 0.20f, h = screen.Height * 0.55f;
+                float cx = CardX(screen, i), w = screen.Height * (Cards.Length == 4 ? (float)Gap4 * 0.92f : 0.32f), top = screen.Height * 0.20f, h = screen.Height * 0.55f;
                 e.Graphics.FillRectangle(card, cx - w / 2, top, w, h); e.Graphics.DrawRectangle(border, cx - w / 2, top, w, h);
                 var size = e.Graphics.MeasureString(Cards[i], font);
                 e.Graphics.DrawString(Cards[i], font, Brushes.White, cx - size.Width / 2, screen.Height * 0.40f);
@@ -480,6 +486,29 @@ static class P
             Note(await WaitCount("no se vio cuál", unseen, 25_000) ? "Taric: cartas sin clic: se apunta «no se vio cuál»" : "FALLO: Taric: las cartas sin clic no dejaron nada apuntado");
 
             Cards = null; Game.Invalidate(); Game.Update(); await Task.Delay(1000);
+
+            // Parche 26.23, Headliner «Maestro»: 4 cartas a elegir, más juntas. Antes ninguna caía en las columnas de 3 cartas y
+            // la app no enseñaba nada. Deben salir las 4 y apuntarse la que se elige (la de la derecha, que no existe con 3).
+            // Aumentos que no se han elegido antes en esta partida (uno que ya tienes no se apunta otra vez).
+            Cards = CardsEn ? ["Long Range", "Blunt Force", "Goliath", "Soul Eater"] : ["De Largo Alcance", "Fuego Zorruno", "Alma Infernal", "Devorador de Almas"];
+            seen = Count("Cartas en pantalla"); Game.Invalidate(); Game.Update();
+            t0.Restart(); while (Count("Cartas en pantalla") == seen && t0.ElapsedMilliseconds < 10_000) await Task.Delay(20);
+            Note(Count("Cartas en pantalla") > seen ? $"Maestro: cartas reconocidas en {t0.ElapsedMilliseconds} ms (separación {Gap4:0.00})" : "FALLO: Maestro: las 4 cartas no se reconocieron en 10 s");
+            Note(await WaitLog("4 cartas a elegir", 6000) ? "Maestro: la app ve que son 4" : "FALLO: Maestro: la app no vio que eran 4 cartas");
+            await Task.Delay(2500); Shot($"{lang}-maestro-4-cartas");
+            string shown4 = "";
+            try { shown4 = File.ReadAllText(Path.Combine(Out, "overlay.txt")); } catch { }
+            var missing4 = Cards.Where(n => !shown4.Contains(n, StringComparison.OrdinalIgnoreCase)).ToList();
+            Note(missing4.Count == 0 ? "Maestro: el panel enseña la nota de las 4 cartas" : $"FALLO: Maestro: faltan en el panel {string.Join(", ", missing4)}");
+            int picks4 = Count("Aumento elegido");
+            await Front();
+            SetCursorPos(CardX(b, 3), (int)(b.Height * 0.45)); await Task.Delay(150);
+            mouse_event(0x02, 0, 0, 0, IntPtr.Zero); await Task.Delay(40); mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
+            await Task.Delay(250); Cards = null; Game.Invalidate(); Game.Update();
+            string last4 = CardsEn ? "Soul Eater" : "Devorador de Almas";
+            Note(await WaitCount("Aumento elegido", picks4, 15_000) && LogText().Contains("Aumento elegido: " + last4)
+                ? "Maestro: se apuntó la 4.ª carta elegida" : "FALLO: Maestro: no se apuntó la 4.ª carta");
+            await Task.Delay(1000);
             // Fin de la partida: la app debe guardar la partida que falta en cuanto el cliente la tenga (antes, 90 s fijos).
             if (Environment.GetEnvironmentVariable("FG_REMOVE_ID") is { Length: > 0 } rid)
             {

@@ -106,9 +106,35 @@ public sealed class GameData
 
     sealed record Cache(List<ItemInfo> Items, List<ChampionInfo> Champions);
 
-    public static async Task<GameData> LoadAsync(HttpClient http)
+    /// <summary>La caché de objetos y campeones.</summary>
+    public static string CachePath => Path.Combine(Paths.DataDir, "gamedata-v6.json");
+
+    /// <summary>La versión del juego cuyos datos usa la app (la de CommunityDragon cuando se bajaron, ver RemoteVersionAsync).</summary>
+    public static string VersionFile => Path.Combine(Paths.DataDir, "version-juego.txt");
+
+    /// <summary>
+    /// La versión de los datos del juego que tiene ahora CommunityDragon («16.23.…+branch…»), o null si no responde. Cambia
+    /// cuando publica los de un parche nuevo (suele ser 1-2 días después de que salga).
+    /// </summary>
+    public static async Task<string?> RemoteVersionAsync(HttpClient http, CancellationToken ct = default)
     {
-        var path = Path.Combine(Paths.DataDir, "gamedata-v6.json");
+        int cut = Base.IndexOf("/plugins/", StringComparison.Ordinal);
+        if (cut < 0) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(await http.GetStringAsync(Base[..cut] + "/content-metadata.json", ct));
+            return doc.RootElement.GetProperty("version").GetString() is { Length: > 0 } v ? v : null;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    /// <param name="forceRefresh">Bajarlos aunque la caché sea de hoy (parche nuevo). Si no se puede, falla (no usa la vieja).</param>
+    public static async Task<GameData> LoadAsync(HttpClient http, bool forceRefresh = false)
+    {
+        var path = CachePath;
         // Un archivo a medio escribir (apagón) no debe impedir que arranque la app: se lee como si no estuviera.
         static async Task<Cache?> Read(string file)
         {
@@ -116,14 +142,14 @@ public sealed class GameData
             catch (Exception ex) when (ex is JsonException or IOException) { return null; }
         }
         Cache? cache = null;
-        if (File.Exists(path) && File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddDays(-1))
+        if (!forceRefresh && File.Exists(path) && File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddDays(-1))
             cache = await Read(path);
 
         if (cache is null)
         {
             // Con lo que arrancar si CommunityDragon falla o tarda: la caché caducada o, si no hay, la copia que trae la app.
             // Antes se esperaba hasta 60 s por cada archivo (la app tardaba minutos en abrir con la web lenta).
-            var fallback = (File.Exists(path) ? await Read(path) : null) ?? (File.Exists(Seed) ? await Read(Seed) : null);
+            var fallback = forceRefresh ? null : (File.Exists(path) ? await Read(path) : null) ?? (File.Exists(Seed) ? await Read(Seed) : null);
             try
             {
                 var download = DownloadAsync(http);
