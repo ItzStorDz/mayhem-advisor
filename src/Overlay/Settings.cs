@@ -11,7 +11,7 @@ public sealed class Settings
     /// <summary>Con AutoAccept: solo en colas de ARAM: Caos (las demás se dejan para que las aceptes tú).</summary>
     public bool AutoAcceptOnlyMayhem { get; set; } = true;
     /// <summary>
-    /// Idioma de la app y del panel: "es", "en", "pt", "fr", "de" o "vi" (ver Lang.All). La primera vez, el de Windows si es
+    /// Idioma de la app y del panel: "es", "en", "pt", "fr", "de", "vi" o "ko" (ver Lang.All). La primera vez, el de Windows si es
     /// uno de esos; si no, inglés.
     /// </summary>
     public string Language { get; set; } = Lang.Normalize(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);

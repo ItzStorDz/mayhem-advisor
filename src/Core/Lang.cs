@@ -24,7 +24,7 @@ public static class Lang
         new("ko", "한국어", "ko-KR", "ko_kr"),
     ];
 
-    /// <summary>El idioma elegido ("es", "en", "pt", "fr", "de", "vi").</summary>
+    /// <summary>El idioma elegido ("es", "en", "pt", "fr", "de", "vi", "ko").</summary>
     public static string Code { get; private set; } = "es";
 
     /// <summary>Cambia el idioma (un código que no conocemos pasa a inglés).</summary>
