@@ -7,6 +7,6 @@ contextBridge.exposeInMainWorld('mayhem', {
   send: message => ipcRenderer.send('to-app', message),
   // Arrastrando el panel: el overlay no debe soltar el ratón aunque el cursor salga del panel.
   setDragging: on => ipcRenderer.send('dragging', !!on),
-  // Selección de campeón: el ratón está encima de un botón (la ventana coge los clics) o no (pasan al cliente de LoL).
-  setChampMouse: over => ipcRenderer.send('champ-mouse', !!over),
+  // Selección de campeón: dónde están sus botones y la lista (ahí la ventana coge el ratón; fuera, pasa al cliente de LoL).
+  setChampRects: rects => ipcRenderer.send('champ-rects', rects),
 });

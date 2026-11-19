@@ -29,6 +29,12 @@ sugerencias\        La ventanita «¿Qué te parece la app?», la pestaña «Sug
                       node pruebas\sugerencias\probar-ventanita.mjs <salida>   (durante el simulador: la captura, la rellena y la envía)
                       node pruebas\sugerencias\probar-pestana.mjs <salida>     (con MAYHEM_OPEN=sugerencias: español, inglés y enviar)
 
+seleccion-campeon\  raton.js (1.9.5): el ratón DE VERDAD en el panel de selección de campeón. Hace de programa en C# (tubería), abre
+                    el overlay real con un banco de 17 campeones, mueve el cursor encima del primer «Coger» y hace clic (tiene
+                    que llegar «benchswap»), gira la rueda encima de la lista (tiene que bajar) y sale del panel. Mueve el ratón.
+                      node pruebas\seleccion-campeon\raton.js
+panel-juego\        (también) PANEL_PESTANAS=1: ¿vuelve a tu pestaña tras las cartas y al reaparecer? (15 pasos)
+
 seleccion-campeon\  Dibuja el panel de la selección de campeón del overlay con datos de ejemplo (AD/AP, tus aliados) en
                     español e inglés y guarda champselect-es/en.png y .txt:
                       overlay-electron\node_modules\electron\dist\electron.exe pruebas\seleccion-campeon overlay-electron <salida>

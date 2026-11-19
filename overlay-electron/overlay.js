@@ -146,7 +146,8 @@ function place(cards) {
 
 const TABS = [['compra', 'tabBuy'], ['adaptar', 'tabAdapt'], ['aumentos', 'tabAugs']];
 let tab = 'compra';
-let autoTab = null;           // pestaña a la que volver cuando se van las cartas (si saltamos solos a "Aumentos")
+let userTab = 'compra';       // la pestaña que elegiste tú: se vuelve a ella al irse las cartas y al revivir
+let autoTab = false;          // saltamos solos a "Aumentos" por las cartas
 let details = false;          // "Ver detalles" / "Ver más" abierto
 let scrollY = 0;
 let hadBest = false;
@@ -157,14 +158,16 @@ const keptHere = new Set(); // "Me quedo con…" pulsado: el botón se va al mom
 function renderSide(game) {
   if (!game) { sideEl.classList.add('hidden'); reportButtons(); return; }
 
-  // Con cartas de aumento en pantalla saltamos solos a "Aumentos"; al elegir, volvemos a donde estabas.
+  // Con cartas de aumento en pantalla saltamos solos a "Aumentos"; al elegir, volvemos a la pestaña que elegiste tú.
+  // Muerto = estás en la tienda: el panel se abre en «Compra» aunque lo tengas minimizado, y al revivir vuelve a tu
+  // pestaña. Antes, morir con las cartas fuera (o justo antes) te dejaba en «Compra» aunque estuvieras en «Adaptar»
+  // (opinión n.º 28).
   const hasBest = !!game.bestAugments;
-  if (hasBest && !hadBest && tab !== 'aumentos' && autoAugments) { autoTab = tab; tab = 'aumentos'; scrollY = 0; }
-  if (!hasBest && hadBest && autoTab) { tab = autoTab; autoTab = null; scrollY = 0; }
+  if (hasBest && !hadBest && tab !== 'aumentos' && autoAugments) { autoTab = true; tab = 'aumentos'; scrollY = 0; }
+  if (!hasBest && hadBest && autoTab) { tab = game.dead ? 'compra' : userTab; autoTab = false; scrollY = 0; }
   hadBest = hasBest;
-
-  // Muerto = estás en la tienda: el panel se abre en «Compra» aunque lo tengas minimizado (no se guarda).
-  if (game.dead && !wasDead) { tab = 'compra'; autoTab = null; details = false; scrollY = 0; }
+  if (game.dead && !wasDead && !(hasBest && autoTab)) { tab = 'compra'; details = false; scrollY = 0; }
+  if (!game.dead && wasDead && !autoTab && tab === 'compra' && userTab !== 'compra') { tab = userTab; scrollY = 0; }
   wasDead = !!game.dead;
 
   if (minimized && !game.dead) {
@@ -490,7 +493,7 @@ function doAction(act, id) {
   const now = Date.now();
   if (now - (lastAction.get(key) ?? 0) < 400) return;
   lastAction.set(key, now);
-  if (act === 'tab') { tab = id; autoTab = null; details = false; scrollY = 0; nextIndex = 0; }
+  if (act === 'tab') { tab = userTab = id; autoTab = false; details = false; scrollY = 0; nextIndex = 0; }
   if (act === 'details') details = !details;
   if (act === 'scroll') {
     const body = sideEl.querySelector('.pn-body');

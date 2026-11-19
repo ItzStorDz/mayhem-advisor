@@ -33,6 +33,8 @@ let socket = null;      // tubería con el programa en C#
 let interactive = false; // el ratón está encima de un botón del overlay
 let buttons = [];        // rectángulos de los botones del overlay (px CSS, relativos a la ventana)
 let dragging = false;    // se está arrastrando el panel: el overlay se queda con el ratón hasta soltar
+let champRects = [];     // selección de campeón: botones y lista (px CSS, relativos a su ventana)
+let champInteractive = false;
 
 // El overlay deja pasar los clics al juego, salvo encima de sus botones. En vez de fiarnos de los eventos de
 // ratón que reenvía Electron (en modo ventana no llegaban), miramos dónde está el cursor 20 veces por segundo.
@@ -61,6 +63,17 @@ setInterval(() => {
   }) : [];
   const key = JSON.stringify(rects);
   if (key !== sentRects && socket && !socket.destroyed) { sentRects = key; socket.write(JSON.stringify({ type: 'buttons', rects }) + '\n'); }
+}, 50);
+
+// Lo mismo en la selección de campeón: la ventana coge el ratón solo encima de sus botones y de la lista.
+setInterval(() => {
+  if (!champ || champ.isDestroyed()) return;
+  let over = false;
+  if (champRects.length > 0 && champ.isVisible()) {
+    const p = screen.getCursorScreenPoint(), b = champ.getContentBounds();
+    over = champRects.some(r => p.x >= b.x + r.x && p.x <= b.x + r.x + r.w && p.y >= b.y + r.y && p.y <= b.y + r.y + r.h);
+  }
+  if (over !== champInteractive) { champInteractive = over; champ.setIgnoreMouseEvents(!over, { forward: true }); }
 }, 50);
 
 function createOverlay() {
@@ -104,10 +117,16 @@ function createChampSelect() {
   });
   champ.setAlwaysOnTop(true, 'screen-saver');
   champ.setContentProtection(true);
-  // El ratón pasa al cliente de LoL salvo encima de un botón del panel (Coger, Aceptar…): forward deja que la página
-  // vea por dónde va el ratón y avise (ipc 'champ-mouse') para capturar los clics solo ahí.
+  // El ratón pasa al cliente de LoL salvo encima de un botón del panel (Coger, Aceptar…) o de la lista: ver champRects.
   champ.setIgnoreMouseEvents(true, { forward: true });
   champ.loadFile('champselect.html');
+  // Solo para las pruebas (pruebas/seleccion-campeon/raton.js): qué ve la página de la rueda y cuánto se ha desplazado la lista.
+  if (process.env.MAYHEM_CHAMP_DEBUG) {
+    champ.webContents.on('console-message', (_e, _level, text) => console.error(`[champ page] ${text}`));
+    champ.webContents.on('did-finish-load', () => champ.webContents.executeJavaScript(
+      `document.addEventListener('wheel', e => console.log('rueda ' + e.deltaY + ' en ' + (e.target.className || e.target.tagName)), { capture: true, passive: true });
+       setInterval(() => console.log('lista ' + (document.querySelector('.cs-list')?.scrollTop ?? '-')), 500);`).catch(() => { }));
+  }
 }
 
 /**
@@ -156,8 +175,10 @@ ipcMain.on('dragging', (_e, on) => {
   dragging = !!on;
   if (dragging && !interactive) { interactive = true; applyMouseMode(); }
 });
-ipcMain.on('champ-mouse', (_e, over) => {
-  if (champ && !champ.isDestroyed()) champ.setIgnoreMouseEvents(!over, { forward: true });
+ipcMain.on('champ-rects', (_e, rects) => {
+  champRects = Array.isArray(rects) ? rects : [];
+  if (process.env.MAYHEM_CHAMP_DEBUG && champ && !champ.isDestroyed())
+    console.error('[champ] rects', JSON.stringify({ bounds: champ.getContentBounds(), scale: screen.getPrimaryDisplay().scaleFactor, rects: champRects }));
 });
 ipcMain.on('to-app', (_e, message) => {
   if (socket && !socket.destroyed) socket.write(JSON.stringify(message) + '\n');

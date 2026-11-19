@@ -101,6 +101,39 @@ app.whenReady().then(async () => {
     await win.webContents.executeJavaScript('localStorage.clear(); location.reload()');
     await new Promise(r => setTimeout(r, 1500));
   }
+  // PANEL_PESTANAS=1: ¿se recuerda la pestaña que elegiste? (opinión n.º 28: estaba en «Adaptar», salieron las cartas y
+  // al elegir volvió a «Compra»). Pasos con cartas, muerte y reaparición; dice en qué pestaña queda el panel.
+  if (process.env.PANEL_PESTANAS === '1') {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const cards = { rarity: 'Plata', champion: 'Kayle', list: [{ name: 'Plan de Escape', icon: icon(3006), grade: 'S', score: 90, games: 400, onScreen: true }] };
+    let fails = 0;
+    const step = async (name, extra, want) => {
+      win.webContents.send('data', { ...live('es'), game: { ...game('es'), ...extra } });
+      await sleep(350);
+      const got = await win.webContents.executeJavaScript('document.querySelector(".pn-tab.on")?.dataset.id ?? "(sin pestañas)"');
+      if (got !== want) fails++;
+      console.log(`${got === want ? 'ok    ' : 'FALLO '} ${name}: ${got}${got === want ? '' : ` (tenía que ser ${want})`}`);
+    };
+    await win.webContents.executeJavaScript('localStorage.clear(); location.reload()'); await sleep(1500);
+    await step('al empezar', {}, 'compra');
+    await win.webContents.executeJavaScript('doAction("tab", "adaptar")'); await sleep(450);
+    await step('eliges «Adaptar»', {}, 'adaptar');
+    await step('salen las cartas', { bestAugments: cards }, 'aumentos');
+    await step('mueres con las cartas fuera', { bestAugments: cards, dead: true, respawn: 12 }, 'aumentos');
+    await step('eliges la carta (aún muerto: tienda)', { dead: true, respawn: 9 }, 'compra');
+    await step('reapareces', {}, 'adaptar');
+    await step('mueres', { dead: true, respawn: 10 }, 'compra');
+    await step('salen las cartas estando muerto', { dead: true, respawn: 8, bestAugments: cards }, 'aumentos');
+    await step('eliges', { dead: true, respawn: 5 }, 'compra');
+    await step('reapareces', {}, 'adaptar');
+    await step('salen las cartas vivo', { bestAugments: cards }, 'aumentos');
+    await step('eliges', {}, 'adaptar');
+    await step('mueres', { dead: true, respawn: 10 }, 'compra');
+    await win.webContents.executeJavaScript('doAction("tab", "compra")'); await sleep(450);
+    await step('eliges «Compra» tú, muerto', { dead: true, respawn: 6 }, 'compra');
+    await step('reapareces (te quedas en «Compra», la elegiste tú)', {}, 'compra');
+    console.log(fails === 0 ? 'PESTAÑAS: TODO BIEN' : `PESTAÑAS: ${fails} FALLOS`);
+  }
   win.destroy();
   app.quit();
 });

@@ -528,7 +528,7 @@ public sealed partial class Advisor(StatsStore stats)
         // Cada categoría: objetos que la cubren y le sirven a tu campeón, por % de victorias con él (mayhemmeta.com).
         int champGames = stats.Global.For(champion)?.Games ?? 0;
         string? AugmentFor(ItemInfo item) =>
-            myAugments.FirstOrDefault(aug => stats.Links.RequiredBy(aug.Id).Contains(item.Id) || StatTags.ItemCategories(aug.StatList, iAmMagic).Any(item.Has))?.Name;
+            myAugments.FirstOrDefault(aug => stats.Links.RequiredBy(aug.Id).Contains(item.Id) || StatTags.ItemCategories(aug.StatList, iAmMagic).Any(item.Has))?.DisplayName;
         CategoryItem Describe(ItemInfo item)
         {
             var g = stats.GlobalItem(champion, item.Id);

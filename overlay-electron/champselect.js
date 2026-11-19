@@ -3,15 +3,35 @@
 // ya está en la tienda del juego. Los botones solo hacen algo cuando los pulsas tú.
 const sideEl = document.getElementById('side');
 
-// La ventana deja pasar el ratón al cliente de LoL salvo encima de un botón.
-let overButton = false;
-document.addEventListener('mousemove', e => {
-  // …o encima de la lista cuando no cabe entera (banco lleno, ventana del cliente pequeña): ahí la rueda la desplaza.
-  // Antes no se podía bajar para ver los últimos campeones (opinión de un jugador, 2026-11-12).
-  const list = e.target.closest('.cs-list');
-  const over = !!e.target.closest('button') || (!!list && list.scrollHeight > list.clientHeight + 1);
-  if (over !== overButton) { overButton = over; window.mayhem.setChampMouse?.(over); }
-});
+// La ventana deja pasar el ratón al cliente de LoL salvo encima de un botón o de la lista cuando no cabe entera (banco
+// lleno, ventana del cliente pequeña: ahí la rueda la desplaza). Aquí se dice dónde están; el proceso principal
+// (main.js) mira el cursor 20 veces por segundo, como en el panel del juego. Antes la página esperaba a que Windows le
+// pasara el movimiento del ratón, y en algunos PCs no llegaba: «Coger» no hacía nada y la lista no bajaba (opiniones
+// 27 y 30, con la 1.9.2).
+let lastChampRects = '';
+function reportChampRects() {
+  const rect = el => { const r = el.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }; };
+  const rects = [];
+  if (!sideEl.classList.contains('hidden')) {
+    for (const b of sideEl.querySelectorAll('button[data-act]')) { const r = rect(b); if (r.w > 0 && r.h > 0) rects.push(r); }
+    const list = sideEl.querySelector('.cs-list');
+    if (list && list.scrollHeight > list.clientHeight + 1) rects.push(rect(list));
+  }
+  const key = JSON.stringify(rects);
+  if (key !== lastChampRects) { lastChampRects = key; window.mayhem.setChampRects?.(rects); }
+}
+setInterval(reportChampRects, 250); // también al desplazar la lista o si el panel cambia de tamaño
+// La rueda desplaza la lista aunque el navegador no se la dé a ella: con la ventana sin foco llega al documento entero
+// (comprobado con pruebas/seleccion-campeon/raton.js) y no se movía nada. La ventana solo coge la rueda encima de la lista
+// o de sus botones, así que aquí siempre es para la lista.
+window.addEventListener('wheel', e => {
+  const list = sideEl.querySelector('.cs-list');
+  if (!list || list.scrollHeight <= list.clientHeight + 1 || e.target.closest?.('.cs-list')) return; // ya la mueve el navegador
+  list.scrollTop += e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;
+  e.preventDefault();
+  reportChampRects();
+}, { passive: false });
+window.addEventListener('resize', reportChampRects);
 document.addEventListener('click', e => {
   const b = e.target.closest('button[data-act]');
   if (!b || b.disabled) return;
@@ -27,7 +47,7 @@ window.mayhem.onData(message => {
   if (message.lang) LANG = message.lang;
   if (message.type !== 'live') return;
   const options = message.phase === 'champselect' ? message.champSelect ?? [] : [];
-  if (options.length === 0) { sideEl.classList.add('hidden'); return; }
+  if (options.length === 0) { sideEl.classList.add('hidden'); reportChampRects(); return; }
   const cs = message.champSelectInfo ?? {};
 
   const rate = o => o.mayhemWinRate ?? (o.games >= 3 ? o.winRate : null);
@@ -72,6 +92,7 @@ window.mayhem.onData(message => {
     }).join('')}</div>
     ${cs.itemSet ? `<div class="cs-foot">🛒 ${tr('inShop', esc(cs.itemSet))}</div>` : ''}`;
 
-  if (sideEl.dataset.html !== html) { sideEl.innerHTML = html; sideEl.dataset.html = html; overButton = false; window.mayhem.setChampMouse?.(false); }
+  if (sideEl.dataset.html !== html) { sideEl.innerHTML = html; sideEl.dataset.html = html; }
   sideEl.classList.remove('hidden');
+  reportChampRects();
 });
