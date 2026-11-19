@@ -59,9 +59,9 @@ public sealed class AugmentCatalog
     /// </summary>
     static string Seed => Path.Combine(AppContext.BaseDirectory, "datos", "semilla-augments.json");
     const string StringTable = "https://raw.communitydragon.org/latest/game/es_mx/data/menu/en_us/lol.stringtable.json";
-    // También los nombres en portugués, francés, alemán y vietnamita (1.8.5): para enseñarlos en ese idioma y para reconocer
-    // las cartas con el juego en cualquiera de ellos (el lector compara con todos los nombres).
-    static readonly string[] Locales = ["default", "es_mx", "es_es", "pt_br", "fr_fr", "de_de", "vi_vn"];
+    // También los nombres en portugués, francés, alemán, vietnamita (1.8.5) y coreano: para enseñarlos en ese idioma y para
+    // reconocer las cartas con el juego en cualquiera de ellos (el lector compara con todos los nombres).
+    static readonly string[] Locales = ["default", "es_mx", "es_es", "pt_br", "fr_fr", "de_de", "vi_vn", "ko_kr"];
 
     public IReadOnlyList<Augment> Augments { get; }
     readonly Dictionary<int, Augment> _byId;
@@ -118,15 +118,19 @@ public sealed class AugmentCatalog
         if (download is not null && OfflineCache(cache) is { } slowPath && await Task.WhenAny(download, Task.Delay(GameData.SlowSourceMs)) != download
             && await ReadCache(slowPath) is { } slow)
         {
-            _ = download.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+            // La descarga sigue: si acaba bien, se guarda para la próxima vez. Si no, con una conexión lenta nunca habría
+            // caché y la app arrancaría siempre con la copia que trae (sin los nombres en los idiomas añadidos después).
+            _ = download.ContinueWith(async t =>
+            {
+                if (!t.IsCompletedSuccessfully) { _ = t.Exception; return; }
+                try { await SaveCache(cache, t.Result); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            });
             return new AugmentCatalog(slow);
         }
         try
         {
             var list = await (download ?? DownloadAsync(http));
-            Directory.CreateDirectory(Paths.DataDir);
-            await File.WriteAllTextAsync(cache + ".tmp", JsonSerializer.Serialize(list));
-            File.Move(cache + ".tmp", cache, overwrite: true);
+            await SaveCache(cache, list);
             return new AugmentCatalog(list);
         }
         catch when (OfflineCache(cache) is not null)
@@ -134,6 +138,13 @@ public sealed class AugmentCatalog
             // Sin internet: usamos la caché vieja aunque esté caducada (o la de la versión anterior de la app, recién actualizada).
             return new AugmentCatalog(await ReadCache(OfflineCache(cache)!) ?? throw new InvalidDataException("caché de aumentos dañada y sin conexión"));
         }
+    }
+
+    static async Task SaveCache(string cache, List<Augment> list)
+    {
+        Directory.CreateDirectory(Paths.DataDir);
+        await File.WriteAllTextAsync(cache + ".tmp", JsonSerializer.Serialize(list));
+        File.Move(cache + ".tmp", cache, overwrite: true);
     }
 
     /// <summary>La caché de aumentos, o null si falta o está a medio escribir (un apagón no debe impedir que arranque la app).</summary>

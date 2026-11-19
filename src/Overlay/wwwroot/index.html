@@ -417,7 +417,7 @@ const T = {
 };
 // Portugués, francés, alemán y vietnamita (i18n.js). Lo que falte en un idioma sale en inglés (en español, lo de español).
 Object.assign(T, window.I18N?.T);
-const LANGS = [["es", "Español"], ["en", "English"], ["pt", "Português (Brasil)"], ["fr", "Français"], ["de", "Deutsch"], ["vi", "Tiếng Việt"]];
+const LANGS = [["es", "Español"], ["en", "English"], ["pt", "Português (Brasil)"], ["fr", "Français"], ["de", "Deutsch"], ["vi", "Tiếng Việt"], ["ko", "한국어"]];
 let lang = "es";
 const t = (k, ...a) => { const v = T[lang]?.[k] ?? (lang === "es" ? undefined : T.en[k]) ?? T.es[k] ?? k; return typeof v === "function" ? v(...a) : v; };
 // Español, francés y alemán ponen un espacio antes del % («54 %»); inglés, portugués y vietnamita no («54%»).
