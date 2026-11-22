@@ -74,9 +74,55 @@ public partial class App : System.Windows.Application
     volatile bool _trackClicks;
     object? _lastLive;
 
+    // Una sola copia abierta (por carpeta de datos: las copias de prueba usan otra). Ver OnlyCopy.
+    Mutex? _onlyCopy;
+    EventWaitHandle? _openRequest;
+
+    /// <summary>
+    /// ¿Es la única copia abierta? Antes se podía abrir dos veces (la que arranca con Windows y otra desde el escritorio): la
+    /// segunda no podía abrir su panel («Overlay Electron se cerró solo: ya había otro overlay abierto», 5 intentos y «vuelvo
+    /// al overlay de siempre»: dos paneles en pantalla) y las dos escribían los mismos archivos («matches.jsonl está siendo
+    /// usado por otro proceso»). Si ya hay una, se le pide que abra su ventana y esta se cierra. Al actualizar, el instalador
+    /// abre la nueva mientras la vieja aún se cierra: se le esperan unos segundos.
+    /// </summary>
+    bool OnlyCopy()
+    {
+        string id = Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(System.Text.Encoding.UTF8.GetBytes(Paths.DataDir.ToLowerInvariant())))[..16];
+        _onlyCopy = new Mutex(true, @"Local\MayhemAdvisor-" + id, out bool first);
+        _openRequest = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\MayhemAdvisor-abrir-" + id);
+        if (!first)
+        {
+            try { first = _onlyCopy.WaitOne(TimeSpan.FromSeconds(8)); }
+            catch (AbandonedMutexException) { first = true; } // la otra se cerró de golpe
+        }
+        if (!first)
+        {
+            Log.Write("Ya había un Mayhem Advisor abierto: se le pide que abra su ventana y este se cierra");
+            _openRequest.Set();
+            return false;
+        }
+        var request = _openRequest;
+        new Thread(() =>
+        {
+            while (true)
+            {
+                try { request.WaitOne(); } catch (ObjectDisposedException) { return; }
+                Dispatcher.InvokeAsync(() =>
+                {
+                    Log.Write("Se intentó abrir otra copia: se abre la ventana de esta");
+                    if (!GameRunning()) OpenDashboard();
+                });
+            }
+        }) { IsBackground = true, Name = "Una copia" }.Start();
+        return true;
+    }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (!OnlyCopy()) { Shutdown(); return; }
+        // Un cierre por un error en otro hilo también se apunta (antes la app desaparecía sin dejar rastro).
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => Log.Write($"Error fatal: {args.ExceptionObject}");
         // Números en español en todos los textos (47,3 %), igual que en el overlay, aunque Windows esté en inglés.
         System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("es-ES");
         System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("es-ES");
@@ -807,10 +853,14 @@ public partial class App : System.Windows.Application
     /// </summary>
     async Task SyncAfterGameAsync(DateTime endedUtc, CancellationToken ct)
     {
-        int[] waits = [3, 3, 4, 4, 5, 5, 5, 8, 8, 10, 10, 15, 15, 20, 30, 30, 30];
+        // Después, una vez por minuto durante 15 minutos más: hay quien se queda en la pantalla de resultados y el cliente no
+        // la pone en el historial hasta salir de ahí. Antes, a los 3,5 minutos se dejaba y la partida no salía en
+        // «Partidas» hasta jugar otra (opinión n.º 32). Si empieza otra partida, se deja (al acabar esa se guardan las dos).
+        int[] waits = [3, 3, 4, 4, 5, 5, 5, 8, 8, 10, 10, 15, 15, 20, 30, 30, 30, .. Enumerable.Repeat(60, 15)];
         foreach (var seconds in waits)
         {
             try { await Task.Delay(TimeSpan.FromSeconds(seconds), ct); } catch (TaskCanceledException) { return; }
+            if (_inGame) return;
             if (await SyncHistoryAsync(quiet: true) is > 0)
             {
                 Log.Write($"Partida guardada {(DateTime.UtcNow - endedUtc).TotalSeconds:0} s después de acabar");
@@ -1678,6 +1728,7 @@ public partial class App : System.Windows.Application
 
     void Quit()
     {
+        Log.Write("Mayhem Advisor cerrado");
         _cts.Cancel();
         _bridge?.Dispose();
         if (_foregroundHookHandle != IntPtr.Zero) UnhookWinEvent(_foregroundHookHandle);
